@@ -8,10 +8,11 @@
   "scripts": {
     "dev": "vinext dev",
     "build": "vinext build",
+    "prestart": "node tools/runtime/patch-vinext-windows-static-cache.mjs",
     "start": "vinext start",
     "test": "node tools/test/run-tests.mjs",
     "test:model": "node tools/eval/live-model-smoke.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern .runtime",
     "rag:build": ".venv\\Scripts\\python.exe tools\\rag\\build_index.py",
     "knowledge:build": ".venv\\Scripts\\python.exe tools\\knowledge\\build_knowledge_v2.py",
     "knowledge:validate": ".venv\\Scripts\\python.exe tools\\knowledge\\validate_knowledge_v2.py",

@@ -50,11 +50,19 @@ function Start-DemoServer {
   $stdoutPath = Join-Path $runtimeDir "app-$stamp.out.log"
   $stderrPath = Join-Path $runtimeDir "app-$stamp.err.log"
   $npxPath = (Get-Command npx.cmd -ErrorAction Stop).Source
+  $nodePath = (Get-Command node.exe -ErrorAction Stop).Source
+  $vinextPatchPath = Join-Path $projectDir "tools\runtime\patch-vinext-windows-static-cache.mjs"
+
+  & $nodePath $vinextPatchPath
+  if ($LASTEXITCODE -ne 0) {
+    Write-HostStatus -State "unhealthy" -Detail "Vinext Windows compatibility patch failed."
+    return $false
+  }
 
   $env:DEMO_EXPIRES_AT = $ExpiresAt.ToUniversalTime().ToString("o")
   Start-Process `
     -FilePath $npxPath `
-    -ArgumentList @("vinext", "dev", "--port", $Port) `
+    -ArgumentList @("vinext", "start", "--port", $Port, "--hostname", "localhost") `
     -WorkingDirectory $projectDir `
     -WindowStyle Hidden `
     -RedirectStandardOutput $stdoutPath `

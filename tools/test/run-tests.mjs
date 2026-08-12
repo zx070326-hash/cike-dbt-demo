@@ -10,8 +10,9 @@ const testEnvironment = {
 };
 
 for (const [command, args] of [
+  [process.execPath, ["tools/runtime/patch-vinext-windows-static-cache.mjs"]],
   [process.execPath, [npmCli, "run", "build"]],
-  [process.execPath, ["--test", "tests/rendered-html.test.mjs"]],
+  [process.execPath, ["--test", "tests/*.test.mjs"]],
 ]) {
   const result = spawnSync(command, args, {
     cwd: process.cwd(),

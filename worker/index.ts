@@ -3,10 +3,10 @@ import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } fr
 import handler from "vinext/server/app-router-entry";
 
 interface Env {
-  ASSETS: Fetcher;
-  DB: D1Database;
+  ASSETS?: Fetcher;
+  DB?: D1Database;
   DEMO_EXPIRES_AT?: string;
-  IMAGES: {
+  IMAGES?: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {
         output(options: { format: string; quality: number }): Promise<{ response(): Response }>;
@@ -47,17 +47,17 @@ interface ExecutionContext {
 // const imageConfig: ImageConfig = { dangerouslyAllowSVG: true };
 
 const worker = {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env | undefined, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    if (env.DEMO_EXPIRES_AT) {
+    if (env?.DEMO_EXPIRES_AT) {
       const expiresAt = Date.parse(env.DEMO_EXPIRES_AT);
       if (Number.isFinite(expiresAt) && Date.now() >= expiresAt) {
         return expiredResponse(url.pathname);
       }
     }
 
-    if (url.pathname === "/_vinext/image") {
+    if (url.pathname === "/_vinext/image" && env?.ASSETS && env.IMAGES) {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
       return handleImageOptimization(request, {
         fetchAsset: (path) => env.ASSETS.fetch(new Request(new URL(path, request.url))),
@@ -68,7 +68,7 @@ const worker = {
       }, allowedWidths);
     }
 
-    return handler.fetch(request, env, ctx);
+    return handler.fetch(request, env ?? {}, ctx);
   },
 };
 
