@@ -158,7 +158,7 @@ export function planRetrieval(query: string, recentUserContext = ""): RetrievalP
       kind: "guided",
       route: "behavior-chain",
       retrievalQuery: `${context} 行为链 链式分析 脆弱因素 促发事件 问题行为 后果`,
-      label: "反复行为与冲动链条",
+      label: "反复行为的发生过程",
     };
   }
 
@@ -500,12 +500,14 @@ function groundedTemplate(query: string, hits: RetrievalHit[]): GroundedTemplate
       steps: ["观察：留意当下经验。", "描述和参与：用事实语言命名，并投入正在做的事。", "练习不评判、一次专注一件事，并选择有效行动。"],
     };
   }
-  if ((normalizedQuery.includes(normalize("行为链")) || normalizedQuery.includes(normalize("链式分析"))) && supports("促发事件", "问题行为")) {
+  const supportsBehaviorChain = evidenceText.includes(normalize("问题行为")) &&
+    (evidenceText.includes(normalize("促发事件")) || evidenceText.includes(normalize("诱发事件")));
+  if ((normalizedQuery.includes(normalize("行为链")) || normalizedQuery.includes(normalize("链式分析"))) && supportsBehaviorChain) {
     return {
       label: "行为链",
       title: "行为链分析用来还原问题行为如何一步步发生",
-      message: "它从脆弱因素和促发事件开始，沿着想法、情绪、身体感觉和行动冲动追踪到问题行为及其后果，再寻找可以插入技能的环节。",
-      steps: ["确定要分析的问题行为和促发事件。", "按时间顺序写下中间每一个环节。", "检查后果，并找出可以使用替代技能的连接点。"],
+      message: "它从易感因素和诱发事件开始，沿着想法、情绪、身体感觉和行动冲动追踪到问题行为及其后果，再寻找可以插入技能的环节。",
+      steps: ["先确定一次具体的问题行为和诱发事件。", "按时间顺序写下中间的想法、感受、身体感觉与行动。", "检查后果，并找出可以使用替代技能的连接点。"],
     };
   }
   return null;
@@ -555,7 +557,8 @@ export function buildRetrievalFallback(
 
   const top = hits[0];
   const normalizedQuery = normalize(query);
-  const template = groundedTemplate(query, hits);
+  const templateQuery = plan?.kind === "guided" ? plan.retrievalQuery : query;
+  const template = groundedTemplate(templateQuery, hits);
   const guidedPrefix = plan?.kind === "guided"
     ? `根据你描述的情境，我先把“${plan.label}”作为一个待核实的技能入口，而不是对你下结论。`
     : "";
@@ -566,16 +569,14 @@ export function buildRetrievalFallback(
   return {
     kind: "answer",
     title: template?.title ?? `找到与“${queryLabel}”相关的书内证据`,
-    message: `${guidedPrefix}${template?.message ?? (generationStatus
-      ? "生成结果没有通过结构或证据支持校验，因此这次只展示最相关的书内依据，并保留这个技能选择为待核实建议。"
-      : "下面是与当前情境最相关的书内依据。技能选择是结合你描述作出的暂定判断；书内原则有页码支持，但是否贴合你的具体情况仍由你确认。")}`,
+    message: `${guidedPrefix}${template?.message ?? "下面先给出与当前情境最接近的书内依据。这个技能方向只是一个入口；你可以对照自己的实际情况，保留贴合的部分。"}`,
     steps: template?.steps ?? [
-      `优先查看：${top.page.section}。`,
-      "确认原页内容与自己的问题确实相关。",
-      "若证据不充分，请缩小问题或明确技能名称。",
+      "先用一句可观察的话写下刚才发生了什么，不解释他人的动机。",
+      "再选一个当前最想改变的目标：情绪强度、下一步行为，或沟通结果。",
+      `对照来源“${top.page.section}”，确认这个技能是否贴合，再继续询问具体步骤。`,
     ],
     citations,
-    nextAction: template?.nextAction ?? (/核对事实|解释|假设|证据/u.test(query) ? "practice" : "none"),
+    nextAction: template?.nextAction ?? (plan?.route === "emotion-facts" || /核对事实|解释|假设|证据/u.test(query) ? "practice" : "none"),
     mode: plan?.kind === "guided" ? "guided" : "retrieval",
     generation: generationStatus
       ? { attempted: true, status: generationStatus }

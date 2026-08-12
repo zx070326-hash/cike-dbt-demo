@@ -55,6 +55,7 @@ test("server-renders the DBT demo shell", async () => {
   assert.match(html, /此刻，最困扰你的是什么/);
   assert.match(html, /知识库透明度/);
   assert.match(html, /核对事实/);
+  assert.match(html, /正在准备可交互页面/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
 });
 
@@ -342,6 +343,24 @@ test("ordinary-language situations are expanded to provisional DBT skill routes"
     assert.ok(payload.citations?.length > 0, message);
     assert.match(payload.retrieval?.query ?? "", new RegExp(retrievalAnchor, "u"), message);
   }
+});
+
+test("a model fallback stays useful and does not expose internal validation language", async () => {
+  const response = await request("/api/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json; charset=utf-8" },
+    body: JSON.stringify({
+      message: "我因为工作拖延很自责，总觉得自己什么都做不好，我现在应该先做什么？",
+      history: [],
+    }),
+  });
+  const payload = await response.json();
+  const answerText = `${payload.title} ${payload.message} ${(payload.steps ?? []).join(" ")}`;
+  assert.equal(payload.kind, "answer");
+  assert.equal(payload.mode, "guided");
+  assert.match(answerText, /行为链|促发事件|问题行为/u);
+  assert.doesNotMatch(answerText, /生成结果|结构或证据支持校验|缩小问题|明确技能名称/u);
+  assert.ok(payload.citations?.length > 0);
 });
 
 test("RAG route abstains when no page has enough direct evidence", async () => {

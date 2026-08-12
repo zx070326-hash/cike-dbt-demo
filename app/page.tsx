@@ -156,6 +156,7 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [busySeconds, setBusySeconds] = useState(0);
   const [source, setSource] = useState<SourceCitation | null>(null);
   const [practiceIndex, setPracticeIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({
@@ -174,6 +175,7 @@ export default function Home() {
   const latestMessageRef = useRef<HTMLElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const panelScrollRef = useRef<HTMLDivElement | null>(null);
+  const requestControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -186,7 +188,7 @@ export default function Home() {
           localStorage.removeItem("dbt-practice-records-v1");
         }
       }
-    }, 0);
+    }, 250);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -202,6 +204,16 @@ export default function Home() {
     panelScrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, [tab]);
 
+  useEffect(() => {
+    if (!busy) return;
+    const timer = window.setInterval(() => {
+      setBusySeconds((seconds) => seconds + 1);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [busy]);
+
+  useEffect(() => () => requestControllerRef.current?.abort(), []);
+
   const currentStep = practiceSteps[practiceIndex];
   const progress = Math.round(((practiceIndex + 1) / practiceSteps.length) * 100);
   const currentValue = answers[currentStep.id] ?? "";
@@ -216,6 +228,12 @@ export default function Home() {
   const latestAssistant = [...messages]
     .reverse()
     .find((message) => message.role === "assistant")?.payload;
+
+  const busyLabel = busySeconds < 3
+    ? "正在理解你的情境"
+    : busySeconds < 8
+      ? "正在检索书内依据"
+      : "正在核对回答与页码";
 
   function acceptBoundary() {
     localStorage.setItem("dbt-demo-consent-v1", "accepted");
@@ -248,7 +266,12 @@ export default function Home() {
       { id: createId(), role: "user", text: message },
     ]);
     setInput("");
+    setBusySeconds(0);
     setBusy(true);
+    const controller = new AbortController();
+    requestControllerRef.current?.abort();
+    requestControllerRef.current = controller;
+    const timeout = window.setTimeout(() => controller.abort(), 45_000);
 
     try {
       const history = messages
@@ -267,6 +290,7 @@ export default function Home() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ message, history }),
+        signal: controller.signal,
       });
       const payload = (await response.json()) as ChatPayload & { error?: string };
       setMessages((items) => [
@@ -283,7 +307,8 @@ export default function Home() {
               },
         },
       ]);
-    } catch {
+    } catch (error) {
+      const wasAborted = error instanceof DOMException && error.name === "AbortError";
       setMessages((items) => [
         ...items,
         {
@@ -291,14 +316,24 @@ export default function Home() {
           role: "assistant",
           payload: {
             kind: "refusal",
-            title: "连接暂时不可用",
-            message: "本地服务没有响应，请稍后再试。",
+            title: wasAborted ? "本次等待已停止" : "连接暂时不可用",
+            message: wasAborted
+              ? "没有提交新的内容。你可以稍后重试，或先从下方技能和练习进入。"
+              : "服务暂时没有响应。你可以重试，或先从下方技能和练习进入。",
           },
         },
       ]);
     } finally {
+      window.clearTimeout(timeout);
+      if (requestControllerRef.current === controller) {
+        requestControllerRef.current = null;
+      }
       setBusy(false);
     }
+  }
+
+  function cancelPendingRequest() {
+    requestControllerRef.current?.abort();
   }
 
   function updateAnswer(value: string) {
@@ -580,10 +615,18 @@ export default function Home() {
                   )}
                   {busy && (
                     <div className="thinking" role="status">
-                      <span />
-                      <span />
-                      <span />
-                      正在检查证据
+                      <div className="thinking-dots" aria-hidden="true">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+                      <div className="thinking-copy">
+                        <strong>{busyLabel}</strong>
+                        <small>{busySeconds < 8 ? "通常几秒即可完成" : "正在做最后核对，请稍候"}</small>
+                      </div>
+                      {busySeconds >= 10 && (
+                        <button type="button" onClick={cancelPendingRequest}>停止等待</button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1047,21 +1090,35 @@ export default function Home() {
       {consented === false && (
         <div className="modal-backdrop consent-backdrop">
           <section className="consent-modal" role="dialog" aria-modal="true" aria-labelledby="consent-title">
-            <div className="consent-symbol" aria-hidden="true">此</div>
-            <p className="kicker">开始之前</p>
-            <h2 id="consent-title">这是心理自助工具，不是真人咨询师</h2>
-            <p>
-              当前版本仅用于 18 岁以上成人的内部测试，提供 DBT 知识学习和技能练习；不进行诊断、处方或个体化治疗决策。
-            </p>
-            <ul>
-              <li>AI 回答可能出错，请通过来源页核验。</li>
-              <li>练习记录仅保存在这台设备。</li>
-              <li>启用第三方模型时，对话内容会发送给模型供应商处理；请勿输入姓名、电话等身份信息。</li>
-              <li>如果有立即伤害自己或他人的危险，请联系身边的人并拨打 120 或 110。</li>
-            </ul>
-            <button onClick={acceptBoundary}>我已了解，进入 Demo</button>
-            <small>继续即表示你已年满 18 岁，并理解以上边界。</small>
+            <div className="consent-scroll">
+              <div className="consent-symbol" aria-hidden="true">此</div>
+              <p className="kicker">开始之前</p>
+              <h2 id="consent-title">这是心理自助工具，不是真人咨询师</h2>
+              <p>
+                当前版本仅用于 18 岁以上成人的内部测试，提供 DBT 知识学习和技能练习；不进行诊断、处方或个体化治疗决策。
+              </p>
+              <ul>
+                <li>AI 回答可能出错，请通过来源页核验。</li>
+                <li>练习记录仅保存在这台设备。</li>
+                <li>启用第三方模型时，对话内容会发送给模型供应商处理；请勿输入姓名、电话等身份信息。</li>
+                <li>如果有立即伤害自己或他人的危险，请联系身边的人并拨打 120 或 110。</li>
+              </ul>
+            </div>
+            <div className="consent-actions">
+              <button onClick={acceptBoundary}>我已了解，进入 Demo</button>
+              <small>继续即表示你已年满 18 岁，并理解以上边界。</small>
+            </div>
           </section>
+        </div>
+      )}
+
+      {consented === null && (
+        <div className="boot-backdrop" role="status" aria-live="polite">
+          <div className="boot-card">
+            <div className="consent-symbol" aria-hidden="true">此</div>
+            <strong>正在准备可交互页面</strong>
+            <span>加载完成后即可开始，不需要重复点击。</span>
+          </div>
         </div>
       )}
     </main>
