@@ -11,7 +11,7 @@ async function getWorker() {
   return workerPromise;
 }
 
-async function request(path = "/", init = {}) {
+async function request(path = "/", init = {}, bindings = {}) {
   const worker = await getWorker();
 
   return worker.fetch(
@@ -23,6 +23,7 @@ async function request(path = "/", init = {}) {
       ASSETS: {
         fetch: async () => new Response("Not found", { status: 404 }),
       },
+      ...bindings,
     },
     {
       waitUntil() {},
@@ -30,6 +31,19 @@ async function request(path = "/", init = {}) {
     },
   );
 }
+
+test("three-day public demo expires at the server boundary", async () => {
+  const bindings = { DEMO_EXPIRES_AT: "2000-01-01T00:00:00.000Z" };
+  const [pageResponse, apiResponse] = await Promise.all([
+    request("/", {}, bindings),
+    request("/api/knowledge/status", { headers: { accept: "application/json" } }, bindings),
+  ]);
+
+  assert.equal(pageResponse.status, 410);
+  assert.match(await pageResponse.text(), /本次体验已经结束/);
+  assert.equal(apiResponse.status, 410);
+  assert.deepEqual(await apiResponse.json(), { error: "本次内部 Demo 体验已结束。" });
+});
 
 test("server-renders the DBT demo shell", async () => {
   const response = await request();
