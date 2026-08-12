@@ -47,47 +47,47 @@ type PracticeRecord = {
 const practiceSteps = [
   {
     id: "emotion",
-    eyebrow: "步骤 1 · 命名情绪",
-    title: "你想调整哪一种情绪？",
-    helper: "写下一个最主要的情绪，并估计练习前的强度。",
+    eyebrow: "第 1 步 · 先说说感受",
+    title: "现在最明显的情绪是什么？",
+    helper: "先写一个最贴近的词就好，比如焦虑、生气或难过。",
   },
   {
     id: "event",
-    eyebrow: "步骤 2 · 描述事件",
-    title: "摄像机能记录到什么？",
-    helper: "只写可观察的事实：谁在何时做了什么，不加入动机推测。",
+    eyebrow: "第 2 步 · 说清发生的事",
+    title: "刚才具体发生了什么？",
+    helper: "先写你亲眼看到或听到的内容：谁说了什么、做了什么。暂时别猜对方为什么这样做。",
   },
   {
     id: "interpretation",
-    eyebrow: "步骤 3 · 找出解释",
-    title: "你对这件事作了什么解释？",
-    helper: "写下脑中出现的想法、假设和预测。它们现在还不是事实。",
+    eyebrow: "第 3 步 · 看看脑中的想法",
+    title: "当时，你脑中第一个冒出的想法是什么？",
+    helper: "把担心、猜测或预想写下来。它们很真实，但还需要和事实分开看。",
   },
   {
     id: "facts",
-    eyebrow: "步骤 4 · 核对证据",
-    title: "哪些事实支持或不支持这些解释？",
-    helper: "同时列出两边的证据，并考虑其他可能的解释。",
+    eyebrow: "第 4 步 · 回头看看事实",
+    title: "哪些事实对得上？哪些对不上？",
+    helper: "两边都写一点。如果暂时想不到，也可以先写“还不确定”。",
   },
   {
     id: "fit",
-    eyebrow: "步骤 5 · 评估匹配度",
-    title: "这份情绪和当前事实有多匹配？",
-    helper: "0 表示几乎不匹配，5 表示非常匹配。暂时不确定也可以。",
+    eyebrow: "第 5 步 · 再看情绪有多贴合",
+    title: "现在再看，这份情绪和事实有多对得上？",
+    helper: "0 表示几乎对不上，5 表示很对得上。拿不准时，选最接近的数字就好。",
   },
   {
     id: "nextStep",
-    eyebrow: "步骤 6 · 选择下一步",
-    title: "现在最稳妥的下一步是什么？",
-    helper: "先选一个负担较低、可以实际完成的动作。",
+    eyebrow: "第 6 步 · 选一个小动作",
+    title: "接下来，你愿意先做哪一小步？",
+    helper: "不用一次解决全部问题，只选一件现在做得到的事。",
   },
 ] as const;
 
 const quickPrompts = [
-  "我脑子很乱，不知道从哪里开始",
-  "什么是核对事实？",
-  "痛苦耐受有哪些技能？",
-  "DEAR MAN 是什么？",
+  "我脑子很乱，想先缓一缓",
+  "一件事反复在脑子里转，我想理清楚",
+  "我不知道该怎么和对方开口",
+  "情绪很强时，有什么能马上练的方法？",
 ];
 
 const skillModules = [
@@ -123,9 +123,9 @@ const initialMessages: Message[] = [
     role: "assistant",
     payload: {
       kind: "answer",
-      title: "你可以从一句日常表达开始",
+      title: "先说一句就好",
       message:
-        "不必先判断问题属于哪种技能。可以先说说今天最困扰你的事；我们会先理解你想处理什么，确认方向后再从书中寻找带页码的依据。",
+        "不用先想清楚该用什么方法。你可以说说今天发生了什么，或者现在最难受的是什么；等方向清楚后，我再从书里找对应的方法和页码。",
       nextAction: "none",
       mode: "bridge",
     },
@@ -148,6 +148,16 @@ function pageLabel(citation: SourceCitation) {
 
 function createId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function looksLikePracticeEvent(value: string) {
+  const text = value.trim();
+  if (text.length < 6 || /[？?]$/u.test(text)) return false;
+  if (/^(你好|您好|嗨|哈喽|谢谢|好的|好吧|在吗|我现在情绪很强|我在反复想一件事|有件事我一直反复想|我想先说说(刚才)?发生)/u.test(text)) return false;
+  if (/什么是|怎么用|如何使用|有哪些|是什么技能|DBT\s*技能/iu.test(text)) return false;
+  const hasPersonOrMoment = /(我|他|她|对方|朋友|同事|领导|家人|伴侣|老师|孩子|刚才|今天|昨天|最近)/u.test(text);
+  const hasObservableAction = /(说了?|做了?|发了?|回复|没回|没有回|收到|看到|听到|告诉|拒绝|批评|争吵|吵架|迟到|取消|离开|发生|联系|答应|失约|挂断|摔|打|骂)/u.test(text);
+  return hasPersonOrMoment && hasObservableAction;
 }
 
 export default function Home() {
@@ -230,10 +240,10 @@ export default function Home() {
     .find((message) => message.role === "assistant")?.payload;
 
   const busyLabel = busySeconds < 3
-    ? "正在理解你的情境"
+    ? "先看看你在说什么"
     : busySeconds < 8
-      ? "正在检索书内依据"
-      : "正在核对回答与页码";
+      ? "正在从书里找相关内容"
+      : "正在核对内容和页码";
 
   function acceptBoundary() {
     localStorage.setItem("dbt-demo-consent-v1", "accepted");
@@ -299,12 +309,12 @@ export default function Home() {
           id: createId(),
           role: "assistant",
           payload: response.ok
-            ? payload
-            : {
-                kind: "refusal",
-                title: "暂时无法处理",
-                message: payload.error ?? "请稍后再试。",
-              },
+              ? payload
+              : {
+                  kind: "refusal",
+                  title: "刚才没有成功",
+                  message: payload.error ?? "可以再试一次，或者先去看看技能和练习。",
+                },
         },
       ]);
     } catch (error) {
@@ -316,10 +326,10 @@ export default function Home() {
           role: "assistant",
           payload: {
             kind: "refusal",
-            title: wasAborted ? "本次等待已停止" : "连接暂时不可用",
+            title: wasAborted ? "已经停止等待" : "刚才没有收到回复",
             message: wasAborted
-              ? "没有提交新的内容。你可以稍后重试，或先从下方技能和练习进入。"
-              : "服务暂时没有响应。你可以重试，或先从下方技能和练习进入。",
+              ? "这次没有继续提交。你可以换个说法再试，也可以先去看看技能和练习。"
+              : "可能是网络有点慢。你可以再试一次，也可以先去看看技能和练习。",
           },
         },
       ]);
@@ -344,7 +354,7 @@ export default function Home() {
   function startPracticeFromConversation(messageIndex: number) {
     const context = [...messages.slice(0, messageIndex)]
       .reverse()
-      .find((message) => message.role === "user")?.text ?? "";
+      .find((message) => message.role === "user" && looksLikePracticeEvent(message.text ?? ""))?.text ?? "";
     setPracticeContext(context);
     setTab("practice");
   }
@@ -385,7 +395,7 @@ export default function Home() {
   }
 
   function deleteRecord(id: string) {
-    if (!window.confirm("确定删除这条练习记录吗？删除后无法恢复。")) return;
+    if (!window.confirm("要删掉这条记录吗？删掉后就找不回来了。")) return;
     const nextRecords = records.filter((record) => record.id !== id);
     setRecords(nextRecords);
     localStorage.setItem("dbt-practice-records-v1", JSON.stringify(nextRecords));
@@ -396,16 +406,16 @@ export default function Home() {
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
 
-      <section className="product-frame" aria-label="DBT 心理自助技能助手">
+      <section className="product-frame" aria-label="DBT 自助练习助手">
         <header className="topbar">
           <div className="brand-mark" aria-hidden="true">
             此
           </div>
           <div className="brand-copy">
             <strong>此刻</strong>
-            <span>DBT 心理自助技能助手</span>
+            <span>DBT 自助练习助手</span>
           </div>
-          <div className="demo-badge">内部 Demo</div>
+          <div className="demo-badge">体验版</div>
         </header>
 
         <div className={`workspace ${tab === "chat" ? "with-evidence" : "full-width"}`}>
@@ -421,20 +431,20 @@ export default function Home() {
                 <div>
                   <p className="kicker">
                     {tab === "chat"
-                      ? "对话 · 先理解，再建议"
+                      ? "先说说，再一起找办法"
                       : tab === "skills"
-                        ? "DBT 技能地图"
+                        ? "看看有哪些 DBT 方法"
                         : tab === "practice"
-                          ? "结构化练习 · 约 5 分钟"
-                          : "本地记录 · 不上传"}
+                          ? "跟着做一遍 · 大约 5 分钟"
+                          : "只存在这台设备上"}
                   </p>
                   <h1>
                     {tab === "chat"
-                      ? "描述困扰，我们一起选一个技能"
+                      ? "把困扰说出来，我们一起理一理"
                       : tab === "skills"
-                        ? "按需要找到 DBT 技能"
+                        ? "你现在更需要哪一种帮助？"
                         : tab === "practice"
-                          ? "一步一步核对事实"
+                          ? "把这件事一步步理清楚"
                           : "你的练习记录"}
                   </h1>
                 </div>
@@ -444,7 +454,7 @@ export default function Home() {
                   <ShieldAlert size={14} aria-hidden="true" />
                   安全求助
                 </button>
-                <button className="quiet-button" onClick={() => setConsented(false)}>使用边界</button>
+                <button className="quiet-button" onClick={() => setConsented(false)}>使用说明</button>
               </div>
             </div>
 
@@ -462,9 +472,9 @@ export default function Home() {
                   />
                   <div className="home-hero-wash" aria-hidden="true" />
                   <div className="home-hero-content">
-                    <div className="support-pill"><Sparkles size={14} aria-hidden="true" /> DBT 自助引导</div>
+                    <div className="support-pill"><Sparkles size={14} aria-hidden="true" /> 有书本依据的自助练习</div>
                     <h1>此刻，最困扰你的是什么？</h1>
-                    <p>不必先判断对错，也不必知道技能名称。写下一件具体的事，我们会先理解情境，再寻找有页码依据的练习方向。</p>
+                    <p>不用先判断谁对谁错，也不用知道专业名词。写下刚刚发生的事，或者你现在最难受的地方，我们从这里开始。</p>
                     <form className="home-composer" onSubmit={startFromHome}>
                       <label htmlFor="home-input">用一两句话开始</label>
                       <div>
@@ -472,12 +482,12 @@ export default function Home() {
                           id="home-input"
                           value={input}
                           onChange={(event) => setInput(event.target.value)}
-                          placeholder="例如：朋友一直没回消息，我越来越觉得自己被讨厌了……"
+                          placeholder="比如：朋友一直没回消息，我开始担心是不是自己做错了……"
                           rows={2}
                           maxLength={1000}
                         />
                         <button type="submit" disabled={!input.trim() || busy}>
-                          开始梳理 <ArrowRight size={17} aria-hidden="true" />
+                          和我说说 <ArrowRight size={17} aria-hidden="true" />
                         </button>
                       </div>
                       <small>你的练习记录默认只保存在当前设备。</small>
@@ -488,53 +498,53 @@ export default function Home() {
                 <section className="home-routes" aria-labelledby="home-routes-title">
                   <div className="section-heading">
                     <div>
-                      <span>也可以直接选择</span>
-                      <h2 id="home-routes-title">按现在的需要进入</h2>
+                      <span>不想打字？也可以直接选</span>
+                      <h2 id="home-routes-title">你现在更需要哪一种帮助？</h2>
                     </div>
-                    <p>每条路径都可以随时回到对话，不要求一次做完。</p>
+                    <p>不用一次想清楚，选一个最接近的就好，之后随时可以换。</p>
                   </div>
                   <div className="home-grid">
                     <button className="need-card urgent" onClick={() => openChat("我现在脑子很乱，情绪很强，想先稳定一点") }>
                       <span className="need-icon"><Wind size={22} aria-hidden="true" /></span>
-                      <strong>情绪太强，先稳定</strong>
-                      <small>用低负担步骤度过当下，不急着分析全部问题。</small>
-                      <b>现在开始 <ArrowRight size={14} aria-hidden="true" /></b>
+                      <strong>情绪太强，先缓一缓</strong>
+                      <small>先做几个简单步骤，别让情绪推着你马上行动。</small>
+                      <b>我想先缓一缓 <ArrowRight size={14} aria-hidden="true" /></b>
                     </button>
                     <button className="need-card" onClick={() => setTab("skills")}>
                       <span className="need-icon"><BookOpen size={22} aria-hidden="true" /></span>
-                      <strong>按需要找技能</strong>
-                      <small>从正念、痛苦耐受、情绪调节和人际效能中选择。</small>
-                      <b>浏览技能 <ArrowRight size={14} aria-hidden="true" /></b>
+                      <strong>找一个适合现在的方法</strong>
+                      <small>不知道该怎么做时，可以从四类 DBT 技能里慢慢找。</small>
+                      <b>看看有哪些方法 <ArrowRight size={14} aria-hidden="true" /></b>
                     </button>
                     <button className="need-card" onClick={() => setTab(records.length ? "records" : "practice")}>
                       <span className="need-icon"><ListChecks size={22} aria-hidden="true" /></span>
-                      <strong>{records.length ? "继续查看练习记录" : "做一次核对事实练习"}</strong>
-                      <small>{records.length ? `当前设备已有 ${records.length} 条记录。` : "六个小步骤，区分事件、解释、证据和下一步。"}</small>
-                      <b>{records.length ? "查看记录" : "进入练习"} <ArrowRight size={14} aria-hidden="true" /></b>
+                      <strong>{records.length ? "看看之前理清的事情" : "把一件事慢慢理清楚"}</strong>
+                      <small>{records.length ? `这台设备上已经有 ${records.length} 条记录。` : "用六个小步骤，分开看发生的事、脑中的想法和能确认的事实。"}</small>
+                      <b>{records.length ? "查看记录" : "开始理一理"} <ArrowRight size={14} aria-hidden="true" /></b>
                     </button>
                   </div>
                 </section>
 
-                <section className="home-proof" aria-label="知识库透明度">
-                  <div className="proof-title"><BookOpen size={18} aria-hidden="true" /><span>知识库透明度</span></div>
-                  <div><strong>{knowledgeManifest.coverage.indexedPageCount}</strong><span>两册 PDF 页</span></div>
-                  <div><strong>{knowledgeManifest.coverage.chunkCount}</strong><span>可追溯原文片段</span></div>
-                  <div><strong>{Math.round(knowledgeManifest.coverage.characterCoverage * 100)}%</strong><span>非空原文覆盖</span></div>
+                <section className="home-proof" aria-label="书本内容收录情况">
+                  <div className="proof-title"><BookOpen size={18} aria-hidden="true" /><span>书本内容收录情况</span></div>
+                  <div><strong>{knowledgeManifest.coverage.indexedPageCount}</strong><span>两册书的 PDF 页数</span></div>
+                  <div><strong>{knowledgeManifest.coverage.chunkCount}</strong><span>可以查到出处的原文段落</span></div>
+                  <div><strong>{Math.round(knowledgeManifest.coverage.characterCoverage * 100)}%</strong><span>有文字的页面已全部收录</span></div>
                 </section>
-                <p className="home-boundary">这是 AI 心理自助工具，不提供诊断、处方或个体化治疗决策。</p>
+                <p className="home-boundary">这是 AI 自助练习，不会替你诊断，也不能告诉你该怎么用药。</p>
               </div>
             )}
 
             {tab === "chat" && (
               <div className="chat-view">
                 <div className="flow-strip" aria-label="本次使用路径">
-                  <span className="active"><b>1</b> 描述情境</span>
+                  <span className="active"><b>1</b> 说说发生了什么</span>
                   <ArrowRight size={13} aria-hidden="true" />
-                  <span className={messages.length > 1 ? "active" : ""}><b>2</b> 理解与选技能</span>
+                  <span className={messages.length > 1 ? "active" : ""}><b>2</b> 找到合适的方法</span>
                   <ArrowRight size={13} aria-hidden="true" />
-                  <button onClick={() => setTab("practice")}><b>3</b> 带入练习</button>
+                  <button onClick={() => { setPracticeContext(""); setTab("practice"); }}><b>3</b> 跟着做一遍</button>
                 </div>
-                <p className="quick-label">不知道怎么说？可以从这些句子开始</p>
+                <p className="quick-label">不知道从哪里说起？可以先点一句</p>
                 <div className="quick-prompts" aria-label="示例问题">
                   {quickPrompts.map((prompt) => (
                     <button key={prompt} onClick={() => sendMessage(undefined, prompt)}>
@@ -566,12 +576,12 @@ export default function Home() {
                         <div className="assistant-label">
                           <span aria-hidden="true">◎</span>
                           {message.payload?.kind === "crisis"
-                            ? "安全优先"
+                            ? "现在先保证安全"
                             : message.payload?.kind === "refusal"
-                              ? "边界提示"
+                              ? "这类问题需要专业人员"
                               : message.payload?.mode === "bridge"
-                                ? "先理解你的需要"
-                                : "基于书内证据"}
+                                ? "先听你说"
+                                : "参考书中内容"}
                         </div>
                         <h2>{message.payload?.title}</h2>
                         <p>{message.payload?.message}</p>
@@ -609,7 +619,7 @@ export default function Home() {
                         )}
                         {message.payload?.nextAction === "practice" && (
                           <button className="primary-inline" onClick={() => startPracticeFromConversation(index)}>
-                            开始六步练习 <ArrowRight size={15} aria-hidden="true" />
+                            跟着做一遍 <ArrowRight size={15} aria-hidden="true" />
                           </button>
                         )}
                       </article>
@@ -624,7 +634,7 @@ export default function Home() {
                       </div>
                       <div className="thinking-copy">
                         <strong>{busyLabel}</strong>
-                        <small>{busySeconds < 8 ? "通常几秒即可完成" : "正在做最后核对，请稍候"}</small>
+                        <small>{busySeconds < 8 ? "通常几秒就好" : "还在认真核对，再等一小会儿"}</small>
                       </div>
                       {busySeconds >= 10 && (
                         <button type="button" onClick={cancelPendingRequest}>停止等待</button>
@@ -634,14 +644,14 @@ export default function Home() {
                 </div>
 
                 <form className="composer" onSubmit={(event) => sendMessage(event)}>
-                  <label htmlFor="chat-input">描述一个问题或具体情境</label>
+                  <label htmlFor="chat-input">把刚才的事告诉我</label>
                   <div>
                     <textarea
                       id="chat-input"
                       ref={inputRef}
                       value={input}
                       onChange={(event) => setInput(event.target.value)}
-                      placeholder="例如：领导没有回复消息，我开始担心自己做错了……"
+                      placeholder="比如：领导一直没回消息，我开始担心是不是自己做错了……"
                       rows={2}
                       maxLength={1000}
                     />
@@ -649,14 +659,14 @@ export default function Home() {
                       <Send size={19} aria-hidden="true" />
                     </button>
                   </div>
-                  <p>AI 可能出错；重要决定请咨询专业人员。</p>
+                  <p>回答可能不准确；涉及安全、诊断或用药，请找专业人员。</p>
                 </form>
               </div>
             )}
 
             {tab === "skills" && (
               <div className="skills-view">
-                <p className="skills-intro">技能页负责理解和导航；所有专业说明最终仍回到原书片段与页码。</p>
+                <p className="skills-intro">不知道技能名也没关系。先选一个最接近的需要，每个方法都能回到书中的原文和页码。</p>
                 <div className="skill-module-grid">
                   {skillModules.map((module, index) => (
                     <article key={module.id} className="skill-module-card">
@@ -674,8 +684,8 @@ export default function Home() {
                   ))}
                 </div>
                 <div className="wiki-note">
-                  <strong>Evidence Wiki 当前状态</strong>
-                  <p>{knowledgeManifest.wiki.nodeCount} 个技能导航节点均已连接原书证据；正式发布前仍需 DBT 专业人员逐节点审核。</p>
+                  <strong>这些内容从哪里来？</strong>
+                  <p>目前整理了 {knowledgeManifest.wiki.nodeCount} 个技能主题，每个都能回到书里的相应页码。正式发布前，还需要 DBT 专业人员逐项复核。</p>
                 </div>
               </div>
             )}
@@ -684,17 +694,9 @@ export default function Home() {
               <div className="practice-view">
                 {practiceContext && (
                   <div className="practice-context">
-                    <span>来自刚才对话的原话</span>
+                    <span>这次想理清的是</span>
                     <p>{practiceContext}</p>
-                    <button
-                      onClick={() => setAnswers((current) => ({
-                        ...current,
-                        event: current.event || practiceContext,
-                      }))}
-                    >
-                      作为待整理情境带入
-                    </button>
-                    <small>这里只复制你的原话，不会替你判断哪些是事实或解释。</small>
+                    <small>先保留你的原话，下面再把“发生的事”和“脑中的想法”慢慢分开。</small>
                   </div>
                 )}
                 <div className="progress-block">
@@ -715,7 +717,7 @@ export default function Home() {
                   {currentStep.id === "emotion" && (
                     <div className="field-stack">
                       <label>
-                        情绪名称
+                        我现在感到
                         <input
                           value={answers.emotion}
                           onChange={(event) =>
@@ -726,7 +728,7 @@ export default function Home() {
                       </label>
                       <label className="range-field">
                         <span>
-                          练习前强度 <strong>{answers.intensityBefore}</strong>/100
+                          这种情绪现在有多强烈 <strong>{answers.intensityBefore}</strong>/100
                         </span>
                         <input
                           type="range"
@@ -746,17 +748,21 @@ export default function Home() {
 
                   {["event", "interpretation", "facts"].includes(currentStep.id) && (
                     <label className="large-field">
-                      <span>你的记录</span>
+                      <span>{currentStep.id === "event"
+                        ? "事情经过"
+                        : currentStep.id === "interpretation"
+                          ? "我当时的想法"
+                          : "我能确认的事实"}</span>
                       <textarea
                         value={currentValue}
                         onChange={(event) => updateAnswer(event.target.value)}
                         rows={7}
                         placeholder={
                           currentStep.id === "event"
-                            ? "只记录可以被观察到的内容……"
+                            ? "比如：我下午三点发了消息，到晚上八点还没有收到回复……"
                             : currentStep.id === "interpretation"
-                              ? "我脑中出现的解释是……"
-                              : "支持这个解释的事实是……\n不支持它的事实是……"
+                              ? "比如：我当时觉得，他是不是在生我的气……"
+                              : "对得上的事实是……\n对不上的事实是……\n我还不能确定的是……"
                         }
                       />
                     </label>
@@ -775,8 +781,8 @@ export default function Home() {
                         </button>
                       ))}
                       <div>
-                        <span>几乎不匹配</span>
-                        <span>非常匹配</span>
+                        <span>几乎对不上</span>
+                        <span>很对得上</span>
                       </div>
                     </div>
                   )}
@@ -784,10 +790,10 @@ export default function Home() {
                   {currentStep.id === "nextStep" && (
                     <div className="choice-grid">
                       {[
-                        "继续观察，不急着行动",
-                        "考虑采用相反行为",
-                        "处理一个现实问题",
-                        "向可信任的人求证",
+                        "先等一等，不急着按冲动行动",
+                        "做一个和冲动相反的小动作",
+                        "处理眼前能改变的那一部分",
+                        "问问信任的人，听听他的看法",
                       ].map((choice) => (
                         <button
                           key={choice}
@@ -801,7 +807,7 @@ export default function Home() {
                       ))}
                       <label className="range-field after-range">
                         <span>
-                          现在的情绪强度 <strong>{answers.intensityAfter}</strong>/100
+                          做到这里，情绪还有多强烈 <strong>{answers.intensityAfter}</strong>/100
                         </span>
                         <input
                           type="range"
@@ -851,15 +857,15 @@ export default function Home() {
                   className="evidence-note"
                   onClick={() => setSource(sourceCitations.worksheetOne)}
                 >
-                  <span>依据</span>
-                  结构来自情绪调节练习单 5 · 查看原页
+                  <span>出处</span>
+                  参考《情绪调节练习单 5》，已为手机填写做了简化 · 对照原页
                   <b aria-hidden="true">↗</b>
                 </button>
 
                 {saved && (
                   <div className="saved-panel">
-                    <strong>练习已经保存在这台设备</strong>
-                    <p>记录不会上传，也不会用于模型训练。</p>
+                    <strong>已经保存在这台设备上</strong>
+                    <p>这条记录不会上传，也不会拿去训练模型。</p>
                     <div>
                       <button onClick={() => setTab("records")}>查看记录</button>
                       <button onClick={resetPractice}>再做一次</button>
@@ -874,16 +880,16 @@ export default function Home() {
                 <div className="local-only-note">
                   <span aria-hidden="true">⌁</span>
                   <div>
-                    <strong>仅保存在当前设备</strong>
-                    <p>当前 Demo 不上传练习记录，也不用于模型训练。</p>
+                    <strong>这些记录只留在这台设备上</strong>
+                    <p>不会上传，也不会拿去训练模型。</p>
                   </div>
                 </div>
                 {records.length === 0 ? (
                   <div className="empty-state">
                     <div aria-hidden="true">○</div>
-                    <h2>还没有练习记录</h2>
-                    <p>完成一次“核对事实”练习后，摘要会出现在这里。</p>
-                    <button onClick={() => setTab("practice")}>开始练习</button>
+                    <h2>这里还没有记录</h2>
+                    <p>跟着完成一次练习后，你可以回来看看自己当时是怎么想的。</p>
+                    <button onClick={() => setTab("practice")}>做一次练习</button>
                   </div>
                 ) : (
                   <div className="record-list">
@@ -921,11 +927,11 @@ export default function Home() {
                               <dd>{record.interpretation || "未填写"}</dd>
                             </div>
                             <div>
-                              <dt>核对结果</dt>
+                              <dt>我能确认的事实</dt>
                               <dd>{record.facts || "未填写"}</dd>
                             </div>
                             <div>
-                              <dt>与事实匹配度</dt>
+                              <dt>情绪和事实有多对得上</dt>
                               <dd>{record.fit || "未评估"} / 5</dd>
                             </div>
                           </dl>
@@ -977,37 +983,37 @@ export default function Home() {
 
           {tab === "chat" && <aside className="evidence-panel">
             <div className="evidence-heading">
-              <p className="kicker">CURRENT EVIDENCE</p>
-              <h2>{latestAssistant?.mode === "bridge" ? "当前会话" : "当前证据板"}</h2>
+              <p className="kicker">这次回答参考了什么</p>
+              <h2>{latestAssistant?.mode === "bridge" ? "这次还没用到书里的方法" : "这次回答的出处"}</h2>
               <p>{latestAssistant?.mode === "bridge"
-                ? "本轮只承接你已经表达的感受并确认目标，尚未提出 DBT 专业结论。"
-                : "本轮回答只使用已摄取的书内页面；OCR 摘录需按原页复核。"}</p>
+                ? "现在只是先听懂你想处理什么。等方向清楚后，再从书里找对应的方法。"
+                : "下面列的是这次回答参考的书本位置。文字识别可能有误，点开可以对照原页。"}</p>
             </div>
             <div className="status-card">
               <div>
-                <span>工作流</span>
+                <span>这次是怎么回答的</span>
                 <strong>
                   {latestAssistant?.mode === "generated"
-                    ? "RAG 受控生成"
+                    ? "结合书本内容回答"
                     : latestAssistant?.mode === "bridge"
-                      ? "会话承接"
+                      ? "先听你把话说清楚"
                     : latestAssistant?.mode === "guided"
-                      ? "RAG 情境引导"
+                      ? "结合你说的事来说明"
                     : latestAssistant?.generation?.attempted
-                      ? "RAG 安全降级"
+                      ? "改用书里的固定说明"
                     : latestAssistant?.mode === "retrieval"
-                      ? "RAG 检索模式"
-                      : "人工核验模板"}
+                      ? "从书里查找相关内容"
+                      : "使用人工整理的说明"}
                 </strong>
               </div>
-              <i>运行中</i>
+              <i>已完成</i>
             </div>
             <div className="source-list">
               {activeSources.length ? (
                 activeSources.map((citation) => (
                   <button key={citation.id} onClick={() => setSource(citation)}>
                     <span className="page-token">
-                      {citation.printedPage ? `P.${citation.printedPage}` : `PDF.${citation.pdfPage}`}
+                      {citation.printedPage ? `书 ${citation.printedPage}` : `PDF ${citation.pdfPage}`}
                     </span>
                     <span>
                       <strong>{citation.section}</strong>
@@ -1018,24 +1024,24 @@ export default function Home() {
                 ))
               ) : (
                 <p className="no-sources">{latestAssistant?.mode === "bridge"
-                  ? "确认你想处理的方向后，再检索书内方法并显示引用。"
-                  : "提出一个问题后，证据会出现在这里。"}</p>
+                  ? "等你选好想处理的方向，再从书里找方法和页码。"
+                  : "问一个问题后，参考的书页会出现在这里。"}</p>
               )}
             </div>
             <div className="boundary-card">
-              <span>本轮边界</span>
+              <span>这里能做什么</span>
               <ul>
-                <li>全书检索；核对事实可结构化练习</li>
-                <li>无诊断和用药建议</li>
-                <li>技能结论需引用；情境不清时先澄清</li>
+                <li>可以查两册书，“核对事实”还能跟着练一遍</li>
+                <li>不做诊断，也不提供用药建议</li>
+                <li>拿不准时会先问清楚，不会硬套一个方法</li>
               </ul>
             </div>
             <p className="evidence-footnote">
               {latestAssistant?.retrieval
-                ? `已摄取 ${latestAssistant.retrieval.corpusPages} 页 · 本轮召回 ${latestAssistant.retrieval.resultCount} 页`
+                ? `这次查看了 ${latestAssistant.retrieval.resultCount} 处相关内容 · 两册书共收录 ${latestAssistant.retrieval.corpusPages} 页`
                 : latestAssistant?.mode === "bridge"
-                  ? "承接语不作为专业结论；技能说明仍须引用"
-                : `已摄取 ${knowledgeManifest.coverage.indexedPageCount} 页 · 非空原文覆盖 ${Math.round(knowledgeManifest.coverage.characterCoverage * 100)}%`}
+                  ? "现在先听你说；讲到具体方法时会标出书本页码"
+                  : `两册书共 ${knowledgeManifest.coverage.indexedPageCount} 页 · 有文字的页面已全部收录`}
             </p>
           </aside>}
         </div>
@@ -1052,7 +1058,7 @@ export default function Home() {
           >
             <div className="modal-head">
               <div>
-                <p>来源核验</p>
+                <p>这段内容来自哪里</p>
                 <h2 id="source-title">{source.section}</h2>
               </div>
               <button onClick={() => setSource(null)} aria-label="关闭来源页面">
@@ -1060,19 +1066,16 @@ export default function Home() {
               </button>
             </div>
             <div className="source-meta">
-              {source.printedPage && <span>印刷第 {source.printedPage} 页</span>}
+              {source.printedPage && <span>书中第 {source.printedPage} 页</span>}
                 <span>PDF 第 {source.pdfPage} 页</span>
-              {typeof source.charStart === "number" && (
-                <span>原文字符 {source.charStart}-{source.charEnd}</span>
-              )}
               {typeof source.ocrScore === "number" && (
-                <span>OCR 置信度 {Math.round(source.ocrScore * 100)}%</span>
+                <span>文字识别准确度 {Math.round(source.ocrScore * 100)}%</span>
               )}
             </div>
             {source.image ? (
               <>
                 <div className="source-summary">
-                  <strong>人工核验摘要</strong>
+                  <strong>这页主要讲了什么</strong>
                   <p>{source.evidence}</p>
                 </div>
                 <div className="scan-frame">
@@ -1087,9 +1090,9 @@ export default function Home() {
               </>
             ) : (
               <div className="ocr-evidence">
-                <span>OCR 证据摘录</span>
+                <span>书页文字摘录</span>
                 <p>{source.evidence}</p>
-                <small>原始扫描页未在网页中公开；请在受控内容库中按 PDF 页码复核。</small>
+                <small>这张扫描页暂未公开，可以按上面的 PDF 页码回到原书核对。</small>
               </div>
             )}
             <p className="source-book">{source.book}</p>
@@ -1102,21 +1105,21 @@ export default function Home() {
           <section className="consent-modal" role="dialog" aria-modal="true" aria-labelledby="consent-title">
             <div className="consent-scroll">
               <div className="consent-symbol" aria-hidden="true">此</div>
-              <p className="kicker">开始之前</p>
-              <h2 id="consent-title">这是心理自助工具，不是真人咨询师</h2>
+              <p className="kicker">先说明一下</p>
+              <h2 id="consent-title">这是自助练习，不是真人咨询</h2>
               <p>
-                当前版本仅用于 18 岁以上成人的内部测试，提供 DBT 知识学习和技能练习；不进行诊断、处方或个体化治疗决策。
+                这个体验版只面向 18 岁以上成人，可以用来了解和练习 DBT 技能，但不能替你做诊断、开药或制定治疗方案。
               </p>
               <ul>
-                <li>AI 回答可能出错，请通过来源页核验。</li>
-                <li>练习记录仅保存在这台设备。</li>
-                <li>启用第三方模型时，对话内容会发送给模型供应商处理；请勿输入姓名、电话等身份信息。</li>
-                <li>如果有立即伤害自己或他人的危险，请联系身边的人并拨打 120 或 110。</li>
+                <li>回答可能不准确，重要内容请点开书本来源核对。</li>
+                <li>练习记录只保存在这台设备上。</li>
+                <li>对话会交给第三方模型处理，请不要输入姓名、电话等身份信息。</li>
+                <li>如果你可能马上伤害自己或他人，请立即联系身边的人，并拨打 120 或 110。</li>
               </ul>
             </div>
             <div className="consent-actions">
-              <button onClick={acceptBoundary}>我已了解，进入 Demo</button>
-              <small>继续即表示你已年满 18 岁，并理解以上边界。</small>
+              <button onClick={acceptBoundary}>我明白了，开始使用</button>
+              <small>点击继续，表示你已年满 18 岁并理解以上说明。</small>
             </div>
           </section>
         </div>
@@ -1126,8 +1129,8 @@ export default function Home() {
         <div className="boot-backdrop" role="status" aria-live="polite">
           <div className="boot-card">
             <div className="consent-symbol" aria-hidden="true">此</div>
-            <strong>正在准备可交互页面</strong>
-            <span>加载完成后即可开始，不需要重复点击。</span>
+            <strong>正在打开页面</strong>
+            <span>稍等一下，加载好后会自动进入。</span>
           </div>
         </div>
       )}

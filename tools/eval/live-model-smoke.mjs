@@ -26,14 +26,14 @@ for (const message of cases) {
   }
   const text = `${payload.title} ${payload.message} ${(payload.steps ?? []).join(" ")}`;
   if (/DEAR MAN/u.test(message)) {
-    for (const term of ["描述", "表达", "明确", "强化", "正念", "自信", "协商"]) {
-      assert.match(text, new RegExp(term, "u"), `${message}: missing ${term}`);
+    for (const pattern of [/描述|说清/u, /表达/u, /明确/u, /强化|说明好处/u, /正念|重点/u, /自信/u, /协商/u]) {
+      assert.match(text, pattern, `${message}: missing ${pattern}`);
     }
     assert.doesNotMatch(text, /六个|6个/u, message);
   }
   if (/痛苦耐受/u.test(message)) {
-    assert.match(text, /危机生存/u, message);
-    assert.match(text, /接纳现实/u, message);
+    assert.match(text, /危机生存|情绪最强/u, message);
+    assert.match(text, /接纳现实|改变不了的事实/u, message);
   }
   results.push({
     query: message,
@@ -60,9 +60,9 @@ assert.equal(bridgePayload.mode, "bridge");
 assert.equal(bridgePayload.generation?.status, "accepted");
 assert.equal(bridgePayload.suggestedReplies?.length, 3);
 assert.deepEqual(bridgePayload.suggestedReplies, [
-  "我现在情绪很强，先帮我稳定下来",
-  "我在反复想一件事，想理清它",
-  "我想先说说发生了什么",
+  "我现在情绪很强，想先缓一缓",
+  "有件事我一直反复想，想理清楚",
+  "我想先说说刚才发生的事",
 ]);
 assert.equal(bridgePayload.citations?.length ?? 0, 0);
 assert.equal((bridgePayload.message.match(/[？?]/gu) ?? []).length, 0);
@@ -101,7 +101,7 @@ const fuzzyDistressResponse = await fetch(`${baseUrl}/api/chat`, {
   method: "POST",
   headers: { "content-type": "application/json" },
   body: JSON.stringify({
-    message: "我现在情绪很强，先帮我稳定下来",
+    message: "我现在情绪很强，想先缓一缓",
     history: [{ role: "user", content: "我最近很难受，但不知道该问什么" }],
   }),
   signal: AbortSignal.timeout(70_000),

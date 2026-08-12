@@ -159,7 +159,7 @@ export function planRetrieval(query: string, recentUserContext = ""): RetrievalP
       kind: "guided",
       route: "interpersonal",
       retrievalQuery: `${context} 人际效能 DEAR MAN GIVE FAST 请求 拒绝`,
-      label: "人际表达与关系目标",
+      label: "把想说的话说清楚",
     };
   }
 
@@ -171,7 +171,7 @@ export function planRetrieval(query: string, recentUserContext = ""): RetrievalP
       kind: "guided",
       route: "behavior-chain",
       retrievalQuery: `${context} 行为链 链式分析 脆弱因素 促发事件 问题行为 后果`,
-      label: "反复行为的发生过程",
+      label: "看看这件事是怎么一步步发生的",
     };
   }
 
@@ -183,7 +183,7 @@ export function planRetrieval(query: string, recentUserContext = ""): RetrievalP
       kind: "guided",
       route: "acceptance",
       retrievalQuery: `${context} 痛苦耐受 接纳现实 全然接纳 转念 我愿意`,
-      label: "面对暂时无法改变的事实",
+      label: "面对一时改变不了的事",
     };
   }
 
@@ -195,7 +195,7 @@ export function planRetrieval(query: string, recentUserContext = ""): RetrievalP
       kind: "guided",
       route: "emotion-facts",
       retrievalQuery: `${context} 核对事实 情绪 解释 假设 证据 威胁 预测`,
-      label: "情绪、解释与事实核对",
+      label: "把事实和脑中的猜测分开",
     };
   }
 
@@ -207,7 +207,7 @@ export function planRetrieval(query: string, recentUserContext = ""): RetrievalP
       kind: "guided",
       route: "distress-survival",
       retrievalQuery: `${context} 痛苦耐受 危机生存 STOP 立即停止 停止动作 退后一步 客观观察 带着觉察行事`,
-      label: "先暂停，避免冲动让情境变得更糟",
+      label: "情绪很强，先让自己停一下",
     };
   }
 
@@ -231,9 +231,9 @@ export function planRetrieval(query: string, recentUserContext = ""): RetrievalP
 export function buildClarificationResponse(): ChatPayload {
   return {
     kind: "answer",
-    title: "听起来你现在有些不好受",
+    title: "听起来，你今天不太好受",
     message:
-      "你不用马上把原因讲得很完整。为了不急着替你选技能，我先确认一下：此刻你更希望先缓一缓情绪、理清反复出现的想法，还是说说发生了什么？",
+      "不用急着把原因讲完整。你可以先选一个最接近的：缓一缓现在的情绪、理清脑中反复出现的想法，或者先说说刚才发生了什么。",
     suggestedReplies: [...conversationStarterReplies],
     citations: [],
     nextAction: "none",
@@ -468,13 +468,13 @@ function groundedTemplate(query: string, hits: RetrievalHit[]): GroundedTemplate
   if (normalizedQuery.includes("stop") && supports("停止动作", "退后一步", "客观观察", "带着觉察行事")) {
     return {
       label: "STOP",
-      title: "先用 STOP 暂停，不让强烈情绪立刻带着你行动",
-      message: "你说想先稳定下来。这里先把 STOP 作为一个低负担入口：它的目标不是立刻解决全部问题或强迫情绪消失，而是在强烈情绪下暂停冲动，避免让情境变得更糟。",
+      title: "情绪很强时，先用 STOP 给自己一点停顿",
+      message: "你想先稳住自己，可以从 STOP 开始。它不是要求情绪马上消失，也不是现在就解决所有问题，而是先停一下，别让冲动把事情推得更糟。",
       steps: [
-        "停止动作：先不要立即按照冲动反应。",
-        "退后一步：从当下抽离片刻，给自己一点空间。",
-        "客观观察：留意内在和外在正在发生什么。",
-        "带着觉察行事：结合事实、目标和有效性，再选择下一步。",
+        "停止动作：先别立刻照着冲动去做。",
+        "退后一步：离开一下，或者慢慢呼吸几次，给自己一点空间。",
+        "客观观察：看看身体、情绪和周围正在发生什么。",
+        "带着觉察行事：想想你真正想要的结果，再决定下一步。",
       ],
     };
   }
@@ -482,25 +482,25 @@ function groundedTemplate(query: string, hits: RetrievalHit[]): GroundedTemplate
   if (normalizedQuery.includes("dearman") && supports("描述情境", "表达感受", "明确态度", "强化对方", "保持正念", "表现自信", "协商妥协")) {
     return {
       label: "DEAR MAN",
-      title: "DEAR MAN 是一套实现人际目标的表达步骤",
-      message: "书中把它用于提出请求、拒绝、坚持立场或完成其他人际目标。名称对应七个动作：描述情境、表达感受、明确态度、强化对方、保持正念、表现自信、协商妥协。",
-      steps: ["先描述可观察的情境。", "表达感受并明确提出请求或立场。", "说明积极结果，保持专注、自信，并在必要时协商。"],
+      title: "DEAR MAN 帮你把难开口的话说清楚",
+      message: "它适合用在提出请求、拒绝别人或坚持立场时。名字看起来有点复杂，其实就是七个动作：说清发生了什么、表达感受、明确请求、说明好处、别跑题、保持自信、愿意协商。",
+      steps: ["先说清你们都能确认的事实。", "说出自己的感受，再明确提出请求或立场。", "说明这样做的好处；如果对话跑偏，就把重点带回来，需要时再协商。"],
     };
   }
   if (normalizedQuery.includes(normalize("痛苦耐受")) && supports("危机生存技能", "接纳现实技能")) {
     return {
       label: "痛苦耐受",
-      title: "痛苦耐受包含危机生存与接纳现实两组技能",
-      message: "书中把痛苦耐受分成两类：危机中先避免让事情恶化的生存技能，以及面对暂时无法改变事实时的接纳现实技能。它不是要认同痛苦，也不替代解决可以改变的问题。",
-      steps: ["危机生存：如 STOP、利弊分析、TIP、转移注意力、自我安抚和改善当下。", "接纳现实：如全然接纳、转念、我愿意、浅笑与愿意的手势。", "先判断现在是需要安全度过危机，还是处理一个能够改变的现实问题。"],
+      title: "有些时候，先撑过最难受的那一阵",
+      message: "书里把“痛苦耐受”分成两类：一类帮你在情绪最强时先别把事情弄得更糟；另一类帮你面对暂时改变不了的事实。接纳不是认同痛苦，能解决的问题还是要解决。",
+      steps: ["如果情绪已经很强，可以先用 STOP、TIP、自我安抚等方法缓下来。", "如果事情暂时改变不了，可以练习全然接纳、转念和“我愿意”。", "先分清：现在更需要安全度过这一刻，还是动手解决一个现实问题。"],
     };
   }
   if (normalizedQuery.includes(normalize("正念")) && supports("观察", "描述", "参与", "不评判", "专一")) {
     return {
       label: "正念",
-      title: "DBT 正念由三个“是什么”和三个“怎样做”技能组成",
-      message: "书中列出的“是什么”技能是观察、描述、参与；“怎样做”技能是不评判、专一地做、有效地做。重点是觉察当下，并选择符合当前目标的做法。",
-      steps: ["观察：留意当下经验。", "描述和参与：用事实语言命名，并投入正在做的事。", "练习不评判、一次专注一件事，并选择有效行动。"],
+      title: "正念，就是把注意力带回正在发生的这一刻",
+      message: "书里把它分成“做什么”和“怎么做”两组：观察、描述、参与；不评判、一次只做一件事、选择真正有用的做法。",
+      steps: ["先留意现在的身体、想法和周围，不急着改变。", "试着用简单的事实语言说出来，然后回到正在做的事。", "少评判，一次专注一件事，选择对当前目标真正有帮助的行动。"],
     };
   }
   const supportsBehaviorChain = evidenceText.includes(normalize("问题行为")) &&
@@ -508,9 +508,9 @@ function groundedTemplate(query: string, hits: RetrievalHit[]): GroundedTemplate
   if ((normalizedQuery.includes(normalize("行为链")) || normalizedQuery.includes(normalize("链式分析"))) && supportsBehaviorChain) {
     return {
       label: "行为链",
-      title: "行为链分析用来还原问题行为如何一步步发生",
-      message: "它从易感因素和诱发事件开始，沿着想法、情绪、身体感觉和行动冲动追踪到问题行为及其后果，再寻找可以插入技能的环节。",
-      steps: ["先确定一次具体的问题行为和诱发事件。", "按时间顺序写下中间的想法、感受、身体感觉与行动。", "检查后果，并找出可以使用替代技能的连接点。"],
+      title: "把整件事倒回去看，找到能改变的那一环",
+      message: "行为链会把一次问题行为按时间慢慢拆开：之前身体和生活是什么状态、什么事触发了你、脑中怎么想、身体怎么反应，最后发生了什么。这样才能找到下次可以停下来或换一种做法的地方。",
+      steps: ["先选一次具体发生过的行为，不要分析一整类问题。", "按时间写下当时的想法、情绪、身体感觉和动作。", "看看结果怎样，再找出下一次可以停一下或换做法的地方。"],
     };
   }
   return null;
@@ -527,14 +527,13 @@ export function buildRetrievalFallback(
     if (plan?.kind === "guided") {
       return {
         kind: "answer",
-        title: `我先把它理解为“${plan.label}”，但需要再确认一步`,
+        title: "我大概明白你想处理什么了，还差一点信息",
         message:
-          "这个方向可能与 DBT 技能有关，但当前检索没有稳定返回可引用的对应页。为了不硬套技能，你可以补充下面这个关键信息，我会据此重新检索，而不是用固定的“书中没有”结束对话。",
-        steps: ["请用一句话描述：刚才发生了什么，以及你此刻最想改变的是情绪、想法、行为还是沟通结果。"],
+          `这可能和“${plan.label}”有关，但我还不想急着替你选方法。再告诉我一点：刚才发生了什么，你现在最想改变的是感受、脑中的想法、接下来的行为，还是沟通结果？`,
         suggestedReplies: [
-          "我最想先降低情绪强度",
-          "我最想弄清脑中的想法是否符合事实",
-          "我最想改变接下来要做的行为或表达",
+          "我想先让情绪缓下来",
+          "我想看看是不是自己想多了",
+          "我想想清楚接下来怎么做或怎么说",
         ],
         citations: [],
         nextAction: "none",
@@ -547,11 +546,11 @@ export function buildRetrievalFallback(
     }
     return {
       kind: "refusal",
-      title: "这个问题暂时不属于当前 DBT 自助范围",
+      title: "我暂时还没看出该从哪种 DBT 方法开始",
       message:
-        "从当前表述中看不出可以可靠连接到 DBT 技能的情绪、行为或人际目标。你不必知道技能名称；如果这是一个现实困扰，可以补充“发生了什么”和“你最想改变什么”，我会重新判断。其他领域的知识问答不在这个 Demo 的范围内。",
+        "如果这和你的情绪、行为或一段关系有关，可以再告诉我两件事：刚才发生了什么，以及你最想改变什么。其他类型的知识问题，这个体验版暂时回答不了。",
       citations: [],
-      suggestedReplies: ["我想换成一个具体的情绪或人际困扰"],
+      suggestedReplies: ["我想换一件最近让我难受的事来说"],
       nextAction: "none",
       mode: "retrieval",
       retrieval: retrievalMetadata(query, []),
@@ -563,7 +562,7 @@ export function buildRetrievalFallback(
   const templateQuery = plan?.kind === "guided" ? plan.retrievalQuery : query;
   const template = groundedTemplate(templateQuery, hits);
   const guidedPrefix = plan?.kind === "guided"
-    ? `根据你描述的情境，我先把“${plan.label}”作为一个待核实的技能入口，而不是对你下结论。`
+    ? `听起来，这件事可能和“${plan.label}”有关。我先把它当作一个尝试方向，你可以看看是否贴合自己。`
     : "";
   const queryLabel = normalizedQuery.includes("dearman")
     ? "DEAR MAN"
@@ -571,12 +570,12 @@ export function buildRetrievalFallback(
       ?? "这个问题";
   return {
     kind: "answer",
-    title: template?.title ?? `找到与“${queryLabel}”相关的书内证据`,
-    message: `${guidedPrefix}${template?.message ?? "下面先给出与当前情境最接近的书内依据。这个技能方向只是一个入口；你可以对照自己的实际情况，保留贴合的部分。"}`,
+    title: template?.title ?? `书里有一部分正好讲到“${queryLabel}”`,
+    message: `${guidedPrefix}${template?.message ?? "下面是书里和你刚才说的事最接近的部分。你可以先看看哪些说得像自己，不贴合的地方不用勉强套进去。"}`,
     steps: template?.steps ?? [
-      "先用一句可观察的话写下刚才发生了什么，不解释他人的动机。",
-      "再选一个当前最想改变的目标：情绪强度、下一步行为，或沟通结果。",
-      `对照来源“${top.page.section}”，确认这个技能是否贴合，再继续询问具体步骤。`,
+      "先用一句话写下刚才实际发生了什么，暂时别猜对方的原因。",
+      "再想想现在最想改变什么：情绪、下一步行动，还是沟通结果。",
+      `可以点开“${top.page.section}”对照原文，再决定要不要继续练这个方法。`,
     ],
     citations,
     nextAction: template?.nextAction ?? (plan?.route === "emotion-facts" || /核对事实|解释|假设|证据/u.test(query) ? "practice" : "none"),

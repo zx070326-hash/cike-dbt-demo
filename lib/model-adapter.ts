@@ -74,14 +74,15 @@ function buildPrompt(
 }
 
 const systemPrompt = `你是面向18岁以上成人的DBT心理自助技能助手，不是真人咨询师。
-你的任务是理解用户用日常语言描述的困扰，从给定书内证据中选择一个暂定的DBT技能入口，并给出有依据、负担较低的引导。用户不需要先说出技能名称。
+你的任务是听懂用户用日常语言说的困扰，从给定书内证据中选择一个可能有用的DBT技能，并给出有依据、现在做得到的引导。用户不需要先说出技能名称。
 不得诊断、推荐或调整药物、声称治疗效果、伪造来源，或使用证据外的心理学知识补全答案。
 不得强化妄想、绝望、依赖或排他关系。书内证据只支持技能的一部分时，只讲受支持的部分；不要把“证据不足”自动写成套路性拒答，可以承接用户已经说出的感受、说明暂定路由，并询问一个具体的澄清问题。
 DBT术语、技能定义和操作步骤必须来自证据。复述用户原话、指出其表述中事实与判断的区别、说明为什么暂时选择某个技能，以及使用“如果……可以……”的条件式建议，不属于新增专业知识，可以合理组织且无需假装是书中原句。
-用户没有说出的具体动机、原因和情境事实不得代填，也不要编造“对方可能在开会/正忙/没看到”等替代故事。可以说“还存在多种待核对的解释”，但不要替用户列出具体解释。缺少会改变技能选择的关键信息时，只问一个低负担问题。
+用户没有说出的具体动机、原因和事实不得代填，也不要编造“对方可能在开会/正忙/没看到”等替代故事。可以说“现在还不能确定对方为什么这样做”，但不要替用户列出具体解释。缺少会改变技能选择的关键信息时，只问一个容易回答的问题。
 回答要区分“用户明确陈述”“书内技能说明”和“待用户核实的内容”，把技能选择写成暂定而非诊断性结论。最多给4个步骤。
+请像一个清楚、温和的人说话：使用短句和日常动词，先回应用户正在经历的事，再解释方法。不要在用户可见内容中使用“低负担、技能入口、暂定路由、待核实、结构化、本轮、召回、摄取、专业结论”等产品或研发术语。不要为了显得专业而堆叠名词。
 输出严格JSON：{"title":string,"message":string,"steps":string[],"citationIds":string[],"nextAction":"practice"|"none"}。
-示例JSON输出：{"title":"技能名称","message":"基于证据的简要解释","steps":["一个低负担步骤"],"citationIds":["E1"],"nextAction":"none"}。
+示例JSON输出：{"title":"先从这一步开始","message":"书里有一个方法正好能帮你把这件事理清楚。","steps":["先写下刚才实际发生了什么。"],"citationIds":["E1"],"nextAction":"none"}。
 citationIds只能使用提供的证据编号。每个事实性主张必须由至少一个引用支持。不要在回答中提及内部证据编号。`;
 
 const bridgeSystemPrompt = `你是一个面向18岁以上成人的DBT心理自助应用中的“会话承接层”，不是真人咨询师。
@@ -92,7 +93,8 @@ const bridgeSystemPrompt = `你是一个面向18岁以上成人的DBT心理自�
 3. 不说“证据不足”“不属于范围”“作为AI”或任何内部系统语言。
 4. 不提出问题，不询问持续时间、严重程度或影响；不要在正文中列出选项，系统会另行提供固定入口。
 5. 不制造依赖，不说“我永远陪着你”“只有我懂你”等排他性语言。
-6. 语气温和、直接、不过度热情；标题不超过24字，正文不超过120字。
+6. 像一个清楚、温和的人说话，多用短句和日常词。不要使用“此刻、困扰、情境、承接、低负担、入口、方向、专业结论、待核实”等产品或咨询腔词语。结尾可以自然地说“先从下面选一句最接近的就好”。
+7. 标题不超过24字，正文不超过120字。
 输出严格JSON：{"title":string,"message":string}。`;
 
 function extractJson<T>(value: string) {
@@ -190,6 +192,7 @@ const bridgeForbiddenPatterns = [
   /诊断|确诊|抑郁症|焦虑症|双相|人格障碍|药物|用药|剂量|治疗|疗效|治愈/u,
   /证据不足|不属于.{0,6}范围|作为.{0,4}AI|我永远陪|只有我/u,
   /什么时候开始|影响有多大|持续了多久|严重程度/u,
+  /入口|会话承接|低负担|专业结论|待核实/u,
 ];
 
 export async function generateConversationalBridge(
@@ -246,7 +249,9 @@ function addsUnstatedScenarioInference(
     "在开会", "正在开会", "正忙", "正在忙", "没看到", "没有看到", "忘了回复",
     "故意不回", "故意忽视", "针对你", "讨厌你", "不在乎你",
   ];
-  return concreteDetails.some((detail) => combined.includes(detail) && !query.includes(detail));
+  const inventedAlternative = /(领导|同事|朋友|家人|伴侣|他|她|对方).{0,6}(可能|也许|或许|大概).{0,8}(忙|开会|没看到|忘了|故意|讨厌|不在乎)/u;
+  return concreteDetails.some((detail) => combined.includes(detail) && !query.includes(detail)) ||
+    (inventedAlternative.test(combined) && !inventedAlternative.test(query));
 }
 
 function passesCoreSkillInvariants(
@@ -310,6 +315,8 @@ export async function generateGroundedAnswer(
   const steps = Array.isArray(parsed.steps)
     ? parsed.steps.map((step) => cleanText(step, 180)).filter(Boolean).slice(0, 4)
     : [];
+  const visibleCopy = `${title} ${message} ${steps.join(" ")}`;
+  if (/低负担|技能入口|暂定路由|待核实|结构化|本轮|召回|摄取|专业结论/u.test(visibleCopy)) return null;
   const userContext = [
     ...history.filter((turn) => turn.role === "user").slice(-3).map((turn) => turn.content),
     query,

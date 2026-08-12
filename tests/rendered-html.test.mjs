@@ -51,11 +51,11 @@ test("server-renders the DBT demo shell", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>此刻｜DBT 心理自助技能助手<\/title>/i);
+  assert.match(html, /<title>此刻｜DBT 自助练习助手<\/title>/i);
   assert.match(html, /此刻，最困扰你的是什么/);
-  assert.match(html, /知识库透明度/);
+  assert.match(html, /书本内容收录情况/);
   assert.match(html, /核对事实/);
-  assert.match(html, /正在准备可交互页面/);
+  assert.match(html, /正在打开页面/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
 });
 
@@ -233,11 +233,11 @@ test("25-case retrieval benchmark places topic evidence in the top four", async 
 
 test("core skills remain useful without a model key", async () => {
   const cases = [
-    ["DBT 的正念技能有哪些？", "观察、描述、参与"],
-    ["痛苦耐受有哪些技能？", "危机生存与接纳现实"],
-    ["DEAR MAN 是什么？", "描述情境、表达感受、明确态度"],
+    ["DBT 的正念技能有哪些？", /观察、描述、参与/u],
+    ["痛苦耐受有哪些技能？", /情绪最强|改变不了的事实/u],
+    ["DEAR MAN 是什么？", /说清发生了什么、表达感受、明确请求/u],
   ];
-  for (const [message, expectedText] of cases) {
+  for (const [message, expectedPattern] of cases) {
     const response = await request("/api/chat", {
       method: "POST",
       headers: { "content-type": "application/json; charset=utf-8" },
@@ -245,7 +245,7 @@ test("core skills remain useful without a model key", async () => {
     });
     const payload = await response.json();
     assert.equal(payload.kind, "answer", message);
-    assert.ok(`${payload.title} ${payload.message}`.includes(expectedText), `${message}: ${JSON.stringify(payload)}`);
+    assert.match(`${payload.title} ${payload.message}`, expectedPattern, `${message}: ${JSON.stringify(payload)}`);
     assert.ok(payload.citations?.length > 0, message);
   }
 });
@@ -332,7 +332,7 @@ test("a vague emotional question is clarified instead of rejected as missing fro
   assert.equal(payload.mode, "bridge");
   assert.equal(payload.citations?.length, 0);
   assert.equal(payload.suggestedReplies?.length, 3);
-  assert.match(`${payload.title} ${payload.message}`, /不好受|不用马上/u);
+  assert.match(`${payload.title} ${payload.message}`, /不好受|不用急着/u);
   assert.equal(payload.retrieval, undefined);
 });
 
@@ -361,15 +361,15 @@ test("the describe-what-happened bridge asks for context instead of looping into
   const payload = await response.json();
   assert.equal(payload.kind, "answer");
   assert.equal(payload.mode, "bridge");
-  assert.match(`${payload.title} ${payload.message}`, /具体|发生了什么/u);
+  assert.match(`${payload.title} ${payload.message}`, /发生的事|发生了什么/u);
   assert.equal(payload.citations?.length ?? 0, 0);
 });
 
 test("every bridge choice advances to its intended next state", async () => {
   const cases = [
-    ["我现在情绪很强，先帮我稳定下来", "guided", /STOP|危机生存/u],
-    ["我在反复想一件事，想理清它", "guided", /核对事实|事实/u],
-    ["我想先说说发生了什么", "bridge", /具体|发生了什么/u],
+    ["我现在情绪很强，想先缓一缓", "guided", /STOP|危机生存/u],
+    ["有件事我一直反复想，想理清楚", "guided", /核对事实|事实/u],
+    ["我想先说说刚才发生的事", "bridge", /发生的事|发生了什么/u],
   ];
   for (const [message, expectedMode, expectedText] of cases) {
     const response = await request("/api/chat", {
@@ -507,7 +507,11 @@ test("removes the disposable starter preview", async () => {
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
-  assert.match(page, /DBT 心理自助技能助手/);
+  assert.match(page, /DBT 自助练习助手/);
+  assert.match(page, /刚才具体发生了什么/);
+  assert.match(page, /已为手机填写做了简化/);
+  assert.match(page, /这次想理清的是/);
+  assert.doesNotMatch(page, /摄像机能记录到什么|Evidence Wiki|当前证据板|RAG 受控生成|结构来自情绪调节练习单|待整理情境带入|把这句话填进第 2 步/u);
   assert.match(layout, /lang="zh-CN"/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
 });

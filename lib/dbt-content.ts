@@ -164,13 +164,13 @@ export function respondFromFrozenEvidence(input: string): ChatPayload {
   if (crisisPatterns.some((pattern) => pattern.test(message))) {
     return {
       kind: "crisis",
-      title: "先确保你此刻的安全",
+      title: "现在先别一个人扛",
       message:
-        "我不能用普通的技能练习处理正在发生的生命安全风险。如果你已经采取行动、持有可伤害自己或他人的物品，或觉得自己可能马上行动，请立即与危险物品和可能被伤害的人拉开距离，联系身边可信任的人陪着你，并拨打 120 或 110。你也可以拨打 12356 全国统一心理援助热线。",
+        "如果你已经开始行动、手边有可能伤人的东西，或者担心自己马上会行动，请先离开危险物品和地点，马上联系一个能来陪你的人，并拨打 120 或 110。你也可以拨打 12356 全国统一心理援助热线。",
       steps: [
-        "先远离可能伤害自己或他人的物品、地点或情境。",
-        "联系一位能够现在陪伴你的人，不要独自承受。",
-        "如有迫在眉睫的危险，立即拨打 120 或 110。",
+        "把可能伤人的东西放远，离开可能发生伤害的地方。",
+        "马上联系一个能陪着你的人，不要独自待着。",
+        "如果危险就在眼前，立即拨打 120 或 110。",
       ],
       nextAction: "none",
       mode: "safety",
@@ -180,9 +180,9 @@ export function respondFromFrozenEvidence(input: string): ChatPayload {
   if (clinicalBoundaryPatterns.some((pattern) => pattern.test(message))) {
     return {
       kind: "refusal",
-      title: "这个问题超出 Demo 边界",
+      title: "诊断和用药，需要交给专业人员",
       message:
-        "我可以帮助你学习 DBT 技能，但不能进行疾病诊断、判断你是否患病，也不能提供开始、停止或调整药物的建议。请把诊断和用药问题交给有资质的专业人员。",
+        "我可以和你一起了解 DBT 技能，但不能判断你是否患有某种疾病，也不能告诉你该不该开始、停止或调整药物。把这个问题带给精神科医生或其他有资质的专业人员会更安全。",
       nextAction: "none",
       mode: "safety",
     };
@@ -195,9 +195,9 @@ export function respondFromFrozenEvidence(input: string): ChatPayload {
       message:
         "在选择相反行为或问题解决之前，先核对当前情绪是否符合事实。如果情绪或行为冲动不符合事实，可以考虑相反行为；如果事实本身构成可以改变的问题，则更适合问题解决。",
       steps: [
-        "描述发生了什么，不加入推测。",
-        "判断当前情绪及强度是否符合事实。",
-        "再决定保持情绪、采用相反行为，还是解决现实问题。",
+        "先写下刚才实际发生了什么，暂时不猜原因。",
+        "再看看现在的情绪和强度，跟能确认的事实有多对得上。",
+        "最后再决定：先等等、做一个相反的小动作，还是处理眼前的问题。",
       ],
       citationIds: ["overview", "trainerOverview", "checkFacts"],
       nextAction: "practice",
@@ -208,14 +208,14 @@ export function respondFromFrozenEvidence(input: string): ChatPayload {
   if (/核对|事实|解释|假设|焦虑|担心|领导|消息|情绪/u.test(message)) {
     return {
       kind: "answer",
-      title: "把事实和解释暂时分开",
+      title: "先把发生的事和脑中的猜测分开",
       message:
-        "“核对事实”不是要否定你的感受，而是先检查：真正发生了什么、你对它作了什么解释，以及情绪强度是否与目前能够确认的事实相符。你可以从一个具体事件开始。",
+        "“核对事实”不是要否定你的感受，而是把三件事分开看：刚才发生了什么、你当时怎么理解，以及现在的情绪和能确认的事实有多对得上。",
       steps: [
-        "只写摄像机能够记录到的事件。",
-        "写下脑中出现的解释、假设或预测。",
-        "列出支持和不支持这些解释的事实。",
-        "评估最坏结果的可能性，并写下可应对的方法。",
+        "先写你亲眼看到或听到的内容，不猜对方的原因。",
+        "再写下当时脑中冒出的想法、担心或预测。",
+        "看看哪些事实对得上，哪些对不上，还有哪些暂时不能确定。",
+        "如果担心最坏的结果，也写下它有多可能，以及真发生时你能做什么。",
       ],
       citationIds: ["trainerEvent", "checkFacts", "worksheetOne", "worksheetTwo"],
       nextAction: "practice",
@@ -226,9 +226,9 @@ export function respondFromFrozenEvidence(input: string): ChatPayload {
   if (/你好|开始|能做什么|怎么用/u.test(message)) {
     return {
       kind: "answer",
-      title: "我可以陪你学习一个 DBT 技能",
+      title: "先告诉我，你现在最想处理什么",
       message:
-        "当前 Demo 可以从两册资料中检索 DBT 技能并标明原页；“核对事实”还提供了一个完整的六步结构化练习。你可以直接说技能名称，或描述一个具体、负担较低的情境。",
+        "你可以直接说一件最近发生的事，或者告诉我现在最难受的是什么。我会从两册书里找合适的方法并标出页码；需要时，还能跟着做一次“核对事实”练习。",
       citationIds: ["trainerOverview", "overview", "checkFacts"],
       nextAction: "practice",
       mode: "verified",
@@ -237,9 +237,9 @@ export function respondFromFrozenEvidence(input: string): ChatPayload {
 
   return {
     kind: "refusal",
-    title: "现有证据不足以回答",
+    title: "这两册书里暂时找不到足够依据",
     message:
-      "当前问题无法从已经摄取的两册资料中得到足够直接的支持。为了避免把模型常识误当作书中内容，我不会继续推测；你可以换成更具体的 DBT 技能名称再试。",
+      "我不想拿模型自己的常识冒充书里的内容。你可以把问题说得更具体一点，或者直接告诉我想了解哪一个 DBT 技能，我再帮你查。",
     citationIds: [],
     nextAction: "none",
     mode: "verified",
