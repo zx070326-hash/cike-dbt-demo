@@ -47,6 +47,27 @@ for (const message of cases) {
 assert.ok(results.every((item) => item.generation !== "not-attempted"), JSON.stringify(results));
 assert.ok(results.every((item) => item.generation !== "error"), JSON.stringify(results));
 
+const bridgeResponse = await fetch(`${baseUrl}/api/chat`, {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ message: "我今天心情不是很好", history: [] }),
+  signal: AbortSignal.timeout(70_000),
+});
+const bridgePayload = await bridgeResponse.json();
+const bridgeText = `${bridgePayload.title} ${bridgePayload.message} ${(bridgePayload.suggestedReplies ?? []).join(" ")}`;
+assert.equal(bridgePayload.kind, "answer");
+assert.equal(bridgePayload.mode, "bridge");
+assert.equal(bridgePayload.generation?.status, "accepted");
+assert.equal(bridgePayload.suggestedReplies?.length, 3);
+assert.deepEqual(bridgePayload.suggestedReplies, [
+  "我现在情绪很强，先帮我稳定下来",
+  "我在反复想一件事，想理清它",
+  "我想先说说发生了什么",
+]);
+assert.equal(bridgePayload.citations?.length ?? 0, 0);
+assert.equal((bridgePayload.message.match(/[？?]/gu) ?? []).length, 0);
+assert.doesNotMatch(bridgeText, /DBT|正念|STOP|诊断|药物|治疗|不属于.{0,6}范围|证据不足/iu);
+
 const personalMessage = "今天上午我给领导发了进度消息，几个小时没有回复，我感到焦虑。";
 const personalResponse = await fetch(`${baseUrl}/api/chat`, {
   method: "POST",

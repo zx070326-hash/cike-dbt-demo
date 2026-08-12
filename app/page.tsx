@@ -123,11 +123,11 @@ const initialMessages: Message[] = [
     role: "assistant",
     payload: {
       kind: "answer",
-      title: "描述困扰就可以，不必先知道 DBT 技能名",
+      title: "你可以从一句日常表达开始",
       message:
-        "当前 Demo 会先理解你想处理的是情绪、想法、行为还是关系，再从两册 DBT 资料中寻找带页码的依据；无法可靠判断时，会先问一个关键问题，而不是直接说“书中没有”。",
-      citationIds: ["checkFacts"],
-      nextAction: "practice",
+        "不必先判断问题属于哪种技能。可以先说说今天最困扰你的事；我们会先理解你想处理什么，确认方向后再从书中寻找带页码的依据。",
+      nextAction: "none",
+      mode: "bridge",
     },
   },
 ];
@@ -569,7 +569,9 @@ export default function Home() {
                             ? "安全优先"
                             : message.payload?.kind === "refusal"
                               ? "边界提示"
-                              : "基于当前证据"}
+                              : message.payload?.mode === "bridge"
+                                ? "先理解你的需要"
+                                : "基于书内证据"}
                         </div>
                         <h2>{message.payload?.title}</h2>
                         <p>{message.payload?.message}</p>
@@ -976,8 +978,10 @@ export default function Home() {
           {tab === "chat" && <aside className="evidence-panel">
             <div className="evidence-heading">
               <p className="kicker">CURRENT EVIDENCE</p>
-              <h2>当前证据板</h2>
-              <p>本轮回答只使用已摄取的书内页面；OCR 摘录需按原页复核。</p>
+              <h2>{latestAssistant?.mode === "bridge" ? "当前会话" : "当前证据板"}</h2>
+              <p>{latestAssistant?.mode === "bridge"
+                ? "本轮只承接你已经表达的感受并确认目标，尚未提出 DBT 专业结论。"
+                : "本轮回答只使用已摄取的书内页面；OCR 摘录需按原页复核。"}</p>
             </div>
             <div className="status-card">
               <div>
@@ -985,6 +989,8 @@ export default function Home() {
                 <strong>
                   {latestAssistant?.mode === "generated"
                     ? "RAG 受控生成"
+                    : latestAssistant?.mode === "bridge"
+                      ? "会话承接"
                     : latestAssistant?.mode === "guided"
                       ? "RAG 情境引导"
                     : latestAssistant?.generation?.attempted
@@ -1011,7 +1017,9 @@ export default function Home() {
                   </button>
                 ))
               ) : (
-                <p className="no-sources">提出一个问题后，证据会出现在这里。</p>
+                <p className="no-sources">{latestAssistant?.mode === "bridge"
+                  ? "确认你想处理的方向后，再检索书内方法并显示引用。"
+                  : "提出一个问题后，证据会出现在这里。"}</p>
               )}
             </div>
             <div className="boundary-card">
@@ -1025,6 +1033,8 @@ export default function Home() {
             <p className="evidence-footnote">
               {latestAssistant?.retrieval
                 ? `已摄取 ${latestAssistant.retrieval.corpusPages} 页 · 本轮召回 ${latestAssistant.retrieval.resultCount} 页`
+                : latestAssistant?.mode === "bridge"
+                  ? "承接语不作为专业结论；技能说明仍须引用"
                 : `已摄取 ${knowledgeManifest.coverage.indexedPageCount} 页 · 非空原文覆盖 ${Math.round(knowledgeManifest.coverage.characterCoverage * 100)}%`}
             </p>
           </aside>}

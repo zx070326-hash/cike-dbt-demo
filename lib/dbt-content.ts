@@ -95,7 +95,7 @@ export type ChatPayload = {
   citationIds?: string[];
   citations?: SourceCitation[];
   nextAction?: "practice" | "none";
-  mode?: "safety" | "verified" | "retrieval" | "guided" | "generated";
+  mode?: "safety" | "bridge" | "verified" | "retrieval" | "guided" | "generated";
   generation?: {
     attempted: boolean;
     status: "accepted" | "rejected" | "error";

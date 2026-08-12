@@ -1,5 +1,6 @@
 import rawIndex from "../data/rag/index-v1.json";
 import type { ChatPayload, SourceCitation } from "./dbt-content";
+import { conversationStarterReplies } from "./conversation-bridge";
 import {
   knowledgeV2,
   wikiEvidenceBoosts,
@@ -106,6 +107,9 @@ const fuzzyPsychologicalTerms = [
   "情绪", "脑子很乱", "冷静不下来", "控制不住", "不知道怎么办", "撑不住",
   "反复想", "胡思乱想", "内耗", "纠结", "放不下", "接受不了", "抗拒",
   "冲动", "后悔", "失控", "吵架", "沟通", "表达", "边界", "关系", "伴侣",
+  "心情不好", "心情不太好", "心情不是很好", "心情有点差", "心情很差", "状态不好", "状态不太好",
+  "状态有点差", "不开心", "低落", "郁闷", "孤独", "心里堵", "有点累", "很累",
+  "好累", "疲惫", "不知道该怎么说", "不知道怎么说", "说不清", "不知道从哪说起",
 ];
 
 function normalize(value: string) {
@@ -135,6 +139,15 @@ export function planRetrieval(query: string, recentUserContext = ""): RetrievalP
       route: "direct",
       retrievalQuery: context,
       label: "用户指定的 DBT 技能",
+    };
+  }
+
+  if (/^(我)?(现在|也)?(不知道(该)?怎么说|不知道从哪(里)?说起|说不清)[了呀啊呢。！!？?\s]*$/u.test(current)) {
+    return {
+      kind: "clarify",
+      route: "clarify",
+      retrievalQuery: current,
+      label: "需要确认当前目标",
     };
   }
 
@@ -215,26 +228,16 @@ export function planRetrieval(query: string, recentUserContext = ""): RetrievalP
   };
 }
 
-export function buildClarificationResponse(query: string): ChatPayload {
+export function buildClarificationResponse(): ChatPayload {
   return {
     kind: "answer",
-    title: "不用先知道技能名，我们先确定你最需要哪类帮助",
+    title: "听起来你现在有些不好受",
     message:
-      "我能听出你现在并不好受，但仅凭这句话还不能可靠判断该先稳定情绪、核对反复想法，还是处理一段关系。这里不把“信息不够”当成拒答；你选一个最接近的方向，我再从书中找对应方法。",
-    steps: [
-      "如果当下强度很高，先选“先帮我稳定下来”。",
-      "如果脑中有反复出现的判断或预测，选“帮我理清想法”。",
-      "如果困扰主要发生在人际互动里，选“帮我组织怎么表达”。",
-    ],
-    suggestedReplies: [
-      "我现在情绪很强，先帮我稳定下来",
-      "我想理清脑中反复出现的想法",
-      "我想处理一段关系，帮我组织怎么表达",
-    ],
+      "你不用马上把原因讲得很完整。为了不急着替你选技能，我先确认一下：此刻你更希望先缓一缓情绪、理清反复出现的想法，还是说说发生了什么？",
+    suggestedReplies: [...conversationStarterReplies],
     citations: [],
     nextAction: "none",
-    mode: "guided",
-    retrieval: retrievalMetadata(query, []),
+    mode: "bridge",
   };
 }
 

@@ -1,4 +1,5 @@
 import type { ChatPayload, SourceCitation } from "./dbt-content";
+import { conversationStarterReplies } from "./conversation-bridge";
 import type { RetrievalHit, RetrievalPlan } from "./rag";
 import { hitToCitation } from "./rag";
 
@@ -82,6 +83,17 @@ DBT术语、技能定义和操作步骤必须来自证据。复述用户原话�
 输出严格JSON：{"title":string,"message":string,"steps":string[],"citationIds":string[],"nextAction":"practice"|"none"}。
 示例JSON输出：{"title":"技能名称","message":"基于证据的简要解释","steps":["一个低负担步骤"],"citationIds":["E1"],"nextAction":"none"}。
 citationIds只能使用提供的证据编号。每个事实性主张必须由至少一个引用支持。不要在回答中提及内部证据编号。`;
+
+const bridgeSystemPrompt = `你是一个面向18岁以上成人的DBT心理自助应用中的“会话承接层”，不是真人咨询师。
+用户刚刚用很概括的日常语言表达了情绪或困扰，还没有提供足够信息来选择技能。你的任务不是立刻教学，而是自然承接用户明确说出的感受，并邀请用户使用界面下方的固定入口选择下一步。
+严格遵守：
+1. 只复述或概括用户已经说出的感受，不猜测原因、经历、动机、疾病或严重程度。
+2. 不使用DBT术语、技能名称、心理诊断、药物、疗效承诺或专业解释。
+3. 不说“证据不足”“不属于范围”“作为AI”或任何内部系统语言。
+4. 不提出问题，不询问持续时间、严重程度或影响；不要在正文中列出选项，系统会另行提供固定入口。
+5. 不制造依赖，不说“我永远陪着你”“只有我懂你”等排他性语言。
+6. 语气温和、直接、不过度热情；标题不超过24字，正文不超过120字。
+输出严格JSON：{"title":string,"message":string}。`;
 
 function extractJson<T>(value: string) {
   const cleaned = value.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
@@ -171,6 +183,57 @@ async function verifyGrounding(
 function cleanText(value: unknown, maxLength: number) {
   if (typeof value !== "string") return "";
   return value.replace(/\s+/gu, " ").trim().slice(0, maxLength);
+}
+
+const bridgeForbiddenPatterns = [
+  /\bDBT\b|辩证行为|正念|STOP|TIP|TIPP|DEAR\s*MAN|行为链|核对事实/iu,
+  /诊断|确诊|抑郁症|焦虑症|双相|人格障碍|药物|用药|剂量|治疗|疗效|治愈/u,
+  /证据不足|不属于.{0,6}范围|作为.{0,4}AI|我永远陪|只有我/u,
+  /什么时候开始|影响有多大|持续了多久|严重程度/u,
+];
+
+export async function generateConversationalBridge(
+  query: string,
+  history: ConversationTurn[] = [],
+): Promise<ChatPayload | null> {
+  const config = readConfig();
+  if (!config) return null;
+  const recentConversation = history.length
+    ? history
+      .slice(-4)
+      .map((turn) => `${turn.role === "user" ? "用户" : "助手"}：${turn.content}`)
+      .join("\n")
+    : "（无）";
+  const prompt = `最近对话只用于理解指代，不得据此推断用户没有说出的事实：\n${recentConversation}\n\n用户当前表达：${query}`;
+  const raw = config.provider === "anthropic"
+    ? await callAnthropic(config, prompt, bridgeSystemPrompt, 320)
+    : await callOpenAiCompatible(config, prompt, bridgeSystemPrompt, 320);
+  const parsed = extractJson<{
+    title?: unknown;
+    message?: unknown;
+  }>(raw);
+  const title = cleanText(parsed.title, 24);
+  const message = cleanText(parsed.message, 120);
+  const suggestedReplies = [...conversationStarterReplies];
+  const combined = `${title} ${message} ${suggestedReplies.join(" ")}`;
+  const questionCount = (message.match(/[？?]/gu) ?? []).length;
+  const addsConcreteCause = /(?:因为|可能是|也许是|大概是).{1,24}(?:导致|所以|让你)/u.test(message);
+  if (
+    !title || !message || questionCount > 0 ||
+    addsConcreteCause || bridgeForbiddenPatterns.some((pattern) => pattern.test(combined))
+  ) {
+    return null;
+  }
+  return {
+    kind: "answer",
+    title,
+    message,
+    suggestedReplies,
+    citations: [],
+    nextAction: "none",
+    mode: "bridge",
+    generation: { attempted: true, status: "accepted" },
+  };
 }
 
 function addsUnstatedScenarioInference(

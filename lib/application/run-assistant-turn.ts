@@ -3,6 +3,7 @@ import {
   respondFromFrozenEvidence,
   type ChatPayload,
 } from "../dbt-content";
+import { getSimpleConversationResponse } from "../conversation-bridge";
 import {
   buildClarificationResponse,
   buildRetrievalFallback,
@@ -12,6 +13,7 @@ import {
 } from "../rag";
 import {
   type ConversationTurn,
+  generateConversationalBridge,
   generateGroundedAnswer,
   isModelConfigured,
 } from "../model-adapter";
@@ -47,9 +49,8 @@ export async function runAssistantTurn(
   const safetyResponse = getContextualSafetyResponse(message, recentUserMessages);
   if (safetyResponse) return safetyResponse;
 
-  if (/你好|开始|能做什么|怎么用/u.test(message)) {
-    return respondFromFrozenEvidence(message);
-  }
+  const simpleConversation = getSimpleConversationResponse(message);
+  if (simpleConversation) return simpleConversation;
 
   const previousUserMessage = [...recentUserMessages].reverse()[0];
   const recentUserContext = recentUserMessages.slice(-2).join(" ");
@@ -58,7 +59,26 @@ export async function runAssistantTurn(
     ? `${recentUserContext} ${message}`
     : message;
   const plan = planRetrieval(message, recentUserContext);
-  if (plan.kind === "clarify") return buildClarificationResponse(message);
+  if (plan.kind === "clarify") {
+    let bridgeStatus: "rejected" | "error" | undefined;
+    if (isModelConfigured()) {
+      try {
+        const generatedBridge = await generateConversationalBridge(message, history);
+        if (generatedBridge) return generatedBridge;
+        bridgeStatus = "rejected";
+        console.warn("[dbt-bridge] falling back: generated bridge failed schema or boundary checks");
+      } catch (error) {
+        bridgeStatus = "error";
+        const reason = error instanceof Error ? error.message : "unknown_model_error";
+        console.warn(`[dbt-bridge] falling back: ${reason.slice(0, 120)}`);
+      }
+    }
+    const fallback = buildClarificationResponse();
+    if (bridgeStatus) {
+      fallback.generation = { attempted: true, status: bridgeStatus };
+    }
+    return fallback;
+  }
 
   const retrievalQuery = plan.kind === "direct" ? contextualQuery : plan.retrievalQuery;
   const hits = retrieveEvidence(retrievalQuery);
