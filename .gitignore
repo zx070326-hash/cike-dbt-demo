@@ -3,6 +3,7 @@ node_modules/
 .vinext/
 dist/
 .wrangler/
+.runtime/
 .venv/
 .env
 .env.local
