@@ -1,0 +1,54 @@
+{
+  "manifest_version": "0.1",
+  "created_at": "2026-08-12",
+  "scope": "DBT 情绪调节技能：核对事实纵向原型",
+  "publication_gate": "书籍商业使用授权确认前，仅限本地内部验证，不公开部署扫描页。",
+  "sources": [
+    {
+      "id": "dbt-manual-upper",
+      "file": "DBT情绪调节手册（上） (莱恩汉).pdf",
+      "role": "治疗师与技能训练师教学说明",
+      "pdf_pages": 784,
+      "text_layer": false,
+      "sha256": "BA0361FF40F9EF383D3967E4AFC38D952D092F4988EA7482CCB096E2DC222B02"
+    },
+    {
+      "id": "dbt-handouts-lower",
+      "file": "DBT情绪调节手册（下） (莱恩汉).pdf",
+      "role": "用户讲义与练习单",
+      "pdf_pages": 392,
+      "text_layer": false,
+      "sha256": "3D3D8F204822FB10579DE90AF11CEC6D91D0B0E1D1F774EF7C9B5F4B717CB716"
+    }
+  ],
+  "segments": [
+    {
+      "source_id": "dbt-handouts-lower",
+      "section": "情绪调节讲义7：概论——改变情绪反应",
+      "printed_pages": [202, 202],
+      "pdf_pages": [223, 223],
+      "status": "visually_verified"
+    },
+    {
+      "source_id": "dbt-handouts-lower",
+      "section": "情绪调节讲义8—8a：核对事实与符合事实的情绪范例",
+      "printed_pages": [203, 204],
+      "pdf_pages": [224, 225],
+      "status": "visually_verified"
+    },
+    {
+      "source_id": "dbt-handouts-lower",
+      "section": "情绪调节练习单5：核对事实",
+      "printed_pages": [256, 257],
+      "pdf_pages": [277, 278],
+      "status": "visually_verified"
+    },
+    {
+      "source_id": "dbt-manual-upper",
+      "section": "第九章第八节：核对事实（情绪调节讲义8—8a）",
+      "printed_pages": [544, 557],
+      "pdf_pages": [567, 580],
+      "status": "ocr_complete_visual_sampled"
+    }
+  ]
+}

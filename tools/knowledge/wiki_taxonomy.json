@@ -1,0 +1,128 @@
+[
+  {
+    "id": "mindfulness-wise-mind",
+    "label": "智慧心",
+    "module": "mindfulness",
+    "aliases": ["智慧心", "理性心", "情绪心", "心的状态"],
+    "related": ["mindfulness-what", "mindfulness-how"]
+  },
+  {
+    "id": "mindfulness-what",
+    "label": "正念“是什么”技能",
+    "module": "mindfulness",
+    "aliases": ["正念是什么技能", "观察", "描述", "参与"],
+    "related": ["mindfulness-wise-mind", "mindfulness-how"]
+  },
+  {
+    "id": "mindfulness-how",
+    "label": "正念“怎样做”技能",
+    "module": "mindfulness",
+    "aliases": ["正念怎样做技能", "不评判", "一心一意", "专一地做", "有效地做"],
+    "related": ["mindfulness-wise-mind", "mindfulness-what"]
+  },
+  {
+    "id": "distress-stop",
+    "label": "STOP",
+    "module": "distress-tolerance",
+    "aliases": ["STOP", "停止动作", "退后一步", "客观观察", "带着觉察行事"],
+    "related": ["distress-tip", "distress-crisis-survival"]
+  },
+  {
+    "id": "distress-tip",
+    "label": "TIP",
+    "module": "distress-tolerance",
+    "aliases": ["TIP", "TIPP", "改变体温", "高强度运动", "调整呼吸", "配对肌肉放松"],
+    "related": ["distress-stop", "distress-crisis-survival"]
+  },
+  {
+    "id": "distress-crisis-survival",
+    "label": "危机生存技能",
+    "module": "distress-tolerance",
+    "aliases": ["危机生存", "转移注意力", "自我安抚", "改善当下", "利弊分析"],
+    "related": ["distress-stop", "distress-tip", "distress-radical-acceptance"]
+  },
+  {
+    "id": "distress-radical-acceptance",
+    "label": "全然接纳",
+    "module": "distress-tolerance",
+    "aliases": ["全然接纳", "彻底接纳", "接纳现实", "转念", "我愿意", "浅笑"],
+    "related": ["distress-crisis-survival", "emotion-problem-solving"]
+  },
+  {
+    "id": "emotion-understand",
+    "label": "了解并命名情绪",
+    "module": "emotion-regulation",
+    "aliases": ["了解并命名情绪", "情绪的功能", "描述情绪", "情绪调节"],
+    "related": ["emotion-check-facts", "emotion-vulnerability"]
+  },
+  {
+    "id": "emotion-check-facts",
+    "label": "核对事实",
+    "module": "emotion-regulation",
+    "aliases": ["核对事实", "诱发事件", "解释和假设", "符合事实", "威胁评估"],
+    "related": ["emotion-opposite-action", "emotion-problem-solving"]
+  },
+  {
+    "id": "emotion-opposite-action",
+    "label": "相反行为",
+    "module": "emotion-regulation",
+    "aliases": ["相反行为", "相反行动", "行动冲动", "改变情绪反应"],
+    "related": ["emotion-check-facts", "emotion-problem-solving"]
+  },
+  {
+    "id": "emotion-problem-solving",
+    "label": "问题解决",
+    "module": "emotion-regulation",
+    "aliases": ["问题解决", "解决问题", "核查事实", "现实问题"],
+    "related": ["emotion-check-facts", "emotion-opposite-action", "distress-radical-acceptance"]
+  },
+  {
+    "id": "emotion-vulnerability",
+    "label": "降低情绪脆弱性",
+    "module": "emotion-regulation",
+    "aliases": ["降低情绪脆弱性", "PLEASE", "照顾身体", "积累正向情绪", "积累正面情绪", "建立掌控感", "预先应对"],
+    "related": ["emotion-understand"]
+  },
+  {
+    "id": "interpersonal-dear-man",
+    "label": "DEAR MAN",
+    "module": "interpersonal-effectiveness",
+    "aliases": ["DEAR MAN", "DEARMAN", "描述情境", "表达感受", "明确态度", "强化对方", "保持正念", "表现自信", "协商妥协"],
+    "related": ["interpersonal-give", "interpersonal-fast", "interpersonal-priorities"]
+  },
+  {
+    "id": "interpersonal-give",
+    "label": "GIVE",
+    "module": "interpersonal-effectiveness",
+    "aliases": ["GIVE", "温和有礼", "表现兴趣", "确认他人", "轻松态度"],
+    "related": ["interpersonal-dear-man", "interpersonal-fast"]
+  },
+  {
+    "id": "interpersonal-fast",
+    "label": "FAST",
+    "module": "interpersonal-effectiveness",
+    "aliases": ["FAST", "公平", "不随意道歉", "坚持价值观", "诚实"],
+    "related": ["interpersonal-dear-man", "interpersonal-give"]
+  },
+  {
+    "id": "interpersonal-priorities",
+    "label": "人际效能目标与优先级",
+    "module": "interpersonal-effectiveness",
+    "aliases": ["人际效能目标", "目标效能", "关系效能", "自尊效能", "请求强度", "拒绝强度"],
+    "related": ["interpersonal-dear-man"]
+  },
+  {
+    "id": "behavior-chain",
+    "label": "行为链分析",
+    "module": "behavior-analysis",
+    "aliases": ["行为链", "链式分析", "链锁分析", "促发事件", "脆弱因素", "问题行为", "行为后果"],
+    "related": ["behavior-missing-links"]
+  },
+  {
+    "id": "behavior-missing-links",
+    "label": "缺失环节分析",
+    "module": "behavior-analysis",
+    "aliases": ["缺失环节", "缺失链接", "技能没有使用", "没有使用技能"],
+    "related": ["behavior-chain"]
+  }
+]
