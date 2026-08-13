@@ -9,6 +9,17 @@ const cases = [
 ];
 
 const results = [];
+function assertClaimCitationsResolve(payload, message) {
+  if (payload.generation?.status !== "accepted") return;
+  assert.ok(Array.isArray(payload.claims) && payload.claims.length > 0, `${message}: accepted generation needs claims`);
+  const sourceIds = new Set((payload.citations ?? []).map((citation) => citation.id));
+  for (const claim of payload.claims) {
+    assert.ok(claim.text && claim.kind, `${message}: malformed claim`);
+    assert.ok(Array.isArray(claim.citationIds) && claim.citationIds.length > 0, `${message}: uncited claim`);
+    assert.ok(claim.citationIds.every((id) => sourceIds.has(id)), `${message}: claim citation must resolve`);
+  }
+}
+
 for (const message of cases) {
   const startedAt = Date.now();
   const response = await fetch(`${baseUrl}/api/chat`, {
@@ -21,6 +32,7 @@ for (const message of cases) {
   const payload = await response.json();
   assert.equal(payload.kind, "answer", message);
   assert.ok(payload.citations?.length || payload.citationIds?.length, message);
+  assertClaimCitationsResolve(payload, message);
   if (/DEAR MAN|痛苦耐受|正念|行为链/u.test(message)) {
     assert.notEqual(payload.nextAction, "practice", `${message}: wrong workflow CTA`);
   }

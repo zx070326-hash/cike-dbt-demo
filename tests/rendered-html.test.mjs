@@ -54,7 +54,7 @@ test("server-renders the DBT demo shell", async () => {
   assert.match(html, /<title>此刻｜DBT 自助练习助手<\/title>/i);
   assert.match(html, /此刻，最困扰你的是什么/);
   assert.match(html, /书本内容收录情况/);
-  assert.match(html, /核对事实/);
+  assert.match(html, /伴读引导与知识深读双模式/);
   assert.match(html, /正在打开页面/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
 });
@@ -336,6 +336,95 @@ test("a vague emotional question is clarified instead of rejected as missing fro
   assert.equal(payload.retrieval, undefined);
 });
 
+test("companion mode pairs a human-scale response with a traceable skill card", async () => {
+  for (const [message, expectedCard] of [
+    ["我今天心情不太好，但不知道怎么说", /观察与描述/u],
+    ["领导一直没有回消息，我开始担心是不是自己做错了", /核对事实/u],
+    ["我脑子很乱，想先缓一缓", /STOP/u],
+  ]) {
+    const response = await request("/api/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json; charset=utf-8" },
+      body: JSON.stringify({ message, history: [], experienceMode: "companion" }),
+    });
+    const payload = await response.json();
+    assert.equal(payload.kind, "answer", `${message}: ${JSON.stringify(payload)}`);
+    assert.equal(payload.experienceMode, "companion", message);
+    assert.ok(payload.skillCard?.label, message);
+    assert.match(payload.skillCard.label, expectedCard, message);
+    assert.ok(payload.skillCard?.summary, message);
+    assert.ok(payload.skillCard?.tryNow, message);
+    assert.match(payload.followUpQuestion ?? "", /[？?]$/u, message);
+    assert.ok(payload.citations?.length > 0, message);
+    assert.equal(payload.steps?.length ?? 0, 0, message);
+  }
+});
+
+test("companion and deep-read modes share evidence but use different presentation", async () => {
+  const message = "STOP 技能怎么做？";
+  const [companionResponse, deepReadResponse] = await Promise.all([
+    request("/api/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json; charset=utf-8" },
+      body: JSON.stringify({ message, experienceMode: "companion" }),
+    }),
+    request("/api/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json; charset=utf-8" },
+      body: JSON.stringify({ message, experienceMode: "deep-read" }),
+    }),
+  ]);
+  const companion = await companionResponse.json();
+  const deepRead = await deepReadResponse.json();
+  assert.equal(companion.experienceMode, "companion");
+  assert.ok(companion.skillCard);
+  assert.equal(deepRead.skillCard, undefined);
+  assert.ok(deepRead.steps?.length > 0);
+  assert.ok(companion.citations?.length > 0);
+  assert.ok(deepRead.citations?.length > 0);
+  assert.ok(companion.citations.some((left) =>
+    deepRead.citations.some((right) => left.chunkId === right.chunkId || left.section === right.section),
+  ));
+});
+
+test("companion mode checks the effect of a first step instead of repeating it", async () => {
+  const firstResponse = await request("/api/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json; charset=utf-8" },
+    body: JSON.stringify({
+      message: "我脑子很乱，想先缓一缓",
+      history: [],
+      experienceMode: "companion",
+    }),
+  });
+  const first = await firstResponse.json();
+  const firstText = [
+    first.title,
+    first.message,
+    first.followUpQuestion,
+    first.skillCard?.title,
+    first.skillCard?.summary,
+    first.skillCard?.tryNow,
+  ].filter(Boolean).join(" ");
+  const secondResponse = await request("/api/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json; charset=utf-8" },
+    body: JSON.stringify({
+      message: "我脑子还是很乱，想先缓一缓",
+      history: [
+        { role: "user", content: "我脑子很乱，想先缓一缓" },
+        { role: "assistant", content: firstText },
+      ],
+      experienceMode: "companion",
+    }),
+  });
+  const second = await secondResponse.json();
+  assert.notEqual(second.title, first.title);
+  assert.match(`${second.title} ${second.message} ${second.followUpQuestion}`, /刚才|变化|没有变化|更难受/u);
+  assert.ok(second.skillCard);
+  assert.ok(second.citations?.length > 0);
+});
+
 test("greetings and product-help questions stay conversational instead of forcing citations", async () => {
   for (const message of ["你好", "在吗？", "你能做什么？", "怎么用？"]) {
     const response = await request("/api/chat", {
@@ -450,6 +539,7 @@ test("ordinary-language situations are expanded to provisional DBT skill routes"
     ["事情已经改变不了，我还是一直抗拒", "痛苦耐受"],
     ["我总是冲动后才后悔，不知道中间哪里出了问题", "行为链"],
     ["我现在脑子很乱，冷静不下来，想先稳定一点", "危机生存"],
+    ["爱上一个薄情的男人怎么办", "人际效能"],
   ];
 
   for (const [message, retrievalAnchor] of cases) {
@@ -464,6 +554,84 @@ test("ordinary-language situations are expanded to provisional DBT skill routes"
     assert.ok(payload.citations?.length > 0, message);
     assert.match(payload.retrieval?.query ?? "", new RegExp(retrievalAnchor, "u"), message);
   }
+});
+
+test("relationship language gets a humane provisional response instead of a scope refusal", async () => {
+  for (const message of [
+    "爱上一个薄情的男人怎么办",
+    "我喜欢上一个对我忽冷忽热的人，放不下怎么办",
+    "对方越来越冷淡，我不知道这段关系该怎么办",
+  ]) {
+    const response = await request("/api/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json; charset=utf-8" },
+      body: JSON.stringify({ message, history: [] }),
+    });
+    const payload = await response.json();
+    const text = `${payload.title} ${payload.message} ${(payload.steps ?? []).join(" ")}`;
+    assert.equal(payload.kind, "answer", `${message}: ${JSON.stringify(payload)}`);
+    assert.equal(payload.mode, "guided", message);
+    assert.ok(payload.citations?.length > 0, message);
+    assert.match(text, /关系|对方|感受|事实|底线|请求/u, message);
+    assert.doesNotMatch(text, /DEAR MAN 帮你/u, message);
+    assert.doesNotMatch(text, /专业人员|范围之外|回答不了|暂时还没看出/u, message);
+  }
+});
+
+test("relationship follow-ups move forward instead of repeating the same response", async () => {
+  const firstResponse = await request("/api/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json; charset=utf-8" },
+    body: JSON.stringify({ message: "我爱上了一个薄情的男人怎么办", history: [] }),
+  });
+  const first = await firstResponse.json();
+  const firstText = `${first.title} ${first.message} ${(first.steps ?? []).join(" ")}`;
+
+  const secondResponse = await request("/api/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json; charset=utf-8" },
+    body: JSON.stringify({
+      message: "我放不下",
+      history: [
+        { role: "user", content: "我爱上了一个薄情的男人怎么办" },
+        { role: "assistant", content: firstText },
+      ],
+    }),
+  });
+  const second = await secondResponse.json();
+  const secondText = `${second.title} ${second.message} ${(second.steps ?? []).join(" ")}`;
+  assert.equal(second.kind, "answer");
+  assert.equal(second.mode, "guided");
+  assert.ok(second.citations?.length > 0);
+  assert.notEqual(second.title, first.title);
+  assert.notEqual(secondText, firstText);
+  assert.match(secondText, /放不下|舍不得|害怕失去|期待/u);
+});
+
+test("a repeated request cannot produce an identical assistant card twice", async () => {
+  const firstResponse = await request("/api/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json; charset=utf-8" },
+    body: JSON.stringify({ message: "我脑子很乱，想先缓一缓", history: [] }),
+  });
+  const first = await firstResponse.json();
+  const firstText = `${first.title} ${first.message} ${(first.steps ?? []).join(" ")}`;
+  const secondResponse = await request("/api/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json; charset=utf-8" },
+    body: JSON.stringify({
+      message: "我脑子还是很乱，想先缓一缓",
+      history: [
+        { role: "user", content: "我脑子很乱，想先缓一缓" },
+        { role: "assistant", content: firstText },
+      ],
+    }),
+  });
+  const second = await secondResponse.json();
+  const secondText = `${second.title} ${second.message} ${(second.steps ?? []).join(" ")}`;
+  assert.equal(second.kind, "answer");
+  assert.notEqual(secondText, firstText);
+  assert.match(secondText, /最卡住|事实|解释|下一步/u);
 });
 
 test("a model fallback stays useful and does not expose internal validation language", async () => {

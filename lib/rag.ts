@@ -1,11 +1,12 @@
 import rawIndex from "../data/rag/index-v1.json";
 import type { ChatPayload, SourceCitation } from "./dbt-content";
 import { conversationStarterReplies } from "./conversation-bridge";
-import {
-  knowledgeV2,
-  wikiEvidenceBoosts,
-  wikiExpansionTerms,
-} from "./knowledge-v2";
+import { knowledgeV2 } from "./knowledge-v2";
+import { createRetrievalEngine, type EngineRetrievalHit } from "./retrieval/engine";
+import { createEvidenceBundle, type EvidenceBundle } from "./retrieval/evidence-bundle";
+import type { RetrievalPlan } from "./retrieval/planner";
+export { planRetrieval } from "./retrieval/planner";
+export type { RetrievalPlan } from "./retrieval/planner";
 
 type RagPage = {
   id: string;
@@ -40,24 +41,13 @@ export type RetrievalHit = {
   page: RagPage;
   score: number;
   matchedTerms: string[];
-};
-
-export type RetrievalPlan = {
-  kind: "direct" | "guided" | "clarify" | "out-of-scope";
-  route:
-    | "direct"
-    | "emotion-facts"
-    | "distress-survival"
-    | "acceptance"
-    | "interpersonal"
-    | "behavior-chain"
-    | "clarify"
-    | "out-of-scope";
-  retrievalQuery: string;
-  label: string;
+  matchedSkillCardIds?: string[];
+  qualityScore?: number;
+  parentBlock?: EngineRetrievalHit["parentBlock"];
 };
 
 export const ragIndex = rawIndex as RagIndex;
+const retrievalEngine = createRetrievalEngine(knowledgeV2);
 
 export function retrievalMetadata(query: string, hits: RetrievalHit[]) {
   return {
@@ -82,36 +72,6 @@ const conceptGroups = [
   ["行为链", "链式分析", "问题行为", "促发事件"],
 ];
 
-const dbtScopeTerms = new Set(conceptGroups.map((group) => normalize(group[0])));
-[
-  "DBT", "辩证行为", "技能", "练习", "情绪", "痛苦", "危机", "冲动",
-  "接纳", "人际", "关系", "请求", "拒绝", "正念", "行为", "应对",
-  "焦虑", "担心", "愤怒", "羞耻", "内疚", "恐惧", "悲伤",
-  "促发事件", "智慧心", "全然接纳", "危机生存", "相反行动", "行动冲动", "不评判",
-  "假设", "观察", "描述", "参与", "专注",
-  "利弊", "转移注意力", "自我安抚", "改善当下",
-  "DEAR MAN", "DEARMAN", "GIVE", "FAST", "TIP", "TIPP", "STOP", "PLEASE", "ABC",
-].forEach((term) => dbtScopeTerms.add(normalize(term)));
-
-const explicitSkillTerms = [
-  "DBT", "辩证行为", "核对事实", "相反行为", "相反行动", "问题解决",
-  "正念", "痛苦耐受", "危机生存", "全然接纳", "彻底接纳", "情绪调节",
-  "人际效能", "智慧心", "行为链", "链式分析", "链锁分析", "DEAR MAN",
-  "DEARMAN", "GIVE", "FAST", "TIP", "TIPP", "STOP", "PLEASE", "ABC",
-  "积累正向情绪", "积累正面情绪", "利弊分析", "转移注意力", "自我安抚", "改善当下",
-];
-
-const fuzzyPsychologicalTerms = [
-  "难受", "烦躁", "崩溃", "压抑", "压力", "紧张", "心慌", "不安", "害怕",
-  "焦虑", "担心", "恐惧", "悲伤", "愤怒", "生气", "羞耻", "内疚", "委屈",
-  "情绪", "脑子很乱", "冷静不下来", "控制不住", "不知道怎么办", "撑不住",
-  "反复想", "胡思乱想", "内耗", "纠结", "放不下", "接受不了", "抗拒",
-  "冲动", "后悔", "失控", "吵架", "沟通", "表达", "边界", "关系", "伴侣",
-  "心情不好", "心情不太好", "心情不是很好", "心情有点差", "心情很差", "状态不好", "状态不太好",
-  "状态有点差", "不开心", "低落", "郁闷", "孤独", "心里堵", "有点累", "很累",
-  "好累", "疲惫", "不知道该怎么说", "不知道怎么说", "说不清", "不知道从哪说起",
-];
-
 function normalize(value: string) {
   return value
     .normalize("NFKC")
@@ -122,110 +82,6 @@ function normalize(value: string) {
 function includesAny(value: string, candidates: string[]) {
   const normalizedValue = normalize(value);
   return candidates.some((candidate) => normalizedValue.includes(normalize(candidate)));
-}
-
-/**
- * Maps ordinary, non-technical descriptions to a provisional DBT skill route.
- * This is a retrieval plan, not a diagnosis: when several routes remain equally
- * plausible we ask one small clarification instead of pretending certainty.
- */
-export function planRetrieval(query: string, recentUserContext = ""): RetrievalPlan {
-  const current = query.trim();
-  const context = `${recentUserContext} ${current}`.trim();
-
-  if (includesAny(current, explicitSkillTerms)) {
-    return {
-      kind: "direct",
-      route: "direct",
-      retrievalQuery: context,
-      label: "用户指定的 DBT 技能",
-    };
-  }
-
-  if (/^(我)?(现在|也)?(不知道(该)?怎么说|不知道从哪(里)?说起|说不清)[了呀啊呢。！!？?\s]*$/u.test(current)) {
-    return {
-      kind: "clarify",
-      route: "clarify",
-      retrievalQuery: current,
-      label: "需要确认当前目标",
-    };
-  }
-
-  if (includesAny(context, [
-    "吵架", "冲突", "沟通", "表达", "怎么说", "开口", "边界", "拒绝", "请求",
-    "一说话就", "不知道怎么表达", "想处理一段关系",
-  ])) {
-    return {
-      kind: "guided",
-      route: "interpersonal",
-      retrievalQuery: `${context} 人际效能 DEAR MAN GIVE FAST 请求 拒绝`,
-      label: "把想说的话说清楚",
-    };
-  }
-
-  if (includesAny(context, [
-    "冲动后", "冲动了", "总是冲动", "反复做", "一再", "停不下来", "控制不住",
-    "失控", "事后后悔", "又后悔", "拖延", "爆发", "问题行为",
-  ])) {
-    return {
-      kind: "guided",
-      route: "behavior-chain",
-      retrievalQuery: `${context} 行为链 链式分析 脆弱因素 促发事件 问题行为 后果`,
-      label: "看看这件事是怎么一步步发生的",
-    };
-  }
-
-  if (includesAny(context, [
-    "无法改变", "改变不了", "已经发生", "挽回不了", "接受不了", "不能接受",
-    "不愿接受", "一直抗拒", "放不下", "耿耿于怀",
-  ])) {
-    return {
-      kind: "guided",
-      route: "acceptance",
-      retrievalQuery: `${context} 痛苦耐受 接纳现实 全然接纳 转念 我愿意`,
-      label: "面对一时改变不了的事",
-    };
-  }
-
-  if (includesAny(context, [
-    "肯定会", "一定会", "一定是", "是不是", "意味着", "搞砸", "最坏", "预测",
-    "反复想", "胡思乱想", "内耗", "纠结", "想不通", "担心", "焦虑", "紧张",
-  ])) {
-    return {
-      kind: "guided",
-      route: "emotion-facts",
-      retrievalQuery: `${context} 核对事实 情绪 解释 假设 证据 威胁 预测`,
-      label: "把事实和脑中的猜测分开",
-    };
-  }
-
-  if (includesAny(context, [
-    "情绪很强", "先稳定", "冷静不下来", "快要崩溃", "情绪爆炸", "压倒",
-    "脑子很乱", "喘不过气", "当下太难熬", "先撑过去",
-  ])) {
-    return {
-      kind: "guided",
-      route: "distress-survival",
-      retrievalQuery: `${context} 痛苦耐受 危机生存 STOP 立即停止 停止动作 退后一步 客观观察 带着觉察行事`,
-      label: "情绪很强，先让自己停一下",
-    };
-  }
-
-  if (includesAny(current, fuzzyPsychologicalTerms)) {
-    return {
-      kind: "clarify",
-      route: "clarify",
-      retrievalQuery: current,
-      label: "需要确认当前目标",
-    };
-  }
-
-  return {
-    kind: "out-of-scope",
-    route: "out-of-scope",
-    retrievalQuery: current,
-    label: "当前 DBT 自助范围之外",
-  };
 }
 
 export function buildClarificationResponse(): ChatPayload {
@@ -241,188 +97,56 @@ export function buildClarificationResponse(): ChatPayload {
   };
 }
 
-const stopBigrams = new Set([
-  "什么", "怎么", "如何", "哪些", "是否", "可以", "应该", "请问", "解释",
-  "中的", "一个", "这个", "那个", "请解", "一下", "今天", "天天", "天气",
-  "气怎", "么样", "量子", "子色", "色动", "动力", "力学", "渐近", "近自", "自由",
-]);
-
-function lexicalTokens(value: string) {
-  const normalized = normalize(value);
-  const tokens = new Set<string>();
-  for (const token of value.toLowerCase().match(/[a-z][a-z0-9-]{1,}/gu) ?? []) {
-    tokens.add(normalize(token));
-  }
-  for (let index = 0; index < normalized.length - 1; index += 1) {
-    const token = normalized.slice(index, index + 2);
-    if (!stopBigrams.has(token)) tokens.add(token);
-  }
-  return [...tokens];
-}
-
-// Retrieval runs over source-exact V2 chunks. Unlike the V1 `excerpt`, each
-// chunk contains the complete OCR character range recorded in its provenance.
-const searchablePages = knowledgeV2.chunks.map((chunk) => {
-  const page: RagPage = {
-    id: chunk.id,
-    pageId: chunk.pageId,
-    sourceId: chunk.sourceId,
-    sourceFile: chunk.sourceFile,
-    book: chunk.book,
-    section: chunk.section,
-    pdfPage: chunk.pdfPage,
-    printedPage: chunk.printedPage,
-    text: chunk.text,
-    excerpt: chunk.text,
-    ocrScore: chunk.ocrScore,
-    renderDpi: 0,
-    charStart: chunk.charStart,
-    charEnd: chunk.charEnd,
-  };
-  const normalizedText = normalize(page.text);
-  const normalizedTitle = normalize(page.section);
-  return {
-    page,
-    normalizedText,
-    normalizedTitle,
-    documentLength: Math.max(normalizedText.length / 2, 1),
-    lexicalTerms: lexicalTokens(`${page.section}\n${page.text}`),
-  };
-});
-
-const documentFrequency = new Map<string, number>();
-for (const page of searchablePages) {
-  for (const term of page.lexicalTerms) {
-    documentFrequency.set(term, (documentFrequency.get(term) ?? 0) + 1);
-  }
-}
-const averageDocumentLength = searchablePages.reduce(
-  (sum, page) => sum + page.documentLength,
-  0,
-) / Math.max(searchablePages.length, 1);
-
-function terms(value: string) {
-  const normalized = normalize(value);
-  const result = new Set<string>();
-  for (const group of conceptGroups) {
-    if (group.some((concept) => normalized.includes(normalize(concept)))) {
-      for (const concept of group) {
-        const normalizedConcept = normalize(concept);
-        if (normalized.includes(normalizedConcept) || concept.length >= 4) {
-          result.add(normalizedConcept);
-        }
-      }
-    }
-  }
-  for (const token of value.toLowerCase().match(/[a-z][a-z0-9-]{1,}|[\p{Script=Han}]{2,}/gu) ?? []) {
-    const normalizedToken = normalize(token);
-    if (normalizedToken.length >= 4 && conceptGroups.some((group) => group.some(
-      (concept) => normalizedToken.includes(normalize(concept)),
-    ))) continue;
-    result.add(normalizedToken);
-  }
-  for (const term of wikiExpansionTerms(value)) {
-    result.add(normalize(term));
-  }
-  for (let index = 0; index < normalized.length - 1; index += 1) {
-    result.add(normalized.slice(index, index + 2));
-  }
-  return [...result].filter((term) => term.length > 1 && !stopBigrams.has(term));
-}
-
-function occurrences(haystack: string, needle: string) {
-  if (!needle) return 0;
-  let count = 0;
-  let cursor = 0;
-  while ((cursor = haystack.indexOf(needle, cursor)) !== -1) {
-    count += 1;
-    cursor += needle.length;
-  }
-  return count;
-}
-
 export function retrieveEvidence(query: string, limit = 6): RetrievalHit[] {
-  const queryTerms = terms(query);
-  const bm25Terms = lexicalTokens(query);
-  const normalizedQuery = normalize(query);
-  const activeGroups = conceptGroups.filter((group) =>
-    group.some((concept) => normalizedQuery.includes(normalize(concept))),
-  );
-  const hasScopeAnchor = [...dbtScopeTerms].some((term) => normalizedQuery.includes(term));
-  const wikiTerms = wikiExpansionTerms(query);
-  if (!hasScopeAnchor && !wikiTerms.length) return [];
-  if (!queryTerms.length) return [];
-  const wikiBoosts = wikiEvidenceBoosts(query);
+  return retrievalEngine.retrieve(query, limit).map((hit) => ({
+    page: {
+      id: hit.chunk.id,
+      pageId: hit.chunk.pageId,
+      sourceId: hit.chunk.sourceId,
+      sourceFile: hit.chunk.sourceFile,
+      book: hit.chunk.book,
+      section: hit.chunk.displaySection,
+      pdfPage: hit.chunk.pdfPage,
+      printedPage: hit.chunk.printedPage,
+      text: hit.chunk.text,
+      excerpt: hit.chunk.text,
+      ocrScore: hit.chunk.ocrScore,
+      renderDpi: 0,
+      charStart: hit.chunk.charStart,
+      charEnd: hit.chunk.charEnd,
+    },
+    score: hit.score,
+    matchedTerms: hit.matchedTerms,
+    matchedSkillCardIds: hit.matchedSkillCardIds,
+    qualityScore: hit.qualityScore,
+    parentBlock: hit.parentBlock,
+  }));
+}
 
-  const scored = searchablePages.map(({ page, normalizedText, normalizedTitle, documentLength }) => {
-    const matchedTerms: string[] = [];
-    let score = wikiBoosts.get(page.id) ?? 0;
-
-    for (const group of activeGroups) {
-      const canonical = normalize(group[0]);
-      if (normalizedTitle.includes(canonical)) score += 60;
-      if (normalizedText.includes(canonical)) score += 24;
-      if (canonical === normalize("正念")) {
-        if (normalizedTitle.includes(normalize("正念讲义4"))) score += 90;
-        if (normalizedTitle.includes(normalize("正念讲义5"))) score += 70;
-      }
-      for (const concept of group.slice(1)) {
-        const normalizedConcept = normalize(concept);
-        if (!normalizedQuery.includes(normalizedConcept)) continue;
-        if (normalizedTitle.includes(normalizedConcept)) score += 18;
-        if (normalizedText.includes(normalizedConcept)) score += 6;
-      }
-    }
-
-    for (const term of queryTerms) {
-      const textCount = Math.min(occurrences(normalizedText, term), 6);
-      const titleCount = occurrences(normalizedTitle, term);
-      if (textCount || titleCount) matchedTerms.push(term);
-      const lengthWeight = Math.min(term.length, 8) / 2;
-      score += textCount * lengthWeight;
-      score += titleCount * lengthWeight * 4;
-    }
-    for (const term of bm25Terms) {
-      const textFrequency = Math.min(occurrences(normalizedText, term), 8);
-      const titleFrequency = Math.min(occurrences(normalizedTitle, term), 3);
-      const frequency = textFrequency + titleFrequency * 3;
-      if (!frequency) continue;
-      const frequencyInCorpus = documentFrequency.get(term) ?? 0;
-      const inverseDocumentFrequency = Math.log(
-        1 + (searchablePages.length - frequencyInCorpus + 0.5) / (frequencyInCorpus + 0.5),
-      );
-      const lengthNormalization = 1.2 * (
-        0.25 + 0.75 * (documentLength / averageDocumentLength)
-      );
-      score += inverseDocumentFrequency * ((frequency * 2.2) / (frequency + lengthNormalization)) * 2.5;
-    }
-    if (normalizedQuery.length >= 4 && normalizedText.includes(normalizedQuery)) score += 18;
-    // Front-matter contents pages often contain every skill name but not the
-    // definition or instructions. They remain searchable as discovery aids,
-    // while substantive pages should win grounding retrieval.
-    if (page.printedPage === null && page.pdfPage <= 20) score *= 0.18;
-    if (page.ocrScore !== null && page.ocrScore < 0.75) score *= 0.72;
-    return { page, score: Math.round(score * 100) / 100, matchedTerms };
-  });
-
-  const ranked = scored
-    .filter((item) => item.score >= 1.5)
-    .sort((left, right) => right.score - left.score || left.page.pdfPage - right.page.pdfPage);
-
-  if (!ranked.length || ranked[0].matchedTerms.length < 1) return [];
-
-  // Avoid returning adjacent duplicates unless the second page adds a strong match.
-  const selected: RetrievalHit[] = [];
-  for (const hit of ranked.slice(0, Math.max(limit * 8, 24))) {
-    const duplicateNeighborhood = selected.some(
-      (current) =>
-        current.page.sourceId === hit.page.sourceId &&
-        Math.abs(current.page.pdfPage - hit.page.pdfPage) <= 1,
-    );
-    if (!duplicateNeighborhood || hit.score >= ranked[0].score * 0.72) selected.push(hit);
-    if (selected.length >= Math.min(limit, 6)) break;
+/**
+ * Quality-first evidence contract for claim-level generation. Existing callers
+ * can continue using RetrievalHit; model integrations can migrate to this
+ * bundle without changing chunk IDs or citation provenance.
+ */
+export function buildEvidenceBundle(
+  query: string,
+  hits: RetrievalHit[],
+  maxParentContext = 8,
+): EvidenceBundle {
+  const engineHits: EngineRetrievalHit[] = [];
+  for (const hit of hits) {
+    const chunk = knowledgeV2.chunks.find((item) => item.id === hit.page.id);
+    if (!chunk) continue;
+    engineHits.push({
+      chunk,
+      score: hit.score,
+      matchedTerms: hit.matchedTerms,
+      matchedSkillCardIds: hit.matchedSkillCardIds ?? chunk.skillCardIds,
+      qualityScore: hit.qualityScore ?? chunk.sourceQuality.score,
+      parentBlock: hit.parentBlock,
+    });
   }
-  return selected;
+  return createEvidenceBundle(knowledgeV2, query, engineHits, maxParentContext);
 }
 
 export function hitToCitation(hit: RetrievalHit): SourceCitation {
@@ -544,6 +268,35 @@ export function buildRetrievalFallback(
         retrieval: retrievalMetadata(query, []),
       };
     }
+    const relationalDistress = includesAny(query, [
+      "爱上", "喜欢上", "放不下", "舍不得", "冷淡", "薄情", "忽冷忽热", "不理我",
+      "没回应", "感情", "恋爱", "失恋", "暧昧", "伴侣", "对象", "前任", "关系", "相处",
+    ]);
+    if (relationalDistress) {
+      return {
+        kind: "answer",
+        title: "喜欢上一个让你摸不准的人，确实会很消耗",
+        message:
+          "先不用逼自己马上决定要不要继续，也不用急着替对方下结论。我们可以先把三件事分开：对方实际做了什么、你因此怎么想和怎么感受、你希望这段关系接下来怎样。这样更容易看清下一步，而不是被反复猜测牵着走。",
+        steps: [
+          "写下一件最近发生的具体小事，只写双方实际说了什么、做了什么。",
+          "再写下你当时的感受，以及脑中最强烈的解释；先把解释当作一种可能，而不是已经确定的事实。",
+          "最后问自己：我现在更想确认事实、表达需求，还是先让情绪缓下来？",
+        ],
+        suggestedReplies: [
+          "我想先说一件最近发生的事",
+          "我想判断自己是不是一直在猜",
+          "我想想清楚要怎么和对方说",
+        ],
+        citations: [],
+        nextAction: "none",
+        mode: "guided",
+        generation: generationStatus
+          ? { attempted: true, status: generationStatus }
+          : undefined,
+        retrieval: retrievalMetadata(query, []),
+      };
+    }
     return {
       kind: "refusal",
       title: "我暂时还没看出该从哪种 DBT 方法开始",
@@ -558,6 +311,58 @@ export function buildRetrievalFallback(
   }
 
   const top = hits[0];
+  if (plan?.situation === "relationship-attachment") {
+    return {
+      kind: "answer",
+      title: "放不下，不是逼自己说一句“算了”就能做到",
+      message:
+        "你可以一边舍不得，一边慢慢看清这段关系。先不用要求自己马上忘掉他，也不用因为还在意，就忽略那些让你受伤的事实。现在更重要的是弄清：你舍不得的究竟是什么，以及继续靠近会不会让你越来越委屈自己。",
+      steps: [
+        "先完成一句：我最舍不得的是这个人、曾经的感觉，还是对未来的期待？",
+        "再写一句：即使我舍不得，目前已经能确认的事实是……",
+        "想一想：如果好朋友处在同样的关系里，我会希望她守住什么底线？",
+        "今天只决定一个小步骤：继续观察、确认一件事，或者先拉开一点距离照顾自己。",
+      ],
+      suggestedReplies: [
+        "我最舍不得的是……",
+        "我已经能确认的事实是……",
+        "我最怕放下以后会……",
+      ],
+      citations,
+      nextAction: "none",
+      mode: "guided",
+      generation: generationStatus
+        ? { attempted: true, status: generationStatus }
+        : undefined,
+      retrieval: retrievalMetadata(query, hits),
+    };
+  }
+  if (plan?.situation === "relationship-distress") {
+    return {
+      kind: "answer",
+      title: "喜欢上一个让你反复受伤的人，确实很难一下放下",
+      message:
+        "你一边在意他，一边又被他的态度弄得难受，这两种感受可以同时存在。先不用逼自己马上离开或继续，也先不把“薄情”当成已经核实的全部事实。更有用的是看清：他实际怎么对待你、这段关系让你付出了什么，以及你真正想要怎样的关系。",
+      steps: [
+        "选一件最近发生的具体小事，只写他实际说了什么、做了什么。",
+        "再写下这件事带给你的感受，以及你脑中对他的解释；把事实和解释暂时分开。",
+        "问问自己：我想从这段关系得到什么？我需要守住什么底线，才不会越来越委屈自己？",
+        "如果你想和他谈，再把最想确认的一件事或最重要的一个请求说清楚。",
+      ],
+      suggestedReplies: [
+        "我想先说一件他最近做的事",
+        "我想看看哪些是事实，哪些是我的猜测",
+        "我想想清楚自己的底线",
+      ],
+      citations,
+      nextAction: "none",
+      mode: "guided",
+      generation: generationStatus
+        ? { attempted: true, status: generationStatus }
+        : undefined,
+      retrieval: retrievalMetadata(query, hits),
+    };
+  }
   const normalizedQuery = normalize(query);
   const templateQuery = plan?.kind === "guided" ? plan.retrievalQuery : query;
   const template = groundedTemplate(templateQuery, hits);

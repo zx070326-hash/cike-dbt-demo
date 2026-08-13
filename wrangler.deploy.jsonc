@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cike-dbt-demo",
+  "main": "dist/server/index.js",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "dist/client"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "DEMO_EXPIRES_AT": "2026-08-16T16:01:26.000Z",
+    "DEMO_MODEL_MODE": "generated",
+    "MODEL_PROVIDER": "openai-compatible",
+    "MODEL_BASE_URL": "https://api.deepseek.com",
+    "MODEL_NAME": "deepseek-v4-flash",
+    "MODEL_TIMEOUT_MS": "25000",
+    "MODEL_VERIFY_GROUNDING": "true"
+  }
+}

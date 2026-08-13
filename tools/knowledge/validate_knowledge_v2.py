@@ -55,6 +55,33 @@ def main() -> None:
     ]
     if unresolved:
         raise AssertionError(f"unresolved wiki evidence links: {unresolved[:5]}")
+    required_claims = ("definition", "applicableWhen", "notApplicableWhen", "firstStep")
+    for node in knowledge["wikiNodes"]:
+        if node.get("contentAuthority") != "navigation-only" and node.get("reviewStatus") != "professionally-reviewed":
+            raise AssertionError(f"unreviewed skill card has authoritative content: {node['id']}")
+        for claim_name in required_claims:
+            claim = node.get(claim_name)
+            if not isinstance(claim, dict) or "text" not in claim or "evidenceIds" not in claim:
+                raise AssertionError(f"incomplete skill-card claim {node['id']}:{claim_name}")
+            unknown_claim_evidence = [chunk_id for chunk_id in claim["evidenceIds"] if chunk_id not in chunk_ids]
+            if unknown_claim_evidence:
+                raise AssertionError(f"unknown claim evidence {node['id']}:{claim_name}: {unknown_claim_evidence[:3]}")
+
+    parent_ids = set()
+    for block in knowledge.get("parentBlocks", []):
+        if block["id"] in parent_ids:
+            raise AssertionError(f"duplicate parent block: {block['id']}")
+        parent_ids.add(block["id"])
+        unknown_parent_chunks = [chunk_id for chunk_id in block["chunkIds"] if chunk_id not in chunk_ids]
+        if unknown_parent_chunks:
+            raise AssertionError(f"unknown parent block chunks: {block['id']}: {unknown_parent_chunks[:3]}")
+        if not block.get("sourceExact"):
+            raise AssertionError(f"parent block is not source exact: {block['id']}")
+    for chunk in chunks:
+        if chunk.get("parentBlockId") not in parent_ids:
+            raise AssertionError(f"chunk missing parent block: {chunk['id']}")
+        if chunk.get("displaySection") is None or chunk.get("sourceQuality") is None:
+            raise AssertionError(f"chunk missing V3 derived metadata: {chunk['id']}")
     coverage = knowledge["coverage"]
     assert coverage["indexedPageCount"] == len(pages)
     assert coverage["sourceCharacterCount"] == source_characters
@@ -62,6 +89,7 @@ def main() -> None:
     assert coverage["characterCoverage"] == 1
     assert coverage["orphanNonEmptyPageCount"] == 0
     assert coverage["unresolvedWikiLinkCount"] == 0
+    assert coverage["parentBlockCount"] == len(parent_ids)
     print(json.dumps({"status": "PASS", **coverage}, ensure_ascii=False, indent=2))
 
 

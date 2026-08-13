@@ -10,14 +10,14 @@
     "id": "mindfulness-what",
     "label": "正念“是什么”技能",
     "module": "mindfulness",
-    "aliases": ["正念是什么技能", "观察", "描述", "参与"],
+    "aliases": ["正念", "正念是什么技能", "观察", "描述", "参与"],
     "related": ["mindfulness-wise-mind", "mindfulness-how"]
   },
   {
     "id": "mindfulness-how",
     "label": "正念“怎样做”技能",
     "module": "mindfulness",
-    "aliases": ["正念怎样做技能", "不评判", "一心一意", "专一地做", "有效地做"],
+    "aliases": ["正念怎样做技能", "不评判", "一心一意", "一次专注做一件事", "专一地做", "有效地做"],
     "related": ["mindfulness-wise-mind", "mindfulness-what"]
   },
   {
@@ -38,7 +38,7 @@
     "id": "distress-crisis-survival",
     "label": "危机生存技能",
     "module": "distress-tolerance",
-    "aliases": ["危机生存", "转移注意力", "自我安抚", "改善当下", "利弊分析"],
+    "aliases": ["痛苦耐受", "痛苦忍受", "危机生存", "转移注意力", "自我安抚", "改善当下", "利弊分析"],
     "related": ["distress-stop", "distress-tip", "distress-radical-acceptance"]
   },
   {
@@ -80,7 +80,7 @@
     "id": "emotion-vulnerability",
     "label": "降低情绪脆弱性",
     "module": "emotion-regulation",
-    "aliases": ["降低情绪脆弱性", "PLEASE", "照顾身体", "积累正向情绪", "积累正面情绪", "建立掌控感", "预先应对"],
+    "aliases": ["降低情绪脆弱性", "PLEASE", "ABC", "照顾身体", "积累正向情绪", "积累正面情绪", "建立掌控感", "预先应对"],
     "related": ["emotion-understand"]
   },
   {

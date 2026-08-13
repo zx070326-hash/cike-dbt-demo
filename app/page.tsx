@@ -5,7 +5,6 @@ import Image from "next/image";
 import {
   ArrowRight,
   BookOpen,
-  ExternalLink,
   Home as HomeIcon,
   ListChecks,
   MessageCircle,
@@ -18,9 +17,11 @@ import {
 import knowledgeManifest from "../data/knowledge/manifest-v2.json";
 import {
   ChatPayload,
+  ExperienceMode,
   SourceCitation,
   sourceCitations,
 } from "../lib/dbt-content";
+import { ConversationAnswer } from "./components/ConversationAnswer";
 
 type Tab = "home" | "chat" | "skills" | "practice" | "records";
 
@@ -29,6 +30,7 @@ type Message = {
   role: "user" | "assistant";
   text?: string;
   payload?: ChatPayload;
+  experienceMode?: ExperienceMode;
 };
 
 type PracticeRecord = {
@@ -83,11 +85,18 @@ const practiceSteps = [
   },
 ] as const;
 
-const quickPrompts = [
+const companionPrompts = [
   "我脑子很乱，想先缓一缓",
   "一件事反复在脑子里转，我想理清楚",
   "我不知道该怎么和对方开口",
-  "情绪很强时，有什么能马上练的方法？",
+  "我今天心情不太好，但不知道怎么说",
+];
+
+const deepReadPrompts = [
+  "STOP 技能怎么做？",
+  "全然接纳和认命有什么不同？",
+  "什么是核对事实？",
+  "DEAR MAN 适合什么时候用？",
 ];
 
 const skillModules = [
@@ -125,9 +134,10 @@ const initialMessages: Message[] = [
       kind: "answer",
       title: "先说一句就好",
       message:
-        "不用先想清楚该用什么方法。你可以说说今天发生了什么，或者现在最难受的是什么；等方向清楚后，我再从书里找对应的方法和页码。",
+        "不用先想清楚该用什么方法。你可以说说今天发生了什么，或者现在最难受的是什么。我们先把眼前这一小段说清楚，再决定要不要一起看书里的方法。",
       nextAction: "none",
       mode: "bridge",
+      experienceMode: "companion",
     },
   },
 ];
@@ -140,14 +150,51 @@ function citationsForPayload(payload?: ChatPayload) {
     .filter(Boolean);
 }
 
-function pageLabel(citation: SourceCitation) {
-  return citation.printedPage
-    ? `印刷第 ${citation.printedPage} 页`
-    : `PDF 第 ${citation.pdfPage} 页`;
-}
-
 function createId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function normalizeChatPayload(value: unknown, mode: ExperienceMode): ChatPayload & { error?: string } {
+  if (!value || typeof value !== "object") {
+    return {
+      kind: "refusal",
+      title: "刚才的回答没有完整送达",
+      message: "网络返回的内容不完整。你的话没有被重复提交，可以点一次发送再试。",
+      experienceMode: mode,
+    };
+  }
+
+  const raw = value as Record<string, unknown>;
+  const kind = raw.kind === "answer" || raw.kind === "refusal" || raw.kind === "crisis"
+    ? raw.kind
+    : "refusal";
+  const cleanStrings = (items: unknown) => Array.isArray(items)
+    ? items.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).slice(0, 8)
+    : undefined;
+
+  return {
+    ...raw,
+    kind,
+    title: typeof raw.title === "string" && raw.title.trim()
+      ? raw.title
+      : kind === "refusal" ? "这件事需要更稳妥地处理" : "我们慢慢来",
+    message: typeof raw.message === "string" && raw.message.trim()
+      ? raw.message
+      : "刚才的回答没有完整显示。你可以换个说法再试一次。",
+    steps: cleanStrings(raw.steps),
+    suggestedReplies: cleanStrings(raw.suggestedReplies),
+    experienceMode: raw.experienceMode === "companion" || raw.experienceMode === "deep-read"
+      ? raw.experienceMode
+      : mode,
+    skillCard: raw.skillCard && typeof raw.skillCard === "object"
+      ? raw.skillCard as ChatPayload["skillCard"]
+      : undefined,
+    citations: Array.isArray(raw.citations)
+      ? raw.citations.filter((citation) => citation && typeof citation === "object") as SourceCitation[]
+      : undefined,
+    citationIds: cleanStrings(raw.citationIds),
+    error: typeof raw.error === "string" ? raw.error : undefined,
+  } as ChatPayload & { error?: string };
 }
 
 function looksLikePracticeEvent(value: string) {
@@ -164,6 +211,7 @@ export default function Home() {
   const [tab, setTab] = useState<Tab>("home");
   const [consented, setConsented] = useState<boolean | null>(null);
   const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [experienceMode, setExperienceMode] = useState<ExperienceMode>("companion");
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [busySeconds, setBusySeconds] = useState(0);
@@ -186,10 +234,15 @@ export default function Home() {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const panelScrollRef = useRef<HTMLDivElement | null>(null);
   const requestControllerRef = useRef<AbortController | null>(null);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setConsented(localStorage.getItem("dbt-demo-consent-v1") === "accepted");
+      const storedMode = localStorage.getItem("dbt-experience-mode-v1");
+      if (storedMode === "companion" || storedMode === "deep-read") {
+        setExperienceMode(storedMode);
+      }
       const stored = localStorage.getItem("dbt-practice-records-v1");
       if (stored) {
         try {
@@ -240,14 +293,23 @@ export default function Home() {
     .find((message) => message.role === "assistant")?.payload;
 
   const busyLabel = busySeconds < 3
-    ? "先看看你在说什么"
+    ? experienceMode === "companion" ? "先听懂你在说什么" : "先读懂你的问题"
     : busySeconds < 8
-      ? "正在从书里找相关内容"
+      ? experienceMode === "companion" ? "正在找一段真正贴近的书中方法" : "正在从两册书里查找"
       : "正在核对内容和页码";
+
+  const quickPrompts = experienceMode === "companion" ? companionPrompts : deepReadPrompts;
 
   function acceptBoundary() {
     localStorage.setItem("dbt-demo-consent-v1", "accepted");
     setConsented(true);
+  }
+
+  function changeExperienceMode(nextMode: ExperienceMode) {
+    if (busy || nextMode === experienceMode) return;
+    setExperienceMode(nextMode);
+    localStorage.setItem("dbt-experience-mode-v1", nextMode);
+    window.setTimeout(() => inputRef.current?.focus(), 0);
   }
 
   function openChat(prompt?: string) {
@@ -269,11 +331,13 @@ export default function Home() {
   async function sendMessage(event?: FormEvent, preset?: string) {
     event?.preventDefault();
     const message = (preset ?? input).trim();
-    if (!message || busy) return;
+    if (!message || busy || submittingRef.current) return;
+    submittingRef.current = true;
+    const requestMode = experienceMode;
 
     setMessages((items) => [
       ...items,
-      { id: createId(), role: "user", text: message },
+      { id: createId(), role: "user", text: message, experienceMode: requestMode },
     ]);
     setInput("");
     setBusySeconds(0);
@@ -290,7 +354,18 @@ export default function Home() {
           role: item.role,
           content: item.role === "user"
             ? item.text ?? ""
-            : [item.payload?.title, item.payload?.message, ...(item.payload?.steps ?? [])]
+            : [
+                item.payload?.title,
+                item.payload?.message,
+                item.payload?.followUpQuestion,
+                item.payload?.skillCard?.label,
+                item.payload?.skillCard?.title,
+                item.payload?.skillCard?.summary,
+                item.payload?.skillCard?.whyItMayHelp,
+                item.payload?.skillCard?.tryNow,
+                ...(item.payload?.skillCard?.takeaways ?? []),
+                ...(item.payload?.steps ?? []),
+              ]
               .filter(Boolean)
               .join(" "),
         }))
@@ -299,21 +374,29 @@ export default function Home() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message, history }),
+        body: JSON.stringify({ message, history, experienceMode: requestMode }),
         signal: controller.signal,
       });
-      const payload = (await response.json()) as ChatPayload & { error?: string };
+      const responseText = await response.text();
+      let payload: ChatPayload & { error?: string };
+      try {
+        payload = normalizeChatPayload(JSON.parse(responseText) as unknown, requestMode);
+      } catch {
+        payload = normalizeChatPayload(null, requestMode);
+      }
       setMessages((items) => [
         ...items,
         {
           id: createId(),
           role: "assistant",
+          experienceMode: requestMode,
           payload: response.ok
-              ? payload
+              ? { ...payload, experienceMode: payload.experienceMode ?? requestMode }
               : {
                   kind: "refusal",
                   title: "刚才没有成功",
                   message: payload.error ?? "可以再试一次，或者先去看看技能和练习。",
+                  experienceMode: requestMode,
                 },
         },
       ]);
@@ -324,12 +407,14 @@ export default function Home() {
         {
           id: createId(),
           role: "assistant",
+          experienceMode: requestMode,
           payload: {
             kind: "refusal",
             title: wasAborted ? "已经停止等待" : "刚才没有收到回复",
             message: wasAborted
               ? "这次没有继续提交。你可以换个说法再试，也可以先去看看技能和练习。"
               : "可能是网络有点慢。你可以再试一次，也可以先去看看技能和练习。",
+            experienceMode: requestMode,
           },
         },
       ]);
@@ -338,6 +423,7 @@ export default function Home() {
       if (requestControllerRef.current === controller) {
         requestControllerRef.current = null;
       }
+      submittingRef.current = false;
       setBusy(false);
     }
   }
@@ -441,7 +527,7 @@ export default function Home() {
                   </p>
                   <h1>
                     {tab === "chat"
-                      ? "把困扰说出来，我们一起理一理"
+                      ? "先说说，此刻怎么了"
                       : tab === "skills"
                         ? "你现在更需要哪一种帮助？"
                         : tab === "practice"
@@ -538,25 +624,59 @@ export default function Home() {
 
             {tab === "chat" && (
               <div className="chat-view">
-                <div className="flow-strip" aria-label="本次使用路径">
-                  <span className="active"><b>1</b> 说说发生了什么</span>
-                  <ArrowRight size={13} aria-hidden="true" />
-                  <span className={messages.length > 1 ? "active" : ""}><b>2</b> 找到合适的方法</span>
-                  <ArrowRight size={13} aria-hidden="true" />
-                  <button onClick={() => { setPracticeContext(""); setTab("practice"); }}><b>3</b> 跟着做一遍</button>
+                <div className="experience-switch" role="group" aria-label="选择对话方式">
+                  <button
+                    type="button"
+                    className={experienceMode === "companion" ? "active" : ""}
+                    aria-pressed={experienceMode === "companion"}
+                    disabled={busy}
+                    onClick={() => changeExperienceMode("companion")}
+                  >
+                    <MessageCircle size={17} aria-hidden="true" />
+                    <span><strong>陪伴对话</strong><small>先回应你的感受，再带来一个相关方法</small></span>
+                    <b>默认</b>
+                  </button>
+                  <button
+                    type="button"
+                    className={experienceMode === "deep-read" ? "active" : ""}
+                    aria-pressed={experienceMode === "deep-read"}
+                    disabled={busy}
+                    onClick={() => changeExperienceMode("deep-read")}
+                  >
+                    <BookOpen size={17} aria-hidden="true" />
+                    <span><strong>知识伴读</strong><small>系统理解方法、步骤和书中出处</small></span>
+                  </button>
                 </div>
-                <p className="quick-label">不知道从哪里说起？可以先点一句</p>
-                <div className="quick-prompts" aria-label="示例问题">
-                  {quickPrompts.map((prompt) => (
-                    <button key={prompt} onClick={() => sendMessage(undefined, prompt)}>
-                      {prompt}
-                    </button>
-                  ))}
+                <div className={`mode-intro ${experienceMode}`}>
+                  <Sparkles size={15} aria-hidden="true" />
+                  <p>{experienceMode === "companion"
+                    ? "这里不会急着给结论。先听懂你正经历什么，每次只往前走一小步；提到 DBT 方法时，仍能回到书本出处。"
+                    : "适合带着问题读 DBT。先给通俗解释，需要时再展开步骤和原书来源，不把大段摘录堆到你面前。"}</p>
                 </div>
+                {messages.length === 1 && (
+                  <>
+                    <p className="quick-label">{experienceMode === "companion" ? "不知道从哪里说起？可以先点一句" : "想先读哪一种方法？"}</p>
+                    <div className="quick-prompts" aria-label="示例问题">
+                      {quickPrompts.map((prompt) => (
+                        <button key={prompt} disabled={busy} onClick={() => sendMessage(undefined, prompt)}>
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
 
                 <div className="message-list" aria-live="polite">
+                  {messages.length === 1 && (
+                    <div className="conversation-empty" aria-hidden="true">
+                      <span>{experienceMode === "companion" ? "从一句话开始就好" : "带着一个问题来读"}</span>
+                      <p>{experienceMode === "companion"
+                        ? "一个感受、一件刚发生的事，或者“我也说不清”都可以。"
+                        : "可以输入技能名，也可以直接问它什么时候有用、该怎么练。"}</p>
+                    </div>
+                  )}
                   {messages.map((message, index) =>
-                    message.role === "user" ? (
+                    message.id === "welcome" ? null : message.role === "user" ? (
                       <div
                         className="user-message"
                         key={message.id}
@@ -568,61 +688,22 @@ export default function Home() {
                       </div>
                     ) : (
                       <article
-                        className={`assistant-card ${message.payload?.kind ?? "answer"}`}
+                        className={`assistant-card ${message.payload?.kind ?? "answer"} ${(message.payload?.experienceMode ?? message.experienceMode) === "companion" ? "companion-answer" : "deep-answer"}`}
                         key={message.id}
                         ref={(node) => {
                           if (index === messages.length - 1) latestMessageRef.current = node;
                         }}
                       >
-                        <div className="assistant-label">
-                          <span aria-hidden="true">◎</span>
-                          {message.payload?.kind === "crisis"
-                            ? "现在先保证安全"
-                            : message.payload?.kind === "refusal"
-                              ? "这类问题需要专业人员"
-                              : message.payload?.mode === "bridge"
-                                ? "先听你说"
-                                : "参考书中内容"}
-                        </div>
-                        <h2>{message.payload?.title}</h2>
-                        <p>{message.payload?.message}</p>
-                        {!!message.payload?.steps?.length && (
-                          <ol className="answer-steps">
-                            {message.payload.steps.map((step) => (
-                              <li key={step}>{step}</li>
-                            ))}
-                          </ol>
-                        )}
-                        {!!message.payload?.suggestedReplies?.length && (
-                          <div className="reply-suggestions" aria-label="选择一个方向继续">
-                            {message.payload.suggestedReplies.map((reply) => (
-                              <button key={reply} onClick={() => sendMessage(undefined, reply)}>
-                                {reply}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                        {message.payload?.kind === "crisis" && (
-                          <div className="crisis-actions">
-                            <a href="tel:12356">拨打 12356</a>
-                            <a href="tel:120">紧急情况拨打 120</a>
-                          </div>
-                        )}
-                        {!!citationsForPayload(message.payload).length && (
-                          <div className="citation-row">
-                            {citationsForPayload(message.payload).map((citation) => (
-                              <button key={citation.id} onClick={() => setSource(citation)}>
-                                <span>来源</span>
-                                {pageLabel(citation)}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                        {message.payload?.nextAction === "practice" && (
-                          <button className="primary-inline" onClick={() => startPracticeFromConversation(index)}>
-                            跟着做一遍 <ArrowRight size={15} aria-hidden="true" />
-                          </button>
-                        )}
+                        <ConversationAnswer
+                          payload={message.payload}
+                          mode={message.payload?.experienceMode ?? message.experienceMode ?? "companion"}
+                          sources={citationsForPayload(message.payload)}
+                          isLatest={index === messages.length - 1 && index > 0}
+                          busy={busy}
+                          onPrompt={(prompt) => sendMessage(undefined, prompt)}
+                          onPractice={() => startPracticeFromConversation(index)}
+                          onSource={setSource}
+                        />
                       </article>
                     ),
                   )}
@@ -644,15 +725,24 @@ export default function Home() {
                   )}
                 </div>
 
-                <form className="composer" onSubmit={(event) => sendMessage(event)}>
-                  <label htmlFor="chat-input">把刚才的事告诉我</label>
+                <form className="composer" onSubmit={(event) => sendMessage(event)} aria-busy={busy}>
+                  <label htmlFor="chat-input">{experienceMode === "companion" ? "把现在最想说的告诉我" : "输入想了解的 DBT 方法或问题"}</label>
                   <div>
                     <textarea
                       id="chat-input"
                       ref={inputRef}
                       value={input}
                       onChange={(event) => setInput(event.target.value)}
-                      placeholder="比如：领导一直没回消息，我开始担心是不是自己做错了……"
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+                          event.preventDefault();
+                          void sendMessage();
+                        }
+                      }}
+                      enterKeyHint="enter"
+                      placeholder={experienceMode === "companion"
+                        ? "比如：领导一直没回消息，我开始担心是不是自己做错了……"
+                        : "比如：核对事实适合什么时候用？"}
                       rows={2}
                       maxLength={1000}
                     />
@@ -660,7 +750,7 @@ export default function Home() {
                       <Send size={19} aria-hidden="true" />
                     </button>
                   </div>
-                  <p>回答可能不准确；涉及安全、诊断或用药，请找专业人员。</p>
+                  <p>{busy ? "正在回复，请不要重复提交；等待较久时可以停止。" : "Ctrl/⌘ + Enter 发送。涉及安全、诊断或用药，请找专业人员。"}</p>
                 </form>
               </div>
             )}
@@ -982,67 +1072,50 @@ export default function Home() {
             </nav>
           </section>
 
-          {tab === "chat" && <aside className="evidence-panel">
-            <div className="evidence-heading">
-              <p className="kicker">这次回答参考了什么</p>
-              <h2>{latestAssistant?.mode === "bridge" ? "这次还没用到书里的方法" : "这次回答的出处"}</h2>
-              <p>{latestAssistant?.mode === "bridge"
-                ? "现在只是先听懂你想处理什么。等方向清楚后，再从书里找对应的方法。"
-                : "下面列的是这次回答参考的书本位置。文字识别可能有误，点开可以对照原页。"}</p>
-            </div>
-            <div className="status-card">
+          {tab === "chat" && <aside className="evidence-panel conversation-aside">
+            <div className="aside-mode-mark">
+              {experienceMode === "companion" ? <MessageCircle size={18} aria-hidden="true" /> : <BookOpen size={18} aria-hidden="true" />}
               <div>
-                <span>这次是怎么回答的</span>
-                <strong>
-                  {latestAssistant?.mode === "generated"
-                    ? "结合书本内容回答"
-                    : latestAssistant?.mode === "bridge"
-                      ? "先听你把话说清楚"
-                    : latestAssistant?.mode === "guided"
-                      ? "结合你说的事来说明"
-                    : latestAssistant?.generation?.attempted
-                      ? "改用书里的固定说明"
-                    : latestAssistant?.mode === "retrieval"
-                      ? "从书里查找相关内容"
-                      : "使用人工整理的说明"}
-                </strong>
+                <span>当前方式</span>
+                <strong>{experienceMode === "companion" ? "陪伴对话" : "知识伴读"}</strong>
               </div>
-              <i>已完成</i>
             </div>
-            <div className="source-list">
-              {activeSources.length ? (
-                activeSources.map((citation) => (
-                  <button key={citation.id} onClick={() => setSource(citation)}>
-                    <span className="page-token">
-                      {citation.printedPage ? `书 ${citation.printedPage}` : `PDF ${citation.pdfPage}`}
-                    </span>
-                    <span>
-                      <strong>{citation.section}</strong>
-                      <small>PDF 第 {citation.pdfPage} 页</small>
-                    </span>
-                    <ExternalLink size={13} aria-hidden="true" />
+            <div className="evidence-heading">
+              <p className="kicker">这一轮，我们先做什么</p>
+              <h2>{latestAssistant?.skillCard
+                ? `先试试：${latestAssistant.skillCard.label}`
+                : experienceMode === "deep-read"
+                  ? "从一个想弄懂的问题开始"
+                  : latestAssistant?.mode === "bridge"
+                  ? "先把眼前的感受说清楚"
+                  : "读懂一个方法，再决定要不要练"}</h2>
+              <p>{experienceMode === "companion"
+                ? "不会一口气塞给你很多知识。每轮只回应一个重点，再给一个可以选择的小方向。"
+                : "通俗解释在前，细节和来源按需展开。你随时可以切回陪伴对话。"}</p>
+            </div>
+
+            <details className="aside-sources">
+              <summary>本轮书本依据 <b>{activeSources.length}</b></summary>
+              <div>
+                {activeSources.length ? activeSources.map((citation) => (
+                  <button key={citation.id} type="button" onClick={() => setSource(citation)}>
+                    <strong>{citation.section}</strong>
+                    <small>{citation.printedPage ? `书中 ${citation.printedPage} 页` : `PDF ${citation.pdfPage} 页`}</small>
                   </button>
-                ))
-              ) : (
-                <p className="no-sources">{latestAssistant?.mode === "bridge"
-                  ? "等你选好想处理的方向，再从书里找方法和页码。"
-                  : "问一个问题后，参考的书页会出现在这里。"}</p>
-              )}
-            </div>
-            <div className="boundary-card">
-              <span>这里能做什么</span>
-              <ul>
-                <li>可以查两册书，“核对事实”还能跟着练一遍</li>
-                <li>不做诊断，也不提供用药建议</li>
-                <li>拿不准时会先问清楚，不会硬套一个方法</li>
-              </ul>
+                )) : (
+                  <p>这一轮还在倾听或澄清，没有硬套书中方法。</p>
+                )}
+              </div>
+            </details>
+
+            <div className="aside-boundary">
+              <ShieldAlert size={16} aria-hidden="true" />
+              <p><strong>这是自助支持，不是诊断。</strong>涉及安全、诊断或用药时，我们会先说明边界并提示合适的求助方式。</p>
             </div>
             <p className="evidence-footnote">
               {latestAssistant?.retrieval
-                ? `这次查看了 ${latestAssistant.retrieval.resultCount} 处相关内容 · 两册书共收录 ${latestAssistant.retrieval.corpusPages} 页`
-                : latestAssistant?.mode === "bridge"
-                  ? "现在先听你说；讲到具体方法时会标出书本页码"
-                  : `两册书共 ${knowledgeManifest.coverage.indexedPageCount} 页 · 有文字的页面已全部收录`}
+                ? `本轮检索 ${latestAssistant.retrieval.resultCount} 处内容，来源可逐页核对`
+                : `两册书共收录 ${knowledgeManifest.coverage.indexedPageCount} 个 PDF 页面`}
             </p>
           </aside>}
         </div>
@@ -1090,11 +1163,11 @@ export default function Home() {
                 </div>
               </>
             ) : (
-              <div className="ocr-evidence">
-                <span>书页文字摘录</span>
+              <details className="ocr-evidence">
+                <summary>查看系统定位到的 OCR 原文</summary>
                 <p>{source.evidence}</p>
-                <small>这张扫描页暂未公开，可以按上面的 PDF 页码回到原书核对。</small>
-              </div>
+                <small>原文用于核对出处，可能有断句或识别错误；伴读卡是基于相关书页整理的通俗说明，不是逐字摘录。</small>
+              </details>
             )}
             <p className="source-book">{source.book}</p>
           </section>

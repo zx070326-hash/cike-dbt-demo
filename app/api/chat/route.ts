@@ -3,12 +3,13 @@ import {
   normalizeHistory,
   runAssistantTurn,
 } from "../../../lib/application/run-assistant-turn";
+import type { ExperienceMode } from "../../../lib/dbt-content";
 
 export async function POST(request: Request) {
-  let body: { message?: unknown; history?: unknown };
+  let body: { message?: unknown; history?: unknown; experienceMode?: unknown };
 
   try {
-    body = (await request.json()) as { message?: unknown; history?: unknown };
+    body = (await request.json()) as { message?: unknown; history?: unknown; experienceMode?: unknown };
   } catch {
     return NextResponse.json({ error: "请求格式无效" }, { status: 400 });
   }
@@ -23,6 +24,7 @@ export async function POST(request: Request) {
   const payload = await runAssistantTurn(
     body.message.trim(),
     normalizeHistory(body.history),
+    (body.experienceMode === "companion" ? "companion" : "deep-read") as ExperienceMode,
   );
   return NextResponse.json(payload);
 }

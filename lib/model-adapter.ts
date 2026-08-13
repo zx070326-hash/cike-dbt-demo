@@ -1,7 +1,13 @@
-import type { ChatPayload, SourceCitation } from "./dbt-content";
+import type { ChatPayload, SkillCard, SourceCitation } from "./dbt-content";
 import { conversationStarterReplies } from "./conversation-bridge";
 import type { RetrievalHit, RetrievalPlan } from "./rag";
-import { hitToCitation } from "./rag";
+import { buildEvidenceBundle } from "./rag";
+import {
+  claimsToReadableText,
+  resolveClaimCitations,
+  validateGroundedClaims,
+  type GroundedClaim,
+} from "./grounding";
 
 type ModelConfig = {
   provider: "openai-compatible" | "anthropic";
@@ -52,13 +58,16 @@ function buildPrompt(
   history: ConversationTurn[],
   plan?: RetrievalPlan,
 ) {
-  const evidence = hits
-    .map(
-      (hit, index) =>
-        `[E${index + 1}] ${hit.page.book}｜${hit.page.section}｜PDF第${hit.page.pdfPage}页` +
-        `${hit.page.printedPage ? `｜印刷第${hit.page.printedPage}页` : ""}` +
-        `${typeof hit.page.charStart === "number" ? `｜原文字符${hit.page.charStart}-${hit.page.charEnd}` : ""}` +
-        `\n${hit.page.excerpt}`,
+  // Four high-quality primary fragments plus a small parent window are enough
+  // for one DBT step. Keeping the evidence packet bounded materially reduces
+  // mobile latency and prevents unrelated chapters from diluting grounding.
+  const bundle = buildEvidenceBundle(query, hits.slice(0, 4), 3);
+  const evidence = bundle.evidence
+    .map((item) =>
+      `[${item.evidenceId}] ${item.book}｜${item.section}｜PDF第${item.pdfPage}页` +
+      `${item.printedPage ? `｜印刷第${item.printedPage}页` : ""}` +
+      `｜原文字符${item.charStart}-${item.charEnd}｜${item.role === "primary" ? "主要证据" : "章节上下文"}` +
+      `\n${item.text}`,
     )
     .join("\n\n");
   const conversation = history.length
@@ -70,7 +79,12 @@ function buildPrompt(
   const routeHint = plan?.kind === "guided"
     ? `系统的暂定技能路由是“${plan.label}”（${plan.route}）。这是待用户核实的入口，不是诊断；不要改成另一个标准化技能。`
     : "用户已直接询问技能，按问题和证据回答。";
-  return `最近对话仅用于理解指代和用户情境，不是专业知识证据：\n${conversation}\n\n用户当前问题：${query}\n\n${routeHint}\n\n仅可使用以下书内证据：\n${evidence}`;
+  const claimPolicy = bundle.claimBindings.length
+    ? bundle.claimBindings.map((binding) =>
+      `${binding.claimType} 只允许引用：${binding.allowedEvidenceIds.join(", ") || "无"}`,
+    ).join("\n")
+    : "没有预先绑定的技能卡主张；只能根据下方原文谨慎生成并逐条引用。";
+  return `最近对话仅用于理解指代和用户情境，不是专业知识证据：\n${conversation}\n\n用户当前问题：${query}\n\n${routeHint}\n\n引用规则：DBT定义、适用性和练习动作必须分别放入claims；每条claim必须列出直接支持它的证据编号。未经专业审核的技能卡只是导航，不能引用其草稿文字。\n候选主张允许范围：\n${claimPolicy}\n\n仅可使用以下书内原文证据：\n${evidence}`;
 }
 
 const systemPrompt = `你是面向18岁以上成人的DBT心理自助技能助手，不是真人咨询师。
@@ -78,12 +92,11 @@ const systemPrompt = `你是面向18岁以上成人的DBT心理自助技能助�
 不得诊断、推荐或调整药物、声称治疗效果、伪造来源，或使用证据外的心理学知识补全答案。
 不得强化妄想、绝望、依赖或排他关系。书内证据只支持技能的一部分时，只讲受支持的部分；不要把“证据不足”自动写成套路性拒答，可以承接用户已经说出的感受、说明暂定路由，并询问一个具体的澄清问题。
 DBT术语、技能定义和操作步骤必须来自证据。复述用户原话、指出其表述中事实与判断的区别、说明为什么暂时选择某个技能，以及使用“如果……可以……”的条件式建议，不属于新增专业知识，可以合理组织且无需假装是书中原句。
-用户没有说出的具体动机、原因和事实不得代填，也不要编造“对方可能在开会/正忙/没看到”等替代故事。可以说“现在还不能确定对方为什么这样做”，但不要替用户列出具体解释。缺少会改变技能选择的关键信息时，只问一个容易回答的问题。
+用户没有说出的具体动机、原因和事实不得代填，也不要编造“对方可能在开会/正忙/没看到/不满意/生气”等替代故事。不要说“你的焦虑源于某种解释”，只能说“可以把已知事实和脑中的解释分开看看”。可以说“现在还不能确定对方为什么这样做”，但不要替用户列出具体解释。缺少会改变技能选择的关键信息时，只问一个容易回答的问题。
 回答要区分“用户明确陈述”“书内技能说明”和“待用户核实的内容”，把技能选择写成暂定而非诊断性结论。最多给4个步骤。
 请像一个清楚、温和的人说话：使用短句和日常动词，先回应用户正在经历的事，再解释方法。不要在用户可见内容中使用“低负担、技能入口、暂定路由、待核实、结构化、本轮、召回、摄取、专业结论”等产品或研发术语。不要为了显得专业而堆叠名词。
-输出严格JSON：{"title":string,"message":string,"steps":string[],"citationIds":string[],"nextAction":"practice"|"none"}。
-示例JSON输出：{"title":"先从这一步开始","message":"书里有一个方法正好能帮你把这件事理清楚。","steps":["先写下刚才实际发生了什么。"],"citationIds":["E1"],"nextAction":"none"}。
-citationIds只能使用提供的证据编号。每个事实性主张必须由至少一个引用支持。不要在回答中提及内部证据编号。`;
+输出严格JSON：{"title":string,"acknowledgement":string,"claims":[{"text":string,"kind":"definition"|"applicability"|"practice"|"boundary","citationIds":string[]}],"followUpQuestion":string,"nextAction":"practice"|"none"}。
+acknowledgement只承接用户明确说出的感受，不写DBT知识。DBT定义、适用理由和动作全部写进claims，每条claim单独引用。claims中的citationIds只能使用提供的证据编号。不要在用户可见文字中提及内部证据编号。`;
 
 const bridgeSystemPrompt = `你是一个面向18岁以上成人的DBT心理自助应用中的“会话承接层”，不是真人咨询师。
 用户刚刚用很概括的日常语言表达了情绪或困扰，还没有提供足够信息来选择技能。你的任务不是立刻教学，而是自然承接用户明确说出的感受，并邀请用户使用界面下方的固定入口选择下一步。
@@ -96,6 +109,19 @@ const bridgeSystemPrompt = `你是一个面向18岁以上成人的DBT心理自�
 6. 像一个清楚、温和的人说话，多用短句和日常词。不要使用“此刻、困扰、情境、承接、低负担、入口、方向、专业结论、待核实”等产品或咨询腔词语。结尾可以自然地说“先从下面选一句最接近的就好”。
 7. 标题不超过24字，正文不超过120字。
 输出严格JSON：{"title":string,"message":string}。`;
+
+const companionSystemPrompt = `你是面向18岁以上成人的DBT心理自助应用中的“伴读引导者”，不是真人咨询师。
+你要同时做到两件事：让用户感到自己的话被认真听见；把给定书内知识用自然、容易记住的话带进对话。
+严格遵守：
+1. 先回应用户明确说出的处境或感受，不猜测未说出的原因、动机、经历、诊断或严重程度。
+2. 正文只写2至4个短句，不列教学步骤；最后另写一个容易回答、只问一件事的followUpQuestion。
+3. 每轮附一张skillCard。卡片只讲一个最贴近的DBT知识点，必须用日常语言，不能照抄OCR原文或堆叠术语。
+4. skillCard中的定义、适用理由、练习动作和要点必须由书内证据支持；不把暂定选择说成诊断或唯一答案。
+5. 情绪承接可以来自用户原话，不需要伪装成书中结论。不得诊断、提供用药建议、承诺疗效、强化依赖或编造来源。
+6. 不使用“低负担、技能入口、暂定路由、待核实、结构化、本轮、召回、摄取、专业结论”等研发或咨询腔词语。
+7. 最多给3个takeaways；suggestedReplies给2至3个可以直接回答followUpQuestion的短句。
+输出严格JSON：{"title":string,"acknowledgement":string,"followUpQuestion":string,"skillLabel":string,"claims":[{"text":string,"kind":"definition"|"applicability"|"practice"|"boundary","citationIds":string[]}],"suggestedReplies":string[],"nextAction":"practice"|"none"}。
+acknowledgement只承接用户原话。技能卡内容必须由claims组成：至少一条definition、一条applicability和一条practice；每条分别引用直接支持它的证据。citationIds只能使用提供的证据编号。不要在用户可见内容中提及证据编号。`;
 
 function extractJson<T>(value: string) {
   const cleaned = value.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
@@ -168,8 +194,8 @@ async function verifyGrounding(
   answer: { title: string; message: string; steps: string[] },
 ) {
   if (!config.verifyGrounding) return true;
-  const evidence = hits
-    .map((hit, index) => `[E${index + 1}] ${hit.page.excerpt}`)
+  const evidence = buildEvidenceBundle(query, hits.slice(0, 4), 3).evidence
+    .map((item) => `[${item.evidenceId}] ${item.text}`)
     .join("\n\n");
   const prompt = `请核验候选回答中的DBT术语、技能定义和操作步骤是否与证据明确一致。允许忠实改写和压缩，不要求逐字相同；允许承接或概括用户明确说出的内容、把技能选择说明为暂定入口、区分事实与判断、使用条件式语言、邀请用户自行填写信息或选择低负担下一步。这些对话桥接语不需要逐字出现在书中。可以说“还存在多种待核对的解释”，但如果回答替用户编造了任何具体动机、具体原因或具体情境事实（如对方在开会、正忙、没看到），必须判为false。存在证据外专业知识、过度推断、诊断、用药或疗效承诺时也判为false。\n\n用户问题：${query}\n\n证据：\n${evidence}\n\n候选回答：\n${JSON.stringify(answer)}\n\n只输出JSON。示例JSON输出：{"supported":true,"unsupportedClaims":[]}`;
   const verificationInstruction = "你是保守的证据核验器。仅判断候选回答是否完全受给定证据支持。只输出JSON：{\"supported\":boolean,\"unsupportedClaims\":string[]}。";
@@ -185,6 +211,47 @@ async function verifyGrounding(
 function cleanText(value: unknown, maxLength: number) {
   if (typeof value !== "string") return "";
   return value.replace(/\s+/gu, " ").trim().slice(0, maxLength);
+}
+
+function evidenceCitationMap(query: string, hits: RetrievalHit[]) {
+  const bundle = buildEvidenceBundle(query, hits.slice(0, 4), 3);
+  return new Map<string, SourceCitation>(bundle.evidence.map((item) => [item.evidenceId, {
+    id: `rag-${item.chunkId}`,
+    sourceId: item.sourceId,
+    book: item.book,
+    section: item.section,
+    printedPage: item.printedPage,
+    pdfPage: item.pdfPage,
+    evidence: item.text,
+    chunkId: item.chunkId,
+    charStart: item.charStart,
+    charEnd: item.charEnd,
+  }]));
+}
+
+function parsedClaims(
+  value: unknown,
+  allowed: ReadonlyMap<string, SourceCitation>,
+  requiredKinds: GroundedClaim["kind"][] = [],
+) {
+  const validation = validateGroundedClaims(value, new Set(allowed.keys()));
+  if (!validation.valid) return null;
+  if (requiredKinds.some((kind) => !validation.claims.some((claim) => claim.kind === kind))) {
+    return null;
+  }
+  return validation.claims;
+}
+
+function publicClaims(
+  claims: GroundedClaim[],
+  allowed: ReadonlyMap<string, SourceCitation>,
+) {
+  return claims.map((claim) => ({
+    ...claim,
+    citationIds: claim.citationIds
+      .map((evidenceId) => allowed.get(evidenceId)?.id)
+      .filter((id): id is string => Boolean(id)),
+  }));
 }
 
 const bridgeForbiddenPatterns = [
@@ -247,10 +314,13 @@ function addsUnstatedScenarioInference(
   const combined = `${answer.title} ${answer.message} ${answer.steps.join(" ")}`;
   const concreteDetails = [
     "在开会", "正在开会", "正忙", "正在忙", "没看到", "没有看到", "忘了回复",
-    "故意不回", "故意忽视", "针对你", "讨厌你", "不在乎你",
+    "故意不回", "故意忽视", "针对你", "讨厌你", "不在乎你", "明确表示不满",
+    "他可能不满意", "她可能不满意", "他可能生气", "她可能生气",
   ];
   const inventedAlternative = /(领导|同事|朋友|家人|伴侣|他|她|对方).{0,6}(可能|也许|或许|大概).{0,8}(忙|开会|没看到|忘了|故意|讨厌|不在乎)/u;
+  const causalAttribution = /(?:你的?)?(?:焦虑|难受|痛苦|情绪).{0,8}(?:源于|来自|是因为)/u;
   return concreteDetails.some((detail) => combined.includes(detail) && !query.includes(detail)) ||
+    (causalAttribution.test(combined) && !causalAttribution.test(query)) ||
     (inventedAlternative.test(combined) && !inventedAlternative.test(query));
 }
 
@@ -304,17 +374,20 @@ export async function generateGroundedAnswer(
   const raw = config.provider === "anthropic"
     ? await callAnthropic(config, prompt)
     : await callOpenAiCompatible(config, prompt);
-  const parsed = extractJson<Partial<ChatPayload> & { citationIds?: string[] }>(raw);
-  const allowed = new Map<string, SourceCitation>(
-    hits.map((hit, index) => [`E${index + 1}`, hitToCitation(hit)]),
-  );
-  const requested = [...new Set((parsed.citationIds ?? []).filter((id) => allowed.has(id)))];
+  const parsed = extractJson<Partial<ChatPayload> & {
+    acknowledgement?: unknown;
+    claims?: unknown;
+  }>(raw);
+  const allowed = evidenceCitationMap(query, hits);
   const title = cleanText(parsed.title, 80);
-  const message = cleanText(parsed.message, 900);
-  if (!title || !message || !requested.length) return null;
-  const steps = Array.isArray(parsed.steps)
-    ? parsed.steps.map((step) => cleanText(step, 180)).filter(Boolean).slice(0, 4)
-    : [];
+  const acknowledgement = cleanText(parsed.acknowledgement, 320);
+  const claims = parsedClaims(parsed.claims, allowed, ["definition", "practice"]);
+  if (!title || !acknowledgement || !claims) return null;
+  const explanatoryClaims = claims.filter((claim) => claim.kind !== "practice");
+  const practiceClaims = claims.filter((claim) => claim.kind === "practice");
+  const message = [acknowledgement, claimsToReadableText(explanatoryClaims)].filter(Boolean).join(" ");
+  const steps = practiceClaims.map((claim) => claim.text).slice(0, 4);
+  const followUpQuestion = cleanText(parsed.followUpQuestion, 120);
   const visibleCopy = `${title} ${message} ${steps.join(" ")}`;
   if (/低负担|技能入口|暂定路由|待核实|结构化|本轮|召回|摄取|专业结论/u.test(visibleCopy)) return null;
   const userContext = [
@@ -331,11 +404,104 @@ export async function generateGroundedAnswer(
     title,
     message,
     steps,
-    citations: requested.map((id) => allowed.get(id) as SourceCitation),
+    followUpQuestion: followUpQuestion || undefined,
+    claims: publicClaims(claims, allowed),
+    citations: resolveClaimCitations(claims, allowed),
     nextAction: parsed.nextAction === "practice" && supportsCheckFactsPractice
       ? "practice"
       : "none",
     mode: "generated",
+    generation: { attempted: true, status: "accepted" },
+    retrieval: { query, resultCount: hits.length, corpusPages: 0 },
+  };
+}
+
+export async function generateCompanionAnswer(
+  query: string,
+  hits: RetrievalHit[],
+  history: ConversationTurn[] = [],
+  plan?: RetrievalPlan,
+): Promise<ChatPayload | null> {
+  const config = readConfig();
+  if (!config || !hits.length) return null;
+  const prompt = buildPrompt(query, hits, history, plan);
+  const raw = config.provider === "anthropic"
+    ? await callAnthropic(config, prompt, companionSystemPrompt, 900)
+    : await callOpenAiCompatible(config, prompt, companionSystemPrompt, 900);
+  const parsed = extractJson<Partial<ChatPayload> & {
+    acknowledgement?: unknown;
+    skillLabel?: unknown;
+    claims?: unknown;
+  }>(raw);
+  const allowed = evidenceCitationMap(query, hits);
+  const title = cleanText(parsed.title, 60);
+  const message = cleanText(parsed.acknowledgement, 360);
+  const followUpQuestion = cleanText(parsed.followUpQuestion, 120);
+  const claims = parsedClaims(parsed.claims, allowed, ["definition", "applicability", "practice"]);
+  if (!claims) return null;
+  const definition = claims.find((claim) => claim.kind === "definition") as GroundedClaim;
+  const applicability = claims.find((claim) => claim.kind === "applicability") as GroundedClaim;
+  const practice = claims.find((claim) => claim.kind === "practice") as GroundedClaim;
+  const card: SkillCard = {
+    label: cleanText(parsed.skillLabel, 24),
+    title: cleanText(parsed.skillLabel, 60),
+    summary: definition.text,
+    whyItMayHelp: applicability.text,
+    tryNow: practice.text,
+    takeaways: claims
+      .filter((claim) => ![definition, applicability, practice].includes(claim))
+      .map((claim) => claim.text)
+      .slice(0, 3),
+  };
+  const suggestedReplies = Array.isArray(parsed.suggestedReplies)
+    ? parsed.suggestedReplies.map((item) => cleanText(item, 60)).filter(Boolean).slice(0, 3)
+    : [];
+  if (
+    !title || !message || !followUpQuestion || !/[？?]$/u.test(followUpQuestion) ||
+    !card.label || !card.title || !card.summary || !card.whyItMayHelp || !card.tryNow ||
+    suggestedReplies.length < 2
+  ) return null;
+  const visibleCopy = [
+    title,
+    message,
+    followUpQuestion,
+    card.label,
+    card.title,
+    card.summary,
+    card.whyItMayHelp,
+    card.tryNow,
+    ...(card.takeaways ?? []),
+  ].join(" ");
+  if (/低负担|技能入口|暂定路由|待核实|结构化|本轮|召回|摄取|专业结论/u.test(visibleCopy)) {
+    return null;
+  }
+  const userContext = [
+    ...history.filter((turn) => turn.role === "user").slice(-3).map((turn) => turn.content),
+    query,
+  ].join("\n");
+  if (addsUnstatedScenarioInference(userContext, {
+    title,
+    message: `${message} ${followUpQuestion} ${card.summary} ${card.whyItMayHelp}`,
+    steps: [card.tryNow, ...(card.takeaways ?? [])],
+  })) return null;
+  const grounded = await verifyGrounding(config, userContext, hits, {
+    title: `${title} ${card.title}`,
+    message: `${message} ${card.summary} ${card.whyItMayHelp}`,
+    steps: [card.tryNow, ...(card.takeaways ?? [])],
+  });
+  if (!grounded) return null;
+  return {
+    kind: "answer",
+    title,
+    message,
+    followUpQuestion,
+    skillCard: card,
+    claims: publicClaims(claims, allowed),
+    suggestedReplies,
+    citations: resolveClaimCitations(claims, allowed).slice(0, 5),
+    nextAction: parsed.nextAction === "practice" ? "practice" : "none",
+    mode: "generated",
+    experienceMode: "companion",
     generation: { attempted: true, status: "accepted" },
     retrieval: { query, resultCount: hits.length, corpusPages: 0 },
   };
