@@ -406,7 +406,7 @@ export default function Home() {
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
 
-      <section className="product-frame" aria-label="DBT 自助练习助手">
+      <section className={`product-frame theme-${tab}`} data-view={tab} aria-label="DBT 自助练习助手">
         <header className="topbar">
           <div className="brand-mark" aria-hidden="true">
             此
@@ -420,6 +420,7 @@ export default function Home() {
 
         <div className={`workspace ${tab === "chat" ? "with-evidence" : "full-width"}`}>
           <section className="phone-panel">
+            {tab !== "home" && <div className="view-art" aria-hidden="true" />}
             <div className="panel-scroll" ref={panelScrollRef}>
             <div className={`mobile-heading ${tab === "home" ? "home-heading" : ""}`}>
               {tab === "home" ? (
