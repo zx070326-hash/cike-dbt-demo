@@ -86,7 +86,7 @@ function advanceRepeatedAnswer(
   history: ConversationTurn[],
   payload: ChatPayload,
 ): ChatPayload {
-  if (payload.kind !== "answer" || payload.mode === "safety") return payload;
+  if (payload.mode === "safety") return payload;
   const previousAssistant = [...history].reverse().find((turn) => turn.role === "assistant")?.content;
   if (!previousAssistant) return payload;
   const previousNormalized = comparisonText(previousAssistant);
@@ -96,6 +96,17 @@ function advanceRepeatedAnswer(
     previousNormalized.includes(comparisonText(payload.followUpQuestion ?? ""));
   if (similarity(payloadText(payload), previousAssistant) < 0.56 && !(repeatsTitle && repeatsQuestion)) {
     return payload;
+  }
+
+  if (payload.kind === "refusal") {
+    return {
+      ...payload,
+      title: "我换个方式确认你真正想处理的部分",
+      message:
+        "刚才的回答没有接住你的需要。如果你是在说一件事带给你的情绪、冲动或关系困扰，可以只说最明显的一部分；如果是其他知识问题，这个体验版仍然无法可靠回答。",
+      followUpQuestion: "你更想处理这件事带来的感受、接下来的行为，还是与某个人的关系？",
+      suggestedReplies: ["先处理现在的感受", "我担心自己会冲动行动", "这是和一段关系有关"],
+    };
   }
 
   if (payload.experienceMode === "companion") {
@@ -155,8 +166,9 @@ function advanceRepeatedAnswer(
     ...payload,
     title: "先抓住你现在最卡住的那一点",
     message:
-      "前面的方向先不用再重复。你可以只回答一个更小的问题：此刻最让你过不去的，是已经发生的事实、脑中反复出现的解释，还是不知道下一步该怎么做？",
-    steps: ["选一个最接近的部分说一句，我们就从那里继续。"],
+      "前面的方向先不用再重复。你重复了刚才的感受，说明上一轮可能还没有接住最重要的部分；这次我们只选一个更小的入口。",
+    followUpQuestion: "此刻最让你过不去的，是已经发生的事实、脑中反复出现的解释，还是不知道下一步该怎么做？",
+    steps: undefined,
     suggestedReplies: [
       "最难接受的是已经发生的事",
       "我一直被一个想法困住",
@@ -287,7 +299,11 @@ export async function runAssistantTurn(
   const contextualQuery = previousUserMessage && (message.length <= 40 || isFollowup)
     ? `${recentUserContext} ${message}`
     : message;
-  const basePlan = planRetrieval(message, recentUserContext);
+  const basePlan = planRetrieval(
+    message,
+    recentUserContext,
+    decision.inputUnderstanding,
+  );
   let plan = applyConversationDecisionToPlan(
     message,
     recentUserContext,

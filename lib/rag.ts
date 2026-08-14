@@ -1,6 +1,5 @@
 import rawIndex from "../data/rag/index-v1.json";
 import type { ChatPayload, SourceCitation } from "./dbt-content";
-import { conversationStarterReplies } from "./conversation-bridge";
 import { knowledgeV2 } from "./knowledge-v2";
 import { createRetrievalEngine, type EngineRetrievalHit } from "./retrieval/engine";
 import { createEvidenceBundle, type EvidenceBundle } from "./retrieval/evidence-bundle";
@@ -87,10 +86,15 @@ function includesAny(value: string, candidates: string[]) {
 export function buildClarificationResponse(): ChatPayload {
   return {
     kind: "answer",
-    title: "听起来，你今天不太好受",
+    title: "先不用急着替你选方法",
     message:
-      "不用急着把原因讲完整。你可以先选一个最接近的：缓一缓现在的情绪、理清脑中反复出现的想法，或者先说说刚才发生了什么。",
-    suggestedReplies: [...conversationStarterReplies],
+      "你这句话已经足够开始。为了不把某个技能硬套给你，我们先只分清眼前最需要处理的部分。",
+    followUpQuestion: "此刻最明显的是身体绷着或坐不住、脑中的想法停不下来，还是很想马上做点什么？",
+    suggestedReplies: [
+      "身体最明显，想先缓下来",
+      "脑中的想法停不下来",
+      "我很想马上做点什么",
+    ],
     citations: [],
     nextAction: "none",
     mode: "bridge",
@@ -299,6 +303,7 @@ export function buildRetrievalFallback(
     }
     return {
       kind: "refusal",
+      refusalReason: "out-of-scope",
       title: "我暂时还没看出该从哪种 DBT 方法开始",
       message:
         "如果这和你的情绪、行为或一段关系有关，可以再告诉我两件事：刚才发生了什么，以及你最想改变什么。其他类型的知识问题，这个体验版暂时回答不了。",

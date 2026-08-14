@@ -63,8 +63,12 @@ export function ConversationAnswer({
   const branches = uniqueBranches(payload, mode);
   const label = kind === "crisis"
     ? "先把安全放在第一位"
-    : kind === "refusal"
-      ? "这里有一条重要边界"
+    : kind === "refusal" && payload?.mode === "safety"
+      ? "这件事需要专业人员判断"
+      : kind === "refusal" && payload?.refusalReason === "out-of-scope"
+        ? "这个问题超出当前体验范围"
+        : kind === "refusal"
+          ? "这次没有顺利接上"
       : mode === "companion"
         ? payload?.skillCard ? "听见你，也带来一个可能有用的方法" : "我在听"
         : "根据书中内容整理";

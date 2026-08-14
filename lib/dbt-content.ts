@@ -105,6 +105,7 @@ export const sourceCitations: Record<string, SourceCitation> = {
 
 export type ChatPayload = {
   kind: "answer" | "refusal" | "crisis";
+  refusalReason?: "clinical-boundary" | "out-of-scope" | "transport" | "grounding-gap";
   title: string;
   message: string;
   steps?: string[];
@@ -209,6 +210,7 @@ export function buildSafetyResponse(assessment: SafetyAssessment): ChatPayload {
   if (assessment.category === "medication") {
     return {
       kind: "refusal",
+      refusalReason: "clinical-boundary",
       title: "药物怎么调整，需要由专业人员判断",
       message:
         "我不能根据聊天告诉你开始、停止、增减或更换药物。不同药物和身体情况的处理不同，自行调整可能有风险。请联系开药医生、精神科门诊或药师；如果已经多服、漏服后明显不适或出现意识异常，请及时联系 120。",
@@ -225,6 +227,7 @@ export function buildSafetyResponse(assessment: SafetyAssessment): ChatPayload {
 
   return {
     kind: "refusal",
+    refusalReason: "clinical-boundary",
     title: "我不能替你诊断，但可以帮你安排下一步",
     message:
       "失眠、低落、焦虑或注意力变化可能有很多原因，仅凭聊天无法判断是不是某种疾病。更合适的下一步是记录持续时间、频率和对生活的影响，再由精神科医生、临床心理专业人员或其他有资质的专业人员评估。",

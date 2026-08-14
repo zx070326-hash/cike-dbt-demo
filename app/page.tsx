@@ -158,6 +158,7 @@ function normalizeChatPayload(value: unknown, mode: ExperienceMode): ChatPayload
   if (!value || typeof value !== "object") {
     return {
       kind: "refusal",
+      refusalReason: "transport",
       title: "刚才的回答没有完整送达",
       message: "网络返回的内容不完整。你的话没有被重复提交，可以点一次发送再试。",
       experienceMode: mode,
@@ -394,6 +395,7 @@ export default function Home() {
               ? { ...payload, experienceMode: payload.experienceMode ?? requestMode }
               : {
                   kind: "refusal",
+                  refusalReason: "transport",
                   title: "刚才没有成功",
                   message: payload.error ?? "可以再试一次，或者先去看看技能和练习。",
                   experienceMode: requestMode,
@@ -410,6 +412,7 @@ export default function Home() {
           experienceMode: requestMode,
           payload: {
             kind: "refusal",
+            refusalReason: "transport",
             title: wasAborted ? "已经停止等待" : "刚才没有收到回复",
             message: wasAborted
               ? "这次没有继续提交。你可以换个说法再试，也可以先去看看技能和练习。"
