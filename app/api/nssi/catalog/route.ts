@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getActivePhase1Config, modulesWithConfig, storageReadiness } from "../../../../lib/nssi/store";
+import { DBT_SKILL_CATEGORIES, DBT_SKILLS, SKILL_OUTCOMES, SKILL_TARGETS, SUPPORT_ACTIONS } from "../../../../lib/nssi/skills";
 import knowledgeManifest from "../../../../data/knowledge/manifest-v2.json";
 
 export async function GET() {
@@ -12,6 +13,14 @@ export async function GET() {
       medicalPositioning: "self-help-with-remote-human-support-not-diagnosis-or-treatment",
     },
     modules: modulesWithConfig(activeConfig.config),
+    skillCatalog: {
+      version: "dbt-skill-catalog-1.0",
+      categories: DBT_SKILL_CATEGORIES,
+      skills: DBT_SKILLS,
+      supportActions: SUPPORT_ACTIONS,
+      targets: SKILL_TARGETS,
+      outcomes: SKILL_OUTCOMES,
+    },
     knowledge: {
       schemaVersion: knowledgeManifest.schemaVersion,
       indexedPages: knowledgeManifest.coverage.indexedPageCount,

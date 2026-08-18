@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   createHelpRisk,
+  createTextRisk,
   getParticipantSnapshot,
   getActivePhase1Config,
   logSkill,
@@ -76,12 +77,26 @@ export async function POST(request: Request) {
     }
     if (action === "skill.log") {
       const input = body.payload as Record<string, unknown>;
-      return NextResponse.json(await logSkill(token, {
-        skillId: String(input.skillId ?? ""),
+      const note = typeof input.note === "string" ? input.note.trim().slice(0, 300) : undefined;
+      const log = await logSkill(token, {
+        skillIds: Array.isArray(input.skillIds) ? input.skillIds.filter((item): item is string => typeof item === "string") : [],
         intensityBefore: Number(input.intensityBefore),
         intensityAfter: Number(input.intensityAfter),
-        note: typeof input.note === "string" ? input.note.trim().slice(0, 300) : undefined,
-      }));
+        targetType: typeof input.targetType === "string" ? input.targetType : undefined,
+        outcomes: Array.isArray(input.outcomes) ? input.outcomes.filter((item): item is string => typeof item === "string") : [],
+        note,
+      });
+      if (!note) return NextResponse.json({ log });
+      const active = await getActivePhase1Config();
+      const deterministic = assessSafety(note, [], active.config.riskLexicon);
+      const semantic = await classifySemanticRisk(note, 700);
+      let riskEventId: string | undefined;
+      if (deterministic.requiresImmediateAction) {
+        riskEventId = (await createTextRisk(token, "deterministic-text", deterministic.reasonCodes.includes("EXTERNAL_LEXICON_L1B") ? "suspected" : "high")).id;
+      } else if (semantic.triggered && semantic.level !== "none") {
+        riskEventId = (await createTextRisk(token, "semantic-text", semantic.level === "imminent" ? "imminent" : semantic.level === "high" ? "high" : "suspected")).id;
+      }
+      return NextResponse.json({ log, riskEventId });
     }
     if (action === "risk.help") {
       return NextResponse.json(await createHelpRisk(token), { status: 201 });

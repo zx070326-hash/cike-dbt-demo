@@ -94,10 +94,15 @@ export type SafetyPlanVersion = {
 export type SkillLog = {
   id: string;
   userId: string;
+  /** Primary option retained for compatibility with earlier exports. */
   skillId: string;
+  /** One practice event can contain several skills or a support action. */
+  skillIds: string[];
   usedAt: string;
   intensityBefore: number;
   intensityAfter: number;
+  targetType?: string;
+  outcomes: string[];
   note?: string;
 };
 

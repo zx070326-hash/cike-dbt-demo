@@ -14,6 +14,12 @@ import type {
   SafetyPlanVersion,
   SkillLog,
 } from "./types";
+import {
+  isPracticeOptionId,
+  isSkillOutcomeId,
+  isSkillTargetId,
+  normalizePracticeOptionId,
+} from "./skills";
 
 type RuntimeEnv = {
   DB?: D1Database;
@@ -359,11 +365,17 @@ async function readRecentEma(db: D1Database, userId: string) {
 
 async function readSkillLogs(db: D1Database, userId: string) {
   const result = await db.prepare(
-    "SELECT id, skill_id, intensity_before, intensity_after, used_at FROM skill_logs WHERE user_id = ? AND deleted_at IS NULL ORDER BY used_at DESC LIMIT 30",
+    "SELECT id, skill_id, skill_ids_json, intensity_before, intensity_after, target_type, outcomes_json, used_at FROM skill_logs WHERE user_id = ? AND deleted_at IS NULL ORDER BY used_at DESC LIMIT 30",
   ).bind(userId).all<Record<string, string | number>>();
   return result.results.map((row) => ({
     id: String(row.id), userId, skillId: String(row.skill_id), usedAt: String(row.used_at),
+    skillIds: (() => {
+      const parsed = parseJsonArray(String(row.skill_ids_json ?? "[]")).map(normalizePracticeOptionId).filter(isPracticeOptionId);
+      return parsed.length ? [...new Set(parsed)] : [normalizePracticeOptionId(String(row.skill_id))];
+    })(),
     intensityBefore: Number(row.intensity_before), intensityAfter: Number(row.intensity_after),
+    targetType: row.target_type ? String(row.target_type) : undefined,
+    outcomes: parseJsonArray(String(row.outcomes_json ?? "[]")).filter(isSkillOutcomeId),
   }));
 }
 
@@ -505,14 +517,19 @@ export async function submitEma(
   signals: EmaRiskSignals = {},
 ) {
   const resolved = await resolveParticipant(token);
-  const submission: EmaSubmission = { ...input, userId: resolved.id };
+  const submission: EmaSubmission = {
+    ...input,
+    moods: [...new Set(input.moods)],
+    skills: [...new Set(input.skills.map(normalizePracticeOptionId))],
+    userId: resolved.id,
+  };
   validateEma(submission);
   const submittedAt = new Date(input.submittedAt ?? Date.now()).toISOString();
   const textTriggered = Boolean(signals.deterministicTriggered || signals.semanticTriggered);
   let decision = decideEmaIntervention(submission, threshold, textTriggered);
   if (decision.intervention === "stop") {
     const logs = resolved.participant?.skillLogs ?? await readSkillLogs(resolved.db!, resolved.id);
-    const priorHelpful = effectiveSkills(logs, 2).find((item) => item.averageIntensityChange > 0);
+    const priorHelpful = effectiveSkills(logs, 3).find((item) => item.averageIntensityChange > 0 && item.negativeReports === 0);
     if (priorHelpful) {
       decision = {
         ...decision,
@@ -616,13 +633,35 @@ export async function saveSafetyPlan(token: string, sections: SafetyPlanSections
   return plan;
 }
 
-export async function logSkill(token: string, input: Omit<SkillLog, "id" | "userId" | "usedAt"> & { usedAt?: string }) {
+export async function logSkill(
+  token: string,
+  input: Omit<SkillLog, "id" | "userId" | "usedAt" | "skillId"> & { skillId?: string; usedAt?: string },
+) {
   const resolved = await resolveParticipant(token);
   for (const value of [input.intensityBefore, input.intensityAfter]) {
     if (!Number.isInteger(value) || value < 0 || value > 10) throw new Error("SKILL_LOG_INTENSITY_INVALID");
   }
+  const skillIds = [...new Set((input.skillIds?.length ? input.skillIds : input.skillId ? [input.skillId] : [])
+    .map(normalizePracticeOptionId))];
+  if (!skillIds.length || skillIds.length > 8 || skillIds.some((value) => !isPracticeOptionId(value))) {
+    throw new Error("SKILL_LOG_SKILLS_INVALID");
+  }
+  const targetType = input.targetType?.trim() || undefined;
+  if (targetType && !isSkillTargetId(targetType)) throw new Error("SKILL_LOG_TARGET_INVALID");
+  const outcomes = [...new Set(input.outcomes ?? [])];
+  if (!outcomes.length || outcomes.length > 4 || outcomes.some((value) => !isSkillOutcomeId(value))) {
+    throw new Error("SKILL_LOG_OUTCOMES_INVALID");
+  }
+  if ((input.note?.length ?? 0) > 300) throw new Error("SKILL_LOG_NOTE_TOO_LONG");
   const log: SkillLog = {
-    ...input, id: crypto.randomUUID(), userId: resolved.id, usedAt: new Date(input.usedAt ?? Date.now()).toISOString(),
+    ...input,
+    id: crypto.randomUUID(),
+    userId: resolved.id,
+    skillId: skillIds[0],
+    skillIds,
+    targetType,
+    outcomes,
+    usedAt: new Date(input.usedAt ?? Date.now()).toISOString(),
   };
   if (resolved.participant) {
     resolved.participant.skillLogs.unshift(log);
@@ -630,12 +669,19 @@ export async function logSkill(token: string, input: Omit<SkillLog, "id" | "user
     const encryption = encryptionSecret();
     const noteCiphertext = log.note ? await sealJson({ note: log.note }, encryption.value) : null;
     await resolved.db!.prepare(
-      "INSERT INTO skill_logs (id, user_id, skill_id, intensity_before, intensity_after, note_ciphertext, key_version, used_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    ).bind(log.id, resolved.id, log.skillId, log.intensityBefore, log.intensityAfter, noteCiphertext, noteCiphertext ? encryption.keyVersion : null, log.usedAt).run();
+      "INSERT INTO skill_logs (id, user_id, skill_id, skill_ids_json, intensity_before, intensity_after, target_type, outcomes_json, note_ciphertext, key_version, used_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    ).bind(log.id, resolved.id, log.skillId, JSON.stringify(log.skillIds), log.intensityBefore, log.intensityAfter, log.targetType ?? null, JSON.stringify(log.outcomes), noteCiphertext, noteCiphertext ? encryption.keyVersion : null, log.usedAt).run();
   }
   await appendAudit({
     actorId: resolved.id, actorRole: "participant", eventType: "skill.logged", targetType: "skill_log", targetId: log.id,
-    occurredAt: log.usedAt, metadata: { skillId: log.skillId, intensityBefore: log.intensityBefore, intensityAfter: log.intensityAfter },
+    occurredAt: log.usedAt,
+    metadata: {
+      skillIds: log.skillIds,
+      targetType: log.targetType,
+      outcomes: log.outcomes,
+      intensityBefore: log.intensityBefore,
+      intensityAfter: log.intensityAfter,
+    },
   }, resolved.db ?? undefined);
   return log;
 }
@@ -988,7 +1034,7 @@ export async function exportCoachResearchCsv(userId: string, coachId: string) {
   const participantCode = `P-${(await sha256(`research:${userId}`)).slice(0, 12)}`;
   const rows: unknown[][] = [[
     "record_type", "participant_code", "date", "item", "urge_0_10",
-    "moods", "skills", "intensity_before", "intensity_after", "is_backfill",
+    "moods", "skills", "intensity_before", "intensity_after", "is_backfill", "target", "outcomes",
   ]];
   const db = d1Database();
   if (!db) {
@@ -996,37 +1042,38 @@ export async function exportCoachResearchCsv(userId: string, coachId: string) {
     if (!participant) throw new Error("PARTICIPANT_NOT_FOUND");
     for (const record of participant.ema) rows.push([
       "ema", participantCode, record.localDate, "daily-ema", record.urge,
-      record.moods, record.skills, "", "", record.isBackfill ? 1 : 0,
+      record.moods, record.skills, "", "", record.isBackfill ? 1 : 0, "", "",
     ]);
     for (const log of participant.skillLogs) rows.push([
-      "skill", participantCode, log.usedAt, log.skillId, "", "", "",
-      log.intensityBefore, log.intensityAfter, 0,
+      "skill", participantCode, log.usedAt, "skill-practice", "", "", log.skillIds?.length ? log.skillIds : [log.skillId],
+      log.intensityBefore, log.intensityAfter, 0, log.targetType ?? "", log.outcomes,
     ]);
     for (const [moduleId, progress] of Object.entries(participant.protocol.progress)) rows.push([
       "module", participantCode, progress.completedAt ?? progress.startedAt ?? "", moduleId,
-      "", "", "", "", "", 0,
+      "", "", "", "", "", 0, "", "",
     ]);
   } else {
     const exists = await db.prepare("SELECT id FROM users WHERE id = ? AND deleted_at IS NULL").bind(userId).first();
     if (!exists) throw new Error("PARTICIPANT_NOT_FOUND");
     const [emaRows, skillRows, protocolRow] = await Promise.all([
       db.prepare("SELECT local_date, urge, moods_json, skills_json, is_backfill FROM ema_records WHERE user_id = ? AND deleted_at IS NULL ORDER BY submitted_at ASC").bind(userId).all<Record<string, unknown>>(),
-      db.prepare("SELECT used_at, skill_id, intensity_before, intensity_after FROM skill_logs WHERE user_id = ? AND deleted_at IS NULL ORDER BY used_at ASC").bind(userId).all<Record<string, unknown>>(),
+      db.prepare("SELECT used_at, skill_id, skill_ids_json, intensity_before, intensity_after, target_type, outcomes_json FROM skill_logs WHERE user_id = ? AND deleted_at IS NULL ORDER BY used_at ASC").bind(userId).all<Record<string, unknown>>(),
       db.prepare("SELECT state_json FROM protocol_states WHERE user_id = ?").bind(userId).first<{ state_json: string }>(),
     ]);
     for (const record of emaRows.results) rows.push([
       "ema", participantCode, record.local_date, "daily-ema", record.urge,
-      JSON.parse(String(record.moods_json)), JSON.parse(String(record.skills_json)), "", "", Number(record.is_backfill),
+      JSON.parse(String(record.moods_json)), JSON.parse(String(record.skills_json)), "", "", Number(record.is_backfill), "", "",
     ]);
     for (const log of skillRows.results) rows.push([
-      "skill", participantCode, log.used_at, log.skill_id, "", "", "",
-      log.intensity_before, log.intensity_after, 0,
+      "skill", participantCode, log.used_at, "skill-practice", "", "",
+      (() => { const parsed = JSON.parse(String(log.skill_ids_json ?? "[]")); return Array.isArray(parsed) && parsed.length ? parsed : [log.skill_id]; })(),
+      log.intensity_before, log.intensity_after, 0, log.target_type ?? "", JSON.parse(String(log.outcomes_json ?? "[]")),
     ]);
     if (protocolRow) {
       const protocol = JSON.parse(protocolRow.state_json) as ProtocolState;
       for (const [moduleId, progress] of Object.entries(protocol.progress)) rows.push([
         "module", participantCode, progress.completedAt ?? progress.startedAt ?? "", moduleId,
-        "", "", "", "", "", 0,
+        "", "", "", "", "", 0, "", "",
       ]);
     }
   }

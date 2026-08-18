@@ -40,6 +40,9 @@ test("NSSI phase-one product contracts hold end to end", async (t) => {
   const catalog = await json("/api/nssi/catalog");
   assert.equal(catalog.response.status, 200);
   assert.equal(catalog.body.modules.length, 16);
+  assert.equal(catalog.body.skillCatalog.skills.length, 18);
+  assert.equal(new Set(catalog.body.skillCatalog.skills.map((skill) => skill.id)).size, 18, "skill IDs must remain stable and unique");
+  assert.equal(catalog.body.skillCatalog.supportActions.length, 1, "support actions stay outside the DBT skill count");
   assert.deepEqual([...new Set(catalog.body.modules.map((item) => item.week))], [1, 2, 3, 4, 5, 6, 7, 8]);
   assert.equal(catalog.body.knowledge.characterCoverage, 1);
   assert.equal(catalog.body.knowledge.indexedPages, 1176);
@@ -132,7 +135,7 @@ test("NSSI phase-one product contracts hold end to end", async (t) => {
 
   const emaStarted = performance.now();
   const ema = await participantRequest(token, "ema.submit", { payload: {
-    localDate: new Date().toISOString().slice(0, 10), urge: 8, moods: ["焦虑"], skills: [], note: "", isBackfill: false, completionDurationMs: 42000,
+    localDate: new Date().toISOString().slice(0, 10), urge: 8, moods: ["焦虑"], skills: ["distress-stop"], note: "", isBackfill: false, completionDurationMs: 42000,
   } });
   assert.equal(ema.response.status, 200, JSON.stringify(ema.body));
   assert.equal(ema.body.emi.trigger, true);
@@ -140,6 +143,15 @@ test("NSSI phase-one product contracts hold end to end", async (t) => {
   assert.ok(performance.now() - emaStarted < 2000, "deterministic EMA risk path should complete within 2 seconds locally");
   assert.ok(ema.body.riskEvent.sources.includes("ema-threshold"));
   assert.ok(ema.body.riskEvent.notificationDeadlineAt);
+
+  const invalidEmaSkill = await participantRequest(token, "ema.submit", { payload: {
+    localDate: new Date().toISOString().slice(0, 10), urge: 3, moods: ["焦虑"], skills: ["=CSV_FORMULA"], note: "", isBackfill: false,
+  } });
+  assert.equal(invalidEmaSkill.response.status, 400, "unknown EMA skill IDs must not enter analytics");
+  const invalidEmaMood = await participantRequest(token, "ema.submit", { payload: {
+    localDate: new Date().toISOString().slice(0, 10), urge: 3, moods: ["自定义情绪"], skills: [], note: "", isBackfill: false,
+  } });
+  assert.equal(invalidEmaMood.response.status, 400, "unknown EMA mood labels must not enter analytics");
 
   const backfillParticipant = await enroll();
   const backfillDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -156,19 +168,37 @@ test("NSSI phase-one product contracts hold end to end", async (t) => {
   assert.equal(textRisk.body.emi.trigger, true);
   assert.ok(textRisk.body.riskEvent.sources.includes("deterministic-text"));
 
+  const skillNoteParticipant = await enroll();
+  const skillNoteRisk = await participantRequest(skillNoteParticipant.token, "skill.log", { payload: {
+    skillIds: ["distress-stop"], targetType: "self-harm-urge", intensityBefore: 8, intensityAfter: 8,
+    outcomes: ["no-change"], note: "我想伤害自己",
+  } });
+  assert.equal(skillNoteRisk.response.status, 200, JSON.stringify(skillNoteRisk.body));
+  assert.ok(skillNoteRisk.body.riskEventId, "optional skill notes must pass through the safety layer");
+
   const coachHeaders = { authorization: "Bearer test-coach-token" };
   const queue = await json("/api/nssi/coach/risks", { headers: coachHeaders });
   assert.equal(queue.response.status, 200);
   assert.ok(queue.body.risks.length >= 2);
   const plans = await json(`/api/nssi/coach/safety-plans?userId=${encodeURIComponent(participant.snapshot.userId)}`, { headers: coachHeaders });
   assert.equal(plans.body.plans.length, 2);
-  await participantRequest(token, "skill.log", { payload: { skillId: "=CSV_FORMULA", intensityBefore: 7, intensityAfter: 5 } });
+  const skillLog = await participantRequest(token, "skill.log", { payload: {
+    skillIds: ["distress-stop", "distress-tip"], targetType: "anxiety",
+    intensityBefore: 7, intensityAfter: 5, outcomes: ["paused", "less-intense"], note: "先暂停，再慢慢呼吸",
+  } });
+  assert.equal(skillLog.response.status, 200, JSON.stringify(skillLog.body));
+  assert.deepEqual(skillLog.body.log.skillIds, ["distress-stop", "distress-tip"]);
+  assert.deepEqual(skillLog.body.log.outcomes, ["paused", "less-intense"]);
+  const invalidSkill = await participantRequest(token, "skill.log", { payload: {
+    skillIds: ["=CSV_FORMULA"], intensityBefore: 7, intensityAfter: 5, outcomes: ["paused"],
+  } });
+  assert.equal(invalidSkill.response.status, 400, "unknown skill IDs must not enter longitudinal analytics");
   const researchExport = await fetch(`${base}/api/nssi/coach/export?userId=${encodeURIComponent(participant.snapshot.userId)}`, { headers: coachHeaders });
   assert.equal(researchExport.status, 200);
   assert.match(researchExport.headers.get("content-type") ?? "", /text\/csv/u);
   const researchCsv = await researchExport.text();
   assert.match(researchCsv, /P-[a-f0-9]{12}/u);
-  assert.match(researchCsv, /'=CSV_FORMULA/u, "spreadsheet formulas must be neutralized");
+  assert.doesNotMatch(researchCsv, /=CSV_FORMULA/u, "rejected categorical values must not enter research exports");
   assert.doesNotMatch(researchCsv, new RegExp(participant.snapshot.userId, "u"));
   assert.doesNotMatch(researchCsv, /13800000000|身体越来越紧/u, "research CSV excludes contacts and free text");
 

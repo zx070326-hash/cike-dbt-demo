@@ -11,11 +11,27 @@ import type { ChatPayload, ExperienceMode, SourceCitation } from "../../lib/dbt-
 import type {
   EmaRecord, ParticipantSnapshot, ProtocolModule, SafetyPlanSections,
 } from "../../lib/nssi/types";
+import {
+  DBT_SKILL_CATEGORIES,
+  DBT_SKILLS,
+  EMA_MOODS,
+  normalizePracticeOptionId,
+  practiceOptionLabel,
+  QUICK_SKILL_IDS,
+  SKILL_OUTCOMES,
+  SKILL_TARGETS,
+  skillOutcomeLabel,
+  skillTargetIntensityLabel,
+  skillTargetLabel,
+  SUPPORT_ACTIONS,
+} from "../../lib/nssi/skills";
+import { nssiPhase1Modules } from "../../lib/nssi/curriculum";
 import { ConversationAnswer } from "./ConversationAnswer";
 
 type AppView = "today" | "modules" | "chat" | "safety" | "records";
 type CatalogPayload = {
   modules: ProtocolModule[];
+  skillCatalog: { version: string; skills: typeof DBT_SKILLS; supportActions: typeof SUPPORT_ACTIONS };
   knowledge: { indexedPages: number; chunks: number; characterCoverage: number; professionallyReviewedSkillCards: number; sourceAuthorization: string };
   runtime: { persistent: boolean; encryptionReady: boolean; productionReady: boolean };
 };
@@ -30,8 +46,7 @@ const tokenKey = "nssi-participant-token-v1";
 const safetyCacheKey = "nssi-safety-plan-offline-v1";
 const conversationKey = "nssi-conversation-id-v1";
 const moduleEvidenceVersion = "display-quality-v2";
-const moods = ["焦虑", "难过", "生气", "空虚", "孤独", "羞愧", "平静", "有希望"];
-const quickSkills = ["STOP", "节律呼吸", "观察与描述", "核对事实", "全然接纳", "联系支持者"];
+const moods = EMA_MOODS;
 const emptySafetyPlan: SafetyPlanSections = {
   warningSigns: [], internalCoping: [], peopleAndPlaces: [], supportContacts: [],
   professionalResources: [
@@ -59,6 +74,33 @@ function readCachedSafetyPlan() {
 function participantHeaders(token: string) { return { "content-type": "application/json", "x-participant-token": token }; }
 function statusLabel(status: string) { return status === "completed" ? "已完成" : status === "in-progress" ? "进行中" : status === "available" ? "可开始" : "未解锁"; }
 function safeVisibleMessage(payload: ChatPayload) { return [payload.title, payload.message, payload.followUpQuestion, ...(payload.steps ?? [])].filter(Boolean).join(" "); }
+
+function SkillPicker({ selected, onChange, quickIds = [...QUICK_SKILL_IDS], includeSupport = true }: {
+  selected: string[];
+  onChange: (value: string[]) => void;
+  quickIds?: string[];
+  includeSupport?: boolean;
+}) {
+  function toggle(id: string) {
+    if (selected.includes(id)) return onChange(selected.filter((value) => value !== id));
+    if (selected.length >= 8) return;
+    onChange([...selected, id]);
+  }
+  const quick = [...new Set([...selected, ...quickIds])]
+    .map((id) => DBT_SKILLS.find((skill) => skill.id === id))
+    .filter((skill): skill is (typeof DBT_SKILLS)[number] => Boolean(skill))
+    .slice(0, 8);
+  return <div className="skill-picker">
+    <div className="skill-picker-heading"><strong>最近使用与课程技能</strong><small>可多选，最多 8 项</small></div>
+    <div className="skill-choice-grid">{quick.map((skill) => <button type="button" key={skill.id} className={selected.includes(skill.id) ? "selected" : ""} aria-pressed={selected.includes(skill.id)} onClick={() => toggle(skill.id)}><strong>{skill.label}</strong><small>{skill.summary}</small></button>)}</div>
+    <details className="all-skills-picker"><summary><span>查看全部 18 个 DBT 技能</span><small>按五组展开</small><ChevronRight /></summary><div>{DBT_SKILL_CATEGORIES.map((category) => <section key={category.id}><h4>{category.label}</h4><div className="skill-choice-grid">{DBT_SKILLS.filter((skill) => skill.category === category.id).map((skill) => <button type="button" key={skill.id} className={selected.includes(skill.id) ? "selected" : ""} aria-pressed={selected.includes(skill.id)} onClick={() => toggle(skill.id)}><strong>{skill.label}</strong><small>{skill.summary}</small></button>)}</div></section>)}</div></details>
+    {includeSupport && <div className="support-action-picker"><span>现实支持行动</span>{SUPPORT_ACTIONS.map((action) => <button type="button" key={action.id} className={selected.includes(action.id) ? "selected" : ""} aria-pressed={selected.includes(action.id)} onClick={() => toggle(action.id)}><strong>{action.label}</strong><small>{action.summary}</small></button>)}</div>}
+  </div>;
+}
+
+function IntensityField({ label, value, onChange }: { label: string; value: number | null; onChange: (value: number) => void }) {
+  return <div className="skill-intensity-field" role="group" aria-label={label}><span><strong>{label}</strong><output>{value === null ? "未选择" : `${value} / 10`}</output></span><div className="skill-scale-options">{Array.from({ length: 11 }, (_, index) => <button type="button" key={index} className={value === index ? "selected" : ""} aria-pressed={value === index} aria-label={`${label} ${index}`} onClick={() => onChange(index)}>{index}</button>)}</div><small><i>0 · 没有</i><i>10 · 非常强</i></small></div>;
+}
 async function readStreamedChat(response: Response) {
   if (!response.ok) {
     const body = await response.json().catch(() => ({})) as { error?: string };
@@ -192,19 +234,19 @@ function ModulesView({ snapshot, modules, selectedId, onSelect, token, onRefresh
 }
 
 function EmaSheet({ token, initial, allowBackfill, onClose, onSaved }: { token: string; initial?: EmaRecord | null; allowBackfill: boolean; onClose: () => void; onSaved: (emi: EmiResult) => void }) {
-  const [urge, setUrge] = useState(initial?.urge ?? 4); const [selectedMoods, setSelectedMoods] = useState<string[]>(initial?.moods ?? []); const [selectedSkills, setSelectedSkills] = useState<string[]>(initial?.skills ?? []); const [note, setNote] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
+  const [urge, setUrge] = useState(initial?.urge ?? 4); const [selectedMoods, setSelectedMoods] = useState<string[]>(initial?.moods ?? []); const [selectedSkills, setSelectedSkills] = useState<string[]>((initial?.skills ?? []).map(normalizePracticeOptionId)); const [note, setNote] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const [recordDate, setRecordDate] = useState(todayLocalDate()); const startedAt = useRef<number | null>(null);
   useEffect(() => { startedAt.current = Date.now(); }, []);
   function toggle(value: string, selected: string[], setSelected: (value: string[]) => void) { setSelected(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value]); }
   async function submit(event: FormEvent) { event.preventDefault(); setBusy(true); setError(""); try { const response = await fetch("/api/nssi/state", { method: "POST", headers: participantHeaders(token), body: JSON.stringify({ action: "ema.submit", payload: { localDate: recordDate, urge, moods: selectedMoods, skills: selectedSkills, note, isBackfill: recordDate !== todayLocalDate(), completionDurationMs: startedAt.current === null ? undefined : Date.now() - startedAt.current } }) }); const body = await response.json() as { emi?: EmiResult; error?: string }; if (!response.ok || !body.emi) throw new Error(body.error ?? "记录失败"); onSaved(body.emi); } catch (cause) { setError(cause instanceof Error ? cause.message : "记录失败"); } finally { setBusy(false); } }
-  return <div className="sheet-backdrop" role="dialog" aria-modal="true" aria-labelledby="ema-title"><form className="nssi-sheet ema-sheet" onSubmit={submit}><button type="button" className="sheet-close" onClick={onClose} aria-label="关闭"><X /></button><span className="eyebrow">每日 EMA · 约 60 秒</span><h2 id="ema-title">{recordDate === todayLocalDate() ? "现在的状态怎么样？" : "补记昨天的状态"}</h2><p>只记录，不评判。补录会明确标记，也不会触发即时干预。</p>{allowBackfill && <div className="ema-date-switch"><button type="button" className={recordDate === todayLocalDate() ? "selected" : ""} onClick={() => setRecordDate(todayLocalDate())}>记录今天</button><button type="button" className={recordDate === yesterdayLocalDate() ? "selected" : ""} onClick={() => setRecordDate(yesterdayLocalDate())}>补记昨天</button></div>}<label className="urge-scale"><span>自伤冲动强度 <strong>{urge} / 10</strong></span><input type="range" min="0" max="10" step="1" value={urge} onChange={(event) => setUrge(Number(event.target.value))} /><div><small>没有</small><small>非常强</small></div></label><fieldset><legend>{recordDate === todayLocalDate() ? "现在有哪些情绪？" : "昨天主要有哪些情绪？"}<small>可多选</small></legend><div className="chip-choices">{moods.map((item) => <button type="button" key={item} className={selectedMoods.includes(item) ? "selected" : ""} onClick={() => toggle(item, selectedMoods, setSelectedMoods)}>{item}</button>)}</div></fieldset><fieldset><legend>{recordDate === todayLocalDate() ? "今天用过哪些方法？" : "昨天用过哪些方法？"}<small>没有也可以</small></legend><div className="chip-choices">{quickSkills.map((item) => <button type="button" key={item} className={selectedSkills.includes(item) ? "selected" : ""} onClick={() => toggle(item, selectedSkills, setSelectedSkills)}>{item}</button>)}</div></fieldset><label className="ema-note"><span>还想补充一句吗？<small>可不填，内容仍会先经过安全识别</small></span><textarea value={note} onChange={(event) => setNote(event.target.value.slice(0, 300))} placeholder="例如：今天最难的是……" /></label>{error && <p className="form-error">{error}</p>}<button className="nssi-primary" type="submit" disabled={busy}>{busy ? "正在保存…" : recordDate === todayLocalDate() ? "保存今天的记录" : "保存补记"}<Check /></button></form></div>;
+  return <div className="sheet-backdrop" role="dialog" aria-modal="true" aria-labelledby="ema-title"><form className="nssi-sheet ema-sheet" onSubmit={submit}><button type="button" className="sheet-close" onClick={onClose} aria-label="关闭"><X /></button><span className="eyebrow">每日 EMA · 约 60 秒</span><h2 id="ema-title">{recordDate === todayLocalDate() ? "现在的状态怎么样？" : "补记昨天的状态"}</h2><p>只记录，不评判。补录会明确标记，也不会触发即时干预。</p>{allowBackfill && <div className="ema-date-switch"><button type="button" className={recordDate === todayLocalDate() ? "selected" : ""} onClick={() => setRecordDate(todayLocalDate())}>记录今天</button><button type="button" className={recordDate === yesterdayLocalDate() ? "selected" : ""} onClick={() => setRecordDate(yesterdayLocalDate())}>补记昨天</button></div>}<label className="urge-scale"><span>自伤冲动强度 <strong>{urge} / 10</strong></span><input type="range" min="0" max="10" step="1" value={urge} onChange={(event) => setUrge(Number(event.target.value))} /><div><small>没有</small><small>非常强</small></div></label><fieldset><legend>{recordDate === todayLocalDate() ? "现在有哪些情绪？" : "昨天主要有哪些情绪？"}<small>可多选</small></legend><div className="chip-choices">{moods.map((item) => <button type="button" key={item} className={selectedMoods.includes(item) ? "selected" : ""} onClick={() => toggle(item, selectedMoods, setSelectedMoods)}>{item}</button>)}</div></fieldset><fieldset><legend>{recordDate === todayLocalDate() ? "今天用过哪些方法？" : "昨天用过哪些方法？"}<small>没有也可以</small></legend><SkillPicker selected={selectedSkills} onChange={setSelectedSkills} /></fieldset><label className="ema-note"><span>还想补充一句吗？<small>可不填，内容仍会先经过安全识别</small></span><textarea value={note} onChange={(event) => setNote(event.target.value.slice(0, 300))} placeholder="例如：今天最难的是……" /></label>{error && <p className="form-error">{error}</p>}<button className="nssi-primary" type="submit" disabled={busy}>{busy ? "正在保存…" : recordDate === todayLocalDate() ? "保存今天的记录" : "保存补记"}<Check /></button></form></div>;
 }
 
 function EmiOverlay({ result, onSafety, onClose, onMarkSafe }: { result: OverlayState; onSafety: () => void; onClose: () => void; onMarkSafe: () => Promise<void> }) {
   const type = result.intervention;
   const urgent = type === "crisis" || type === "help" || type === "safety-plan";
   const remembered = type === "self-reminder";
-  return <div className="crisis-backdrop" role="dialog" aria-modal="true" aria-labelledby="crisis-title"><section className="crisis-panel"><span className="crisis-symbol"><HeartHandshake /></span><span className="eyebrow">{urgent ? "安全支持已打开" : remembered ? "先回到曾经有一点帮助的做法" : "先停一下，不急着解决全部"}</span><h2 id="crisis-title">{urgent ? "现在先把现实中的安全放在第一位" : remembered ? "不必临时想出全新的办法" : "冲动已经比较强，先为自己争取一点停顿"}</h2><p>{urgent ? "风险事件已进入教练端队列，但系统不承诺实时人工回复。危险正在发生或可能很快行动时，请直接联系现实中的人并拨打紧急电话。" : remembered ? `按你自己的前后记录，${"suggestedSkillId" in result && result.suggestedSkillId ? result.suggestedSkillId : "之前练过的方法"}曾带来过一点变化。可以先重复一次；这只是规则汇总，不是疗效判断。` : "先停止手上的动作，退后一步，观察身体和周围。然后从安全计划里选一个现实支持。"}</p><div className="crisis-now-steps"><span><strong>1</strong>移动到有人、相对安全的地方</span><span><strong>2</strong>联系一个能保持通话或到场的人</span><span><strong>3</strong>危险迫近时拨打 120 或 110</span></div><div className="crisis-phone-actions"><a href="tel:12356"><Phone />拨打 12356</a><a href="tel:120"><Phone />拨打 120</a></div><button className="nssi-primary" type="button" onClick={onSafety}>打开我的安全计划<ShieldCheck /></button><button className="nssi-quiet" type="button" onClick={() => void onMarkSafe()}>我现在已联系到现实中的支持</button><button className="nssi-quiet" type="button" onClick={onClose}>暂时关闭此页</button></section></div>;
+  return <div className="crisis-backdrop" role="dialog" aria-modal="true" aria-labelledby="crisis-title"><section className="crisis-panel"><span className="crisis-symbol"><HeartHandshake /></span><span className="eyebrow">{urgent ? "安全支持已打开" : remembered ? "先回到曾经有一点帮助的做法" : "先停一下，不急着解决全部"}</span><h2 id="crisis-title">{urgent ? "现在先把现实中的安全放在第一位" : remembered ? "不必临时想出全新的办法" : "冲动已经比较强，先为自己争取一点停顿"}</h2><p>{urgent ? "风险事件已进入教练端队列，但系统不承诺实时人工回复。危险正在发生或可能很快行动时，请直接联系现实中的人并拨打紧急电话。" : remembered ? `按你自己的前后记录，${"suggestedSkillId" in result && result.suggestedSkillId ? practiceOptionLabel(result.suggestedSkillId) : "之前练过的方法"}曾带来过一点变化。可以先重复一次；这只是规则汇总，不是疗效判断。` : "先停止手上的动作，退后一步，观察身体和周围。然后从安全计划里选一个现实支持。"}</p><div className="crisis-now-steps"><span><strong>1</strong>移动到有人、相对安全的地方</span><span><strong>2</strong>联系一个能保持通话或到场的人</span><span><strong>3</strong>危险迫近时拨打 120 或 110</span></div><div className="crisis-phone-actions"><a href="tel:12356"><Phone />拨打 12356</a><a href="tel:120"><Phone />拨打 120</a></div><button className="nssi-primary" type="button" onClick={onSafety}>打开我的安全计划<ShieldCheck /></button><button className="nssi-quiet" type="button" onClick={() => void onMarkSafe()}>我现在已联系到现实中的支持</button><button className="nssi-quiet" type="button" onClick={onClose}>暂时关闭此页</button></section></div>;
 }
 
 function OfflineSafety({ plan, onRetry }: { plan: SafetyPlanSections; onRetry: () => void }) {
@@ -251,20 +293,84 @@ function ChatView({ snapshot, token, onRisk }: { snapshot: Snapshot; token: stri
   return <div className="nssi-page chat-view"><header className="chat-header"><div><span className="eyebrow">第 {snapshot.protocol.currentWeek} 周 · 只使用已解锁知识</span><h1>先说说，再一起找一小步</h1></div><div className="mode-switch" role="group" aria-label="回答模式"><button className={mode === "companion" ? "selected" : ""} type="button" onClick={() => setMode("companion")}><MessageCircle />日常引导</button><button className={mode === "deep-read" ? "selected" : ""} type="button" onClick={() => setMode("deep-read")}><BookOpen />专家核对</button></div></header><div className="chat-mode-note"><Info />{mode === "deep-read" ? "显示专业主张、完整原文段落、页码、片段 ID 和验证状态。" : "先回应你的话，专业内容仍附段落级来源，但默认折叠。"}</div><div className="nssi-chat-stream" ref={scrollRef}>{messages.map((message, index) => message.role === "user" ? <div className="nssi-user-bubble" key={message.id}>{message.text}</div> : <article className={`nssi-assistant-card ${message.payload?.kind ?? "answer"}`} key={message.id}><ConversationAnswer payload={message.payload} mode={mode} sources={message.payload?.citations ?? []} isLatest={index === messages.length - 1} busy={busy} onPrompt={send} onPractice={() => send("请带我用当前已解锁的技能练一小步。")} onSource={setSource} /></article>)}{busy && <div className="chat-thinking"><i /><i /><i /><span>正在先做安全检查，再核对书内依据…</span></div>}</div><form className="nssi-chat-composer" onSubmit={(event) => { event.preventDefault(); void send(); }}><textarea value={input} onChange={(event) => setInput(event.target.value.slice(0, 1000))} placeholder="说说刚才发生了什么，或问一个已解锁的技能…" rows={1} /><button type="submit" disabled={!input.trim() || busy} aria-label="发送"><Send /></button><small>AI 可能出错；专业内容请核对来源。危险迫近时直接联系现实中的人和紧急服务。</small></form>{source && <div className="source-modal" role="dialog" aria-modal="true"><section><button type="button" onClick={() => setSource(null)} aria-label="关闭"><X /></button><span className="eyebrow">{source.paragraphAnchor ?? source.chunkId}</span><h2>{source.section}</h2><p>{source.book} · PDF 第 {source.pdfPage} 页{source.printedPage ? ` · 书中第 ${source.printedPage} 页` : ""} · 第 {(source.paragraphOrdinal ?? 0) + 1} 段</p><blockquote>{source.evidence}</blockquote><small>这是 OCR 派生原文。专业核对时应回看扫描页；引用存在不等于结论已经专业审核。</small></section></div>}</div>;
 }
 
-function RecordsView({ snapshot, token, onRefresh }: { snapshot: Snapshot; token: string; onRefresh: () => Promise<void> }) {
-  const [skillId, setSkillId] = useState("STOP"); const [before, setBefore] = useState(7); const [after, setAfter] = useState(5); const [notice, setNotice] = useState(""); const [range, setRange] = useState<7 | 30>(7); const logs = snapshot.recentSkillLogs;
-  const effectiveness = useMemo(() => { const groups = new Map<string, { uses: number; change: number }>(); logs.forEach((log) => { const value = groups.get(log.skillId) ?? { uses: 0, change: 0 }; value.uses += 1; value.change += log.intensityBefore - log.intensityAfter; groups.set(log.skillId, value); }); return [...groups.entries()].filter(([, value]) => value.uses >= 2).map(([name, value]) => ({ name, uses: value.uses, average: value.change / value.uses })).sort((a, b) => b.average - a.average); }, [logs]);
+function RecordsView({ snapshot, token, onRefresh, onRisk }: { snapshot: Snapshot; token: string; onRefresh: () => Promise<void>; onRisk: () => void }) {
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
+  const [targetType, setTargetType] = useState("");
+  const [before, setBefore] = useState<number | null>(null);
+  const [after, setAfter] = useState<number | null>(null);
+  const [outcomes, setOutcomes] = useState<string[]>([]);
+  const [note, setNote] = useState("");
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [range, setRange] = useState<7 | 30>(7);
+  const logs = snapshot.recentSkillLogs;
+  const quickIds = useMemo(() => {
+    const recent = logs.flatMap((log) => log.skillIds?.length ? log.skillIds : [log.skillId]).map(normalizePracticeOptionId);
+    const unlocked = nssiPhase1Modules
+      .filter((module) => snapshot.protocol.progress[module.id]?.status !== "locked")
+      .flatMap((module) => module.skillCardIds);
+    return [...new Set([...recent, ...unlocked, ...QUICK_SKILL_IDS])]
+      .filter((id) => DBT_SKILLS.some((skill) => skill.id === id))
+      .slice(0, 8);
+  }, [logs, snapshot.protocol.progress]);
+  const observations = useMemo(() => {
+    const groups = new Map<string, { uses: number; change: number; describedHelpful: number; worse: number }>();
+    logs.forEach((log) => (log.skillIds?.length ? log.skillIds : [log.skillId]).map(normalizePracticeOptionId).forEach((id) => {
+      const value = groups.get(id) ?? { uses: 0, change: 0, describedHelpful: 0, worse: 0 };
+      value.uses += 1;
+      value.change += log.intensityBefore - log.intensityAfter;
+      if (log.outcomes?.some((outcome) => ["paused", "safer", "less-intense", "goal-action", "clearer"].includes(outcome))) value.describedHelpful += 1;
+      if (log.outcomes?.includes("worse")) value.worse += 1;
+      groups.set(id, value);
+    }));
+    return [...groups.entries()]
+      .filter(([, value]) => value.uses >= 5)
+      .map(([id, value]) => ({ id, ...value, average: value.change / value.uses }))
+      .sort((left, right) => right.uses - left.uses || right.describedHelpful - left.describedHelpful);
+  }, [logs]);
   const moodDistribution = useMemo(() => { const counts = new Map<string, number>(); snapshot.recentEma.slice(0, range).flatMap((item) => item.moods).forEach((mood) => counts.set(mood, (counts.get(mood) ?? 0) + 1)); return [...counts.entries()].sort((a, b) => b[1] - a[1]); }, [snapshot.recentEma, range]);
-  async function saveSkill(event: FormEvent) { event.preventDefault(); const response = await fetch("/api/nssi/state", { method: "POST", headers: participantHeaders(token), body: JSON.stringify({ action: "skill.log", payload: { skillId, intensityBefore: before, intensityAfter: after } }) }); if (!response.ok) return setNotice("这次没有保存成功，请稍后再试。"); await onRefresh(); setNotice("已保存。系统只按前后强度和使用次数计算，不让 AI 决定哪个技能最有效。"); }
+  async function saveSkill(event: FormEvent) {
+    event.preventDefault();
+    setNotice("");
+    if (!selectedSkillIds.length) return setNotice("请至少选择一个刚才用过的技能或支持行动。");
+    if (before === null || after === null) return setNotice("请分别选择使用前和现在的强度；系统不会替你预填答案。");
+    if (!outcomes.length) return setNotice("请选择至少一项实际变化；“暂时没感觉”也可以。");
+    setBusy(true);
+    try {
+      const response = await fetch("/api/nssi/state", { method: "POST", headers: participantHeaders(token), body: JSON.stringify({ action: "skill.log", payload: { skillIds: selectedSkillIds, targetType: targetType || undefined, intensityBefore: before, intensityAfter: after, outcomes, note } }) });
+      const body = await response.json() as { riskEventId?: string; error?: string };
+      if (!response.ok) throw new Error(body.error ?? "这次没有保存成功，请稍后再试。");
+      await onRefresh();
+      setSelectedSkillIds([]); setTargetType(""); setBefore(null); setAfter(null); setOutcomes([]); setNote("");
+      setNotice("已保存为一次完整练习事件。这里呈现的是你的近期观察，不是疗效结论。");
+      if (body.riskEventId) onRisk();
+    } catch (cause) {
+      setNotice(cause instanceof Error ? cause.message : "这次没有保存成功，请稍后再试。");
+    } finally { setBusy(false); }
+  }
+  function toggleOutcome(id: string) {
+    if (outcomes.includes(id)) return setOutcomes(outcomes.filter((value) => value !== id));
+    if (outcomes.length < 4) setOutcomes([...outcomes, id]);
+  }
   function csvCell(value: string | number) { const safe = String(value).replace(/^([=+\-@])/u, "'$1"); return `"${safe.replace(/"/gu, '""')}"`; }
-  function exportCsv() { const rows = [["类型", "日期", "项目", "练习前", "练习后"], ...snapshot.recentEma.map((item) => ["EMA", item.localDate, "冲动强度", item.urge, ""]), ...logs.map((item) => ["技能", item.usedAt, item.skillId, item.intensityBefore, item.intensityAfter])].map((row) => row.map(csvCell).join(",")); const blob = new Blob([`\uFEFF${rows.join("\n")}`], { type: "text/csv;charset=utf-8" }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `此刻-个人记录-${todayLocalDate()}.csv`; link.click(); URL.revokeObjectURL(link.href); }
+  function exportCsv() { const rows = [["类型", "日期", "项目", "应对目标", "使用前", "使用后", "实际变化"], ...snapshot.recentEma.map((item) => ["EMA", item.localDate, "自伤冲动", "", item.urge, "", ""]), ...logs.map((item) => ["技能练习", item.usedAt, (item.skillIds?.length ? item.skillIds : [item.skillId]).map(practiceOptionLabel).join("、"), skillTargetLabel(item.targetType) ?? "", item.intensityBefore, item.intensityAfter, (item.outcomes ?? []).map(skillOutcomeLabel).join("、")])].map((row) => row.map(csvCell).join(",")); const blob = new Blob([`\uFEFF${rows.join("\n")}`], { type: "text/csv;charset=utf-8" }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `此刻-个人记录-${todayLocalDate()}.csv`; link.click(); URL.revokeObjectURL(link.href); }
   const displayedEma = snapshot.recentEma.slice(0, range).reverse();
+  const intensityName = skillTargetIntensityLabel(targetType) ?? "困扰或冲动";
+  const canSave = selectedSkillIds.length > 0 && before !== null && after !== null && outcomes.length > 0;
   return <div className="nssi-page nssi-records-view">
     <header className="page-intro"><span className="eyebrow">只用规则计算，不用模型替你下结论</span><h1>看见变化，也保留不确定</h1><p>趋势用于自我观察和与授权的专业人员沟通，不代表诊断或疗效判断。</p><button type="button" onClick={exportCsv}><Download />导出我的 CSV</button></header>
     <section className="trend-card"><div><span className="section-kicker"><BarChart3 />冲动强度记录</span><h2>最近 {range} 天</h2><div className="range-switch"><button type="button" className={range === 7 ? "selected" : ""} onClick={() => setRange(7)}>7 天</button><button type="button" className={range === 30 ? "selected" : ""} onClick={() => setRange(30)}>30 天</button></div></div>{displayedEma.length ? <div className="record-bars">{displayedEma.map((item) => <div key={item.id}><span>{item.urge}</span><i style={{ height: `${Math.max(6, item.urge * 9)}%` }} /><small>{item.localDate.slice(5)}</small></div>)}</div> : <p>还没有记录。完成 EMA 后，这里才开始画趋势。</p>}</section>
     <section className="mood-card"><span className="section-kicker"><Activity />情绪分布</span><h2>这段时间记录过什么情绪？</h2>{moodDistribution.length ? <div>{moodDistribution.map(([mood, count]) => <span key={mood}><strong>{mood}</strong><i style={{ width: `${Math.max(8, count / Math.max(...moodDistribution.map((item) => item[1])) * 100)}%` }} /><small>{count} 次</small></span>)}</div> : <p>还没有可汇总的情绪记录。</p>}</section>
-    <section className="effect-card"><span className="section-kicker"><Sparkles />按规则汇总</span><h2>哪些技能在记录中更有帮助？</h2>{effectiveness.length ? <div>{effectiveness.map((item) => <article key={item.name}><strong>{item.name}</strong><span>使用 {item.uses} 次</span><b>平均变化 {item.average > 0 ? "-" : "+"}{Math.abs(item.average).toFixed(1)}</b></article>)}</div> : <p>同一技能至少记录两次后才参与排序，避免把一次偶然变化当成结论。</p>}</section>
-    <form className="skill-log-card" onSubmit={saveSkill}><span className="section-kicker"><ListChecks />记录一次技能使用</span><h2>刚才用了什么？前后有什么变化？</h2><label><span>技能</span><select value={skillId} onChange={(event) => setSkillId(event.target.value)}>{quickSkills.map((item) => <option key={item}>{item}</option>)}</select></label><div><label><span>练习前 {before}</span><input type="range" min="0" max="10" value={before} onChange={(event) => setBefore(Number(event.target.value))} /></label><label><span>练习后 {after}</span><input type="range" min="0" max="10" value={after} onChange={(event) => setAfter(Number(event.target.value))} /></label></div>{notice && <p className="save-notice">{notice}</p>}<button className="nssi-primary" type="submit">保存技能记录<Check /></button></form>
+    <section className="effect-card"><span className="section-kicker"><Sparkles />近期观察</span><h2>哪些做法值得继续观察？</h2>{observations.length ? <div>{observations.map((item) => <article key={item.id}><strong>{practiceOptionLabel(item.id)}</strong><span>记录 {item.uses} 次</span><b>平均强度变化 {item.average > 0 ? "-" : item.average < 0 ? "+" : ""}{Math.abs(item.average).toFixed(1)}</b>{item.describedHelpful > 0 && <small>{item.describedHelpful} 次记录了正向变化{item.worse ? ` · ${item.worse} 次更难受` : ""}</small>}</article>)}</div> : <p>同一技能至少记录 5 次后才显示个人模式；这里只呈现共同出现的变化，不判断疗效，也不替你选“最佳技能”。</p>}</section>
+    <form className="skill-log-card" onSubmit={saveSkill}>
+      <span className="section-kicker"><ListChecks />约 45 秒 · 记录一次完整练习</span><h2>刚才用了什么？实际发生了什么？</h2><p className="skill-log-intro">可以组合使用多个技能。没有改善也可以如实记录。</p>
+      <section className="skill-form-step"><header><i>1</i><span><strong>刚才用了什么？</strong><small>至少选一项</small></span></header><SkillPicker selected={selectedSkillIds} onChange={setSelectedSkillIds} quickIds={quickIds} /></section>
+      <section className="skill-form-step"><header><i>2</i><span><strong>主要想应对什么？</strong><small>可不选</small></span></header><div className="compact-choice-grid">{SKILL_TARGETS.map((target) => <button type="button" key={target.id} className={targetType === target.id ? "selected" : ""} aria-pressed={targetType === target.id} onClick={() => setTargetType(targetType === target.id ? "" : target.id)}>{target.label}</button>)}</div></section>
+      <section className="skill-form-step"><header><i>3</i><span><strong>使用前和现在有多强？</strong><small>系统不会预填</small></span></header><div className="skill-intensity-grid"><IntensityField label={`使用前的${intensityName}强度`} value={before} onChange={setBefore} /><IntensityField label={`现在的${intensityName}强度`} value={after} onChange={setAfter} /></div></section>
+      <section className="skill-form-step"><header><i>4</i><span><strong>它带来了什么变化？</strong><small>至少选一项，最多 4 项</small></span></header><div className="compact-choice-grid outcome-grid">{SKILL_OUTCOMES.map((outcome) => <button type="button" key={outcome.id} className={outcomes.includes(outcome.id) ? "selected" : ""} aria-pressed={outcomes.includes(outcome.id)} onClick={() => toggleOutcome(outcome.id)}>{outcome.label}</button>)}</div></section>
+      <details className="skill-log-more"><summary>补充一点背景（可选）<ChevronRight /></summary><label><span>只写对自己之后回看有帮助的一句话</span><textarea value={note} onChange={(event) => setNote(event.target.value.slice(0, 300))} placeholder="例如：争执后先离开房间，再做了节律呼吸……" /><small>{note.length} / 300 · 保存前会经过安全识别</small></label></details>
+      {notice && <p className="save-notice" role="status">{notice}</p>}<div className="skill-log-boundary"><Info />前后变化可能受到时间、环境和其他行动影响，因此这里只做个人观察，不作疗效判断。</div><button className="nssi-primary" type="submit" disabled={busy || !canSave}>{busy ? "正在保存…" : canSave ? "保存这次练习" : "完成必填项后保存"}<Check /></button>
+    </form>
   </div>;
 }
 
@@ -352,7 +458,7 @@ export function NssiParticipantApp() {
       {view === "modules" && <ModulesView snapshot={snapshot} modules={catalog.modules} selectedId={selectedModule} onSelect={setSelectedModule} token={token} onRefresh={() => refreshSnapshot()} onSafety={() => setView("safety")} />}
       {view === "chat" && <ChatView snapshot={snapshot} token={token} onRisk={() => { setEmi({ trigger: true, intervention: "crisis", reasonCodes: ["CHAT_RISK"] }); void refreshSnapshot(); }} />}
       {view === "safety" && <SafetyView snapshot={snapshot} token={token} onRefresh={() => refreshSnapshot()} />}
-      {view === "records" && <RecordsView snapshot={snapshot} token={token} onRefresh={() => refreshSnapshot()} />}
+      {view === "records" && <RecordsView snapshot={snapshot} token={token} onRefresh={() => refreshSnapshot()} onRisk={() => setEmi({ trigger: true, intervention: "crisis", reasonCodes: ["SKILL_NOTE_RISK"] })} />}
     </div>
     <nav className="nssi-bottom-nav" aria-label="主要页面">{([["today", "今天", Home], ["modules", "课程", BookOpen], ["chat", "对话", MessageCircle], ["safety", "安全计划", ShieldCheck], ["records", "记录", BarChart3]] as const).map(([id, label, Icon]) => <button key={id} type="button" className={view === id ? "selected" : ""} onClick={() => { setView(id); if (id !== "modules") setSelectedModule(null); }}><Icon /><span>{label}</span></button>)}</nav>
     {emaOpen && <EmaSheet token={token} initial={snapshot.todayEma} allowBackfill={!snapshot.recentEma.some((item) => item.localDate === yesterdayLocalDate())} onClose={() => setEmaOpen(false)} onSaved={async (result) => { setEmaOpen(false); await refreshSnapshot(); if (result.trigger) setEmi(result); }} />}

@@ -398,14 +398,55 @@ body {
 .record-bars i { width: 70%; max-width: 36px; border-radius: 9px 9px 2px 2px; background: linear-gradient(#d47b68, #e7ac85); }
 .record-bars span, .record-bars small { color: #7f6b65; font-size: 10px; }
 .effect-card > div { display: grid; gap: 8px; margin-top: 15px; }
-.effect-card article { display: grid; grid-template-columns: 1fr auto auto; gap: 16px; padding: 13px; border: 1px solid var(--nssi-line); border-radius: 12px; }
+.effect-card article { display: grid; grid-template-columns: 1fr auto auto; gap: 7px 16px; padding: 13px; border: 1px solid var(--nssi-line); border-radius: 12px; }
 .effect-card article span { color: var(--nssi-muted); }
 .effect-card article b { color: var(--nssi-green); }
+.effect-card article small { grid-column: 1 / -1; color: var(--nssi-muted); line-height: 1.5; }
 .effect-card > p, .trend-card > p { color: var(--nssi-muted); }
-.skill-log-card > label { display: grid; gap: 7px; }
-.skill-log-card > div { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
-.skill-log-card > div label { display: grid; gap: 9px; }
-.skill-log-card input[type="range"] { accent-color: var(--nssi-green); }
+.skill-log-intro { margin: -2px 0 0; color: var(--nssi-muted); line-height: 1.65; }
+.skill-form-step { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--nssi-line); }
+.skill-form-step > header { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
+.skill-form-step > header > i { width: 29px; height: 29px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 9px; color: #fff; background: var(--nssi-green); font-size: 12px; font-style: normal; font-weight: 800; }
+.skill-form-step > header > span { display: grid; gap: 2px; }
+.skill-form-step > header small, .skill-picker-heading small { color: var(--nssi-muted); font-size: 11px; font-weight: 400; }
+.skill-picker-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 9px; font-size: 12px; }
+.skill-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.skill-choice-grid > button, .support-action-picker > button { min-height: 58px; display: grid; align-content: center; gap: 3px; padding: 10px 12px; border: 1px solid #cad8d2; border-radius: 13px; color: #405852; background: #fff; cursor: pointer; text-align: left; }
+.skill-choice-grid > button strong, .support-action-picker > button strong { font-size: 13px; }
+.skill-choice-grid > button small, .support-action-picker > button small { color: #788984; font-size: 10px; line-height: 1.35; }
+.skill-choice-grid > button.selected, .support-action-picker > button.selected { border-color: var(--nssi-green); color: #fff; background: var(--nssi-green); box-shadow: 0 7px 16px rgba(31, 105, 88, .15); }
+.skill-choice-grid > button.selected small, .support-action-picker > button.selected small { color: rgba(255,255,255,.76); }
+.all-skills-picker { margin-top: 10px; overflow: hidden; border: 1px solid var(--nssi-line); border-radius: 13px; background: #f8faf8; }
+.all-skills-picker > summary { min-height: 46px; display: flex; align-items: center; gap: 8px; padding: 0 13px; color: var(--nssi-green); cursor: pointer; list-style: none; font-size: 12px; font-weight: 750; }
+.all-skills-picker > summary small { margin-left: auto; color: var(--nssi-muted); font-weight: 400; }
+.all-skills-picker > summary svg { width: 15px; transition: transform 160ms ease; }
+.all-skills-picker[open] > summary svg { transform: rotate(90deg); }
+.all-skills-picker > div { display: grid; gap: 16px; padding: 3px 12px 13px; }
+.all-skills-picker section h4 { margin: 5px 0 8px; color: var(--nssi-muted); font-size: 11px; }
+.support-action-picker { display: grid; grid-template-columns: 118px 1fr; align-items: center; gap: 8px; margin-top: 10px; }
+.support-action-picker > span { color: var(--nssi-muted); font-size: 11px; }
+.compact-choice-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.compact-choice-grid > button { min-height: 42px; padding: 0 13px; border: 1px solid #cad8d2; border-radius: 999px; color: #4e655f; background: #fff; cursor: pointer; }
+.compact-choice-grid > button.selected { border-color: var(--nssi-green); color: #fff; background: var(--nssi-green); }
+.skill-intensity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.skill-intensity-field { display: grid; gap: 5px; padding: 13px; border: 1px solid var(--nssi-line); border-radius: 13px; background: #fff; }
+.skill-intensity-field > span, .skill-intensity-field > small { display: flex; justify-content: space-between; gap: 8px; }
+.skill-intensity-field > span strong { font-size: 12px; }
+.skill-intensity-field output { color: var(--nssi-green); font-size: 12px; font-weight: 800; }
+.skill-intensity-field > small { color: #85928e; font-size: 9px; }
+.skill-intensity-field > small i { font-style: normal; }
+.skill-scale-options { display: grid; grid-template-columns: repeat(6, minmax(38px, 1fr)); gap: 4px; }
+.skill-scale-options button { min-width: 0; min-height: 40px; padding: 0; border: 1px solid #cad8d2; border-radius: 9px; color: #536963; background: #f9fbfa; cursor: pointer; font-weight: 700; }
+.skill-scale-options button.selected { border-color: var(--nssi-green); color: #fff; background: var(--nssi-green); box-shadow: 0 5px 12px rgba(31, 105, 88, .16); }
+.skill-log-more { margin-top: 18px; border: 1px solid var(--nssi-line); border-radius: 13px; background: #f8faf8; }
+.skill-log-more > summary { min-height: 46px; display: flex; align-items: center; justify-content: space-between; padding: 0 13px; color: var(--nssi-green); cursor: pointer; list-style: none; font-size: 12px; font-weight: 750; }
+.skill-log-more > summary svg { width: 15px; transition: transform 160ms ease; }
+.skill-log-more[open] > summary svg { transform: rotate(90deg); }
+.skill-log-more > label { display: grid; gap: 7px; padding: 0 13px 13px; color: var(--nssi-muted); font-size: 11px; }
+.skill-log-more textarea { min-height: 86px; padding: 11px; border: 1px solid #cad7d1; border-radius: 11px; color: var(--nssi-ink); background: #fff; resize: vertical; line-height: 1.55; }
+.skill-log-more label > small { justify-self: end; }
+.skill-log-boundary { display: flex; align-items: flex-start; gap: 8px; margin-top: 13px; padding: 11px 12px; border-radius: 11px; color: #61736e; background: #edf4f1; font-size: 10px; line-height: 1.55; }
+.skill-log-boundary svg { width: 15px; flex: 0 0 auto; }
 .range-switch { display: inline-flex; gap: 4px; padding: 4px; border-radius: 10px; background: #edf2ef; }
 .range-switch button { min-height: 32px; padding: 0 11px; border: 0; border-radius: 8px; color: var(--nssi-muted); background: transparent; cursor: pointer; }
 .range-switch button.selected { color: #fff; background: var(--nssi-green); }
@@ -441,8 +482,8 @@ body {
   .nssi-records-view .page-intro { grid-column: 1 / -1; max-width: none; }
   .nssi-records-view .trend-card { grid-column: 1 / span 7; }
   .nssi-records-view .mood-card { grid-column: 8 / -1; }
-  .nssi-records-view .effect-card { grid-column: 1 / span 6; }
-  .nssi-records-view .skill-log-card { grid-column: 7 / -1; }
+  .nssi-records-view .effect-card { grid-column: 1 / span 4; }
+  .nssi-records-view .skill-log-card { grid-column: 5 / -1; }
 }
 
 @media (max-width: 800px) {
@@ -515,7 +556,11 @@ body {
   .nssi-sheet, .crisis-panel { padding: 25px 17px; border-radius: 23px; }
   .sheet-backdrop, .crisis-backdrop, .source-modal { padding: 8px; }
   .safety-plan-form textarea { min-height: 98px; }
-  .skill-log-card > div { grid-template-columns: 1fr; }
+  .skill-choice-grid, .skill-intensity-grid { grid-template-columns: 1fr; }
+  .skill-scale-options { grid-template-columns: repeat(6, minmax(42px, 1fr)); }
+  .trend-card, .mood-card, .effect-card, .skill-log-card { padding: 18px; }
+  .support-action-picker { grid-template-columns: 1fr; }
+  .support-action-picker > button { min-height: 56px; }
   .onboarding-visual { min-height: 300px; padding: 22px 18px 58px; }
   .onboarding-visual h1 { margin: 14px 0; font-size: 34px; }
   .onboarding-visual p { font-size: 15px; line-height: 1.65; }
@@ -524,6 +569,13 @@ body {
   .onboarding-card > p { margin-bottom: 16px; line-height: 1.65; }
   .disclosure-list { gap: 8px; margin: 16px 0; }
   .disclosure-list > div { padding: 11px; }
+}
+
+@media (max-width: 340px) {
+  .nssi-page { padding-right: 8px; padding-left: 8px; }
+  .trend-card, .mood-card, .effect-card, .skill-log-card { padding: 16px; }
+  .skill-scale-options { grid-template-columns: repeat(4, minmax(44px, 1fr)); }
+  .skill-choice-grid > button, .support-action-picker > button { padding-right: 10px; padding-left: 10px; }
 }
 
 /* The legacy demo also used .source-modal; keep the NSSI modal a true backdrop. */
