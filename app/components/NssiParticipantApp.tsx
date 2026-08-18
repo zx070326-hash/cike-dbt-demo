@@ -205,6 +205,48 @@ function TodayView({ snapshot, modules, onView, onModule, onEma, onNotification 
   );
 }
 
+function ModuleSources({ citations }: { citations: SourceCitation[] }) {
+  const [expandedId, setExpandedId] = useState<string | null>(citations[0]?.id ?? null);
+  const primaryCount = citations.filter((citation) => citation.presentationRole === "primary").length;
+  const supportingCount = citations.length - primaryCount;
+  return (
+    <details className="module-sources">
+      <summary>
+        <BookOpen />
+        <span>
+          <strong>查看本节原文依据</strong>
+          <small>{primaryCount} 条核心原文{supportingCount ? ` · ${supportingCount} 条补充材料` : ""}</small>
+        </span>
+        <ChevronRight />
+      </summary>
+      <div className="module-source-list">
+        {citations.map((citation) => {
+          const expanded = citation.id === expandedId;
+          const page = citation.printedPage ? `书中 ${citation.printedPage} 页` : `PDF ${citation.pdfPage} 页`;
+          return (
+            <details className="module-source-item" key={citation.id} open={expanded}>
+              <summary onClick={(event) => { event.preventDefault(); setExpandedId(expanded ? null : citation.id); }}>
+                <span className="module-source-title">
+                  <span className="module-source-meta">
+                    <i>{citation.presentationRole === "primary" ? "核心原文" : citation.contentType === "worksheet" ? "练习材料" : "补充说明"}</i>
+                    <small>{page}</small>
+                  </span>
+                  <strong>{citation.section}</strong>
+                </span>
+                <ChevronRight />
+              </summary>
+              <div className="module-source-content">
+                <blockquote>{citation.evidence}</blockquote>
+                <small><span>{citation.paragraphAnchor ?? citation.chunkId}</span><span>OCR 派生原文 · 专业核对时请回看扫描页</span></small>
+              </div>
+            </details>
+          );
+        })}
+      </div>
+    </details>
+  );
+}
+
 function ModulesView({ snapshot, modules, selectedId, onSelect, token, onRefresh, onSafety }: { snapshot: Snapshot; modules: ProtocolModule[]; selectedId: string | null; onSelect: (id: string | null) => void; token: string; onRefresh: () => Promise<void>; onSafety: () => void }) {
   const [detail, setDetail] = useState<ModuleDetail | null>(null);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
@@ -216,8 +258,6 @@ function ModulesView({ snapshot, modules, selectedId, onSelect, token, onRefresh
   if (!selectedId) return <div className="nssi-page modules-view"><header className="page-intro"><span className="eyebrow">8 周 · 16 个模块</span><h1>每周两小步，顺着同一条路径往前走</h1><p>解锁与完成由协议状态机判断。AI 可以解释内容，但不能跳过前置练习或替你完成。</p></header><div className="week-list">{Array.from({ length: 8 }, (_, index) => index + 1).map((week) => <section key={week}><div className="week-heading"><span>第 {week} 周</span><i /></div><div className="week-modules">{modules.filter((module) => module.week === week).map((module) => { const status = snapshot.protocol.progress[module.id]?.status ?? "locked"; return <button key={module.id} type="button" disabled={status === "locked"} onClick={() => onSelect(module.id)}><span className={`module-number ${status}`}>{status === "completed" ? <Check /> : status === "locked" ? <LockKeyhole /> : module.ordinal}</span><span><small>{statusLabel(status)} · 约 {module.estimatedMinutes} 分钟</small><strong>{module.title}</strong><p>{module.purpose}</p></span><ChevronRight /></button>; })}</div></section>)}</div></div>;
   if (!detail || detail.module.id !== selectedId) return <div className="nssi-page loading-state"><RefreshCw className="spin" /><p>正在准备课程与原文段落索引…</p></div>;
   const progress = snapshot.protocol.progress[detail.module.id];
-  const primaryCitationCount = detail.citations.filter((citation) => citation.presentationRole === "primary").length;
-  const supportingCitationCount = detail.citations.length - primaryCitationCount;
   return (
     <div className="nssi-page module-detail-view">
       <button className="back-button" type="button" onClick={() => onSelect(null)}><ArrowLeft />返回课程</button>
@@ -228,7 +268,7 @@ function ModulesView({ snapshot, modules, selectedId, onSelect, token, onRefresh
         <form className="exercise-card" onSubmit={submitExercise}><span className="section-kicker"><ClipboardCheck />本节练习</span><h2>{detail.module.exercise.title}</h2><p>{detail.module.exercise.prompt}</p>{detail.module.exercise.fields.map((field) => <label key={field.id} className="exercise-field"><span>{field.label}{field.required && <i>必填</i>}</span>{field.kind === "textarea" && <textarea value={String(answers[field.id] ?? "")} onChange={(event) => setAnswers((current) => ({ ...current, [field.id]: event.target.value }))} placeholder="写一两句就可以" />}{field.kind === "text" && <input value={String(answers[field.id] ?? "")} onChange={(event) => setAnswers((current) => ({ ...current, [field.id]: event.target.value }))} />}{field.kind === "scale" && <div className="scale-choices">{field.options?.map((option) => <button key={option} type="button" className={answers[field.id] === option ? "selected" : ""} onClick={() => setAnswers((current) => ({ ...current, [field.id]: option }))}>{option}</button>)}</div>}{field.kind === "multi-select" && <div className="chip-choices">{field.options?.map((option) => { const selected = (answers[field.id] as string[] | undefined)?.includes(option); return <button key={option} type="button" className={selected ? "selected" : ""} onClick={() => setAnswers((current) => { const before = current[field.id] as string[] | undefined ?? []; return { ...current, [field.id]: selected ? before.filter((item) => item !== option) : [...before, option] }; })}>{option}</button>; })}</div>}</label>)}{notice && <p className="save-notice" role="status">{notice}</p>}<button className="nssi-primary" type="submit">提交练习并检查完成条件<ArrowRight /></button></form>
       )}
       {detail.module.id === "module-03" && notice && <p className="save-notice">{notice}</p>}
-      <details className="module-sources"><summary><BookOpen /><span><strong>查看本节原文依据</strong><small>{primaryCitationCount} 条核心原文{supportingCitationCount ? ` · ${supportingCitationCount} 条补充材料` : ""}</small></span><ChevronRight /></summary><div className="module-source-list">{detail.citations.map((citation, index) => <details className="module-source-item" key={citation.id} open={index === 0}><summary><span><i>{citation.presentationRole === "primary" ? "核心原文" : citation.contentType === "worksheet" ? "练习材料" : "补充说明"}</i><strong>{citation.section}</strong></span><small>{citation.printedPage ? `书中 ${citation.printedPage} 页` : `PDF ${citation.pdfPage} 页`}<ChevronRight /></small></summary><div><blockquote>{citation.evidence}</blockquote><small>{citation.paragraphAnchor ?? citation.chunkId} · OCR 派生原文，专业核对时需回看扫描页</small></div></details>)}</div></details>
+      <ModuleSources key={detail.module.id} citations={detail.citations} />
     </div>
   );
 }
