@@ -190,9 +190,13 @@ export function createRetrievalEngine(knowledge: KnowledgeV2): RetrievalEngine {
         (cardId) => cardIds.has(cardId) || cardEvidenceIds.get(cardId)?.has(chunk.id),
       );
       score += directMatches.length * 18 + relatedMatches.length * 2.5;
-      if (chunk.sourceQuality.contentType === "handout") score += 3.5;
-      if (chunk.sourceQuality.contentType === "worksheet") score += 2;
+      if (chunk.sourceQuality.contentType === "handout") score += 6;
+      if (chunk.sourceQuality.contentType === "trainer-note") score += 2;
+      if (chunk.sourceQuality.contentType === "worksheet") score -= 1;
+      if (chunk.sourceQuality.displayRole === "primary") score += 4;
+      if (chunk.sourceQuality.displayRole === "index-only") score -= 10;
       score *= 0.72 + chunk.sourceQuality.score * 0.28;
+      score *= 0.84 + chunk.sourceQuality.displayScore * 0.16;
       if (score < 2.2 || (!matchedTerms.length && !directMatches.length && !evidenceBoosts.has(chunk.id))) continue;
 
       scored.push({
@@ -218,7 +222,7 @@ export function createRetrievalEngine(knowledge: KnowledgeV2): RetrievalEngine {
         (cardId) => !selected.some((current) => current.matchedSkillCardIds.includes(cardId)),
       );
       if (!sameNeighborhood || addsNewCard || hit.score >= scored[0].score * 0.78) selected.push(hit);
-      if (selected.length >= Math.min(limit, 8)) break;
+      if (selected.length >= Math.min(limit, 24)) break;
     }
     return selected;
   }

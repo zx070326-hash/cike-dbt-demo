@@ -1,6 +1,6 @@
 {
   "schemaVersion": "nssi-phase1-evaluation-1.0",
-  "generatedAt": "2026-08-18T09:01:01.859Z",
+  "generatedAt": "2026-08-18T09:32:05.139Z",
   "executionMode": "deterministic-no-model",
   "frozenInputs": {
     "safety": 212,

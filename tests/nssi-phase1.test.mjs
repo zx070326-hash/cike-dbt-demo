@@ -45,6 +45,14 @@ test("NSSI phase-one product contracts hold end to end", async (t) => {
   assert.equal(catalog.body.knowledge.indexedPages, 1176);
   assert.equal(catalog.body.activeConfig.humanResponseSla, "pending-client-confirmation");
 
+  const moduleEvidence = await json("/api/nssi/module?moduleId=module-01");
+  assert.equal(moduleEvidence.response.status, 200);
+  assert.ok(moduleEvidence.body.citations.length >= 3 && moduleEvidence.body.citations.length <= 4);
+  assert.ok(moduleEvidence.body.citations.some((citation) => citation.presentationRole === "primary"));
+  assert.ok(moduleEvidence.body.citations.some((citation) => citation.contentType === "handout"));
+  assert.ok(moduleEvidence.body.citations.every((citation) => !/、\s*$/u.test(citation.section)), "display headings cannot end as truncated OCR lists");
+  assert.ok(moduleEvidence.body.citations.every((citation) => !/开始日期[：:]?\s*姓名/u.test(citation.evidence)), "blank form headers cannot lead module evidence");
+
   const minor = await json("/api/nssi/enroll", {
     method: "POST", headers: { "content-type": "application/json" },
     body: JSON.stringify({ accepted: true, ageDeclaredAdult: false }),

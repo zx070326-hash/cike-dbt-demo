@@ -43,6 +43,9 @@ export type RetrievalHit = {
   matchedTerms: string[];
   matchedSkillCardIds?: string[];
   qualityScore?: number;
+  displayScore?: number;
+  displayRole?: "primary" | "supporting" | "index-only";
+  contentType?: "handout" | "worksheet" | "trainer-note" | "front-matter" | "source-page";
   parentBlock?: EngineRetrievalHit["parentBlock"];
 };
 
@@ -105,17 +108,28 @@ export function buildClarificationResponse(): ChatPayload {
 export function retrieveEvidence(
   query: string,
   limit = 6,
-  options?: { allowedSkillCardIds?: ReadonlySet<string> },
+  options?: {
+    allowedSkillCardIds?: ReadonlySet<string>;
+    presentation?: "answer" | "module" | "expert";
+  },
 ): RetrievalHit[] {
-  const requestedLimit = options?.allowedSkillCardIds ? Math.max(limit * 4, 24) : limit;
-  return retrievalEngine.retrieve(query, requestedLimit)
+  const requestedLimit = options?.allowedSkillCardIds || options?.presentation === "module"
+    ? Math.max(limit * 5, 30)
+    : Math.max(limit * 2, 12);
+  const eligible = retrievalEngine.retrieve(query, requestedLimit)
     .filter((hit) => {
       const allowed = options?.allowedSkillCardIds;
       if (!allowed?.size) return true;
       const skillIds = new Set([...hit.chunk.skillCardIds, ...hit.matchedSkillCardIds]);
       return [...skillIds].some((id) => allowed.has(id));
-    })
-    .slice(0, limit)
+    });
+  const userFacing = options?.presentation === "expert"
+    ? eligible
+    : eligible.filter((hit) => hit.chunk.sourceQuality.displayRole !== "index-only");
+  // Do not turn a display-quality gate into a silent knowledge gap. If every
+  // match is index-only, expert/source views may still expose the raw result.
+  const selected = userFacing.length ? userFacing : eligible;
+  return selected.slice(0, limit)
     .map((hit) => ({
     page: {
       id: hit.chunk.id,
@@ -138,6 +152,9 @@ export function retrieveEvidence(
     matchedTerms: hit.matchedTerms,
     matchedSkillCardIds: hit.matchedSkillCardIds,
     qualityScore: hit.qualityScore,
+    displayScore: hit.chunk.sourceQuality.displayScore,
+    displayRole: hit.chunk.sourceQuality.displayRole,
+    contentType: hit.chunk.sourceQuality.contentType,
     parentBlock: hit.parentBlock,
     }));
 }
@@ -172,11 +189,14 @@ export function hitToCitation(hit: RetrievalHit): SourceCitation {
   const passage = sourceExactPassage(hit.page.text, hit.matchedTerms);
   const chunkStart = hit.page.charStart ?? 0;
   const paragraphOrdinal = passage.ordinal;
+  const localHeading = passage.text.match(
+    /^[·•√■\s]*((?:通用|正念|情绪调节|人际效能|痛苦忍受)(?:讲义|练习单)\s*[0-9一二三四五六七八九十]+(?:[a-zA-Z]|[一二]?[—－-][0-9a-zA-Z一二]+)?(?:[：:]\s*[^。；\n]{1,42})?)/u,
+  )?.[1]?.trim();
   return {
     id: `rag-${hit.page.id}`,
     sourceId: hit.page.sourceId,
     book: hit.page.book,
-    section: hit.page.section,
+    section: localHeading && localHeading.length <= 58 ? localHeading : hit.page.section,
     printedPage: hit.page.printedPage,
     pdfPage: hit.page.pdfPage,
     evidence: passage.text,
@@ -187,6 +207,8 @@ export function hitToCitation(hit: RetrievalHit): SourceCitation {
     paragraphOrdinal,
     paragraphAnchor: `${hit.page.sourceId}:${hit.page.pdfPage}:c${(hit.page.paragraphOrdinal ?? 0) + 1}:p${passage.ordinal + 1}`,
     sourceHash: hit.page.id,
+    presentationRole: hit.displayRole,
+    contentType: hit.contentType,
   };
 }
 
@@ -229,10 +251,21 @@ function sourceExactPassage(text: string, terms: string[] = []) {
   const passages = sourcePassages(text);
   const normalizedTerms = terms.map(normalize).filter((term) => term.length >= 2);
   let best = passages[0];
-  let bestScore = -1;
+  let bestScore = Number.NEGATIVE_INFINITY;
   for (const passage of passages) {
     const normalizedPassage = normalize(passage.text);
-    const score = normalizedTerms.reduce((sum, term) => sum + (normalizedPassage.includes(term) ? term.length : 0), 0);
+    const termScore = normalizedTerms.reduce((sum, term) => sum + (normalizedPassage.includes(term) ? term.length : 0), 0);
+    const visibleLength = passage.text.replace(/\s/gu, "").length;
+    const referenceCount = (passage.text.match(/(?:讲义|练习单)\s*[0-9一二三四五六七八九十]+[a-zA-Z]?/gu) ?? []).length;
+    const formLabelCount = ["开始日期", "截止日期", "姓名：", "勾选", "填写"].reduce(
+      (sum, label) => sum + (passage.text.includes(label) ? 1 : 0), 0,
+    );
+    const explanatoryCount = ["要点", "是指", "就是", "帮助", "可以", "如果", "意味着"].reduce(
+      (sum, marker) => sum + (passage.text.includes(marker) ? 1 : 0), 0,
+    );
+    const proseScore = Math.min(visibleLength, 240) / 45 + explanatoryCount * 3;
+    const lowValuePenalty = referenceCount * 2.8 + (referenceCount >= 3 ? 10 : 0) + formLabelCount * 5 + (visibleLength < 28 ? 7 : 0);
+    const score = termScore + proseScore - lowValuePenalty;
     if (score > bestScore) {
       best = passage;
       bestScore = score;

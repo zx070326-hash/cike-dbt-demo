@@ -82,6 +82,11 @@ def main() -> None:
             raise AssertionError(f"chunk missing parent block: {chunk['id']}")
         if chunk.get("displaySection") is None or chunk.get("sourceQuality") is None:
             raise AssertionError(f"chunk missing V3 derived metadata: {chunk['id']}")
+        quality = chunk["sourceQuality"]
+        if quality.get("displayRole") not in {"primary", "supporting", "index-only"}:
+            raise AssertionError(f"chunk missing display evidence role: {chunk['id']}")
+        if not isinstance(quality.get("displayScore"), (int, float)):
+            raise AssertionError(f"chunk missing display evidence score: {chunk['id']}")
     coverage = knowledge["coverage"]
     assert coverage["indexedPageCount"] == len(pages)
     assert coverage["sourceCharacterCount"] == source_characters

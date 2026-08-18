@@ -16,6 +16,9 @@ export type SourceCitation = {
   /** Human-readable source anchor, e.g. upper:567:p2. */
   paragraphAnchor?: string;
   sourceHash?: string;
+  /** Presentation metadata; it never changes the source-exact quotation. */
+  presentationRole?: "primary" | "supporting" | "index-only";
+  contentType?: "handout" | "worksheet" | "trainer-note" | "front-matter" | "source-page";
 };
 
 export type ExperienceMode = "companion" | "deep-read";

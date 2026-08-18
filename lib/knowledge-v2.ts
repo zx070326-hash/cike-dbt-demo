@@ -5,6 +5,10 @@ export type SourceQuality = {
   issues: string[];
   contentType: "handout" | "worksheet" | "trainer-note" | "front-matter" | "source-page";
   groundingEligible: boolean;
+  /** Suitability for direct user-facing evidence, separate from retrievability. */
+  displayScore: number;
+  displayRole: "primary" | "supporting" | "index-only";
+  displayIssues: string[];
 };
 
 export type KnowledgeChunk = {

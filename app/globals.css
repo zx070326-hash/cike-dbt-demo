@@ -279,13 +279,24 @@ body {
 .scale-choices button.selected, .chip-choices button.selected { border-color: var(--nssi-green); color: #fff; background: var(--nssi-green); }
 .save-notice { padding: 12px 14px; border-radius: 12px; color: #3d665a; background: #edf5f1; font-size: 13px; line-height: 1.6; }
 .module-sources { padding: 0; overflow: hidden; }
-.module-sources summary { display: flex; align-items: center; gap: 8px; padding: 18px 22px; color: var(--nssi-green); font-weight: 750; cursor: pointer; list-style: none; }
-.module-sources summary svg:first-child { width: 17px; }
-.module-sources summary svg:last-child { width: 16px; margin-left: auto; }
-.module-sources > div { display: grid; gap: 10px; padding: 0 18px 18px; }
-.module-sources article { padding: 17px; border: 1px solid var(--nssi-line); border-radius: 14px; background: #fff; }
-.module-sources article header { display: flex; justify-content: space-between; gap: 12px; }
-.module-sources article header span, .module-sources article small { color: #788984; font-size: 10px; }
+.module-sources > summary { display: flex; align-items: center; gap: 10px; padding: 18px 22px; color: var(--nssi-green); cursor: pointer; list-style: none; }
+.module-sources > summary > svg:first-child { width: 18px; }
+.module-sources > summary > svg:last-child { width: 17px; margin-left: auto; transition: transform 180ms ease; }
+.module-sources[open] > summary > svg:last-child { transform: rotate(90deg); }
+.module-sources > summary > span { display: grid; gap: 2px; }
+.module-sources > summary strong { font-size: 14px; }
+.module-sources > summary small { color: var(--nssi-muted); font-size: 11px; font-weight: 500; }
+.module-source-list { display: grid; gap: 10px; padding: 0 18px 18px; }
+.module-source-item { overflow: hidden; border: 1px solid var(--nssi-line); border-radius: 14px; background: #fff; }
+.module-source-item > summary { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 70px; padding: 14px 16px; cursor: pointer; list-style: none; }
+.module-source-item > summary > span { min-width: 0; display: grid; gap: 5px; }
+.module-source-item > summary i { width: fit-content; padding: 3px 7px; border-radius: 999px; color: var(--nssi-green); background: var(--nssi-mint); font-size: 9px; font-style: normal; font-weight: 800; }
+.module-source-item > summary strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: "Songti SC", "STSong", serif; font-size: 17px; }
+.module-source-item > summary > small { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; color: #788984; font-size: 10px; }
+.module-source-item > summary svg { width: 14px; transition: transform 180ms ease; }
+.module-source-item[open] > summary svg { transform: rotate(90deg); }
+.module-source-item > div { padding: 0 16px 16px; border-top: 1px solid #edf1ef; }
+.module-source-item > div > small { color: #788984; font-size: 10px; }
 .module-sources blockquote { margin: 13px 0; padding-left: 14px; border-left: 3px solid #b8d4c8; color: #405852; line-height: 1.75; white-space: pre-wrap; }
 
 .sheet-backdrop, .crisis-backdrop, .source-modal { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(13, 39, 33, .58); backdrop-filter: blur(12px); }
@@ -379,8 +390,8 @@ body {
 .expert-evidence-body article button { padding: 0; border: 0; color: var(--nssi-green); background: transparent; font-size: 11px; cursor: pointer; }
 .expert-caveat { color: #7c8985 !important; font-size: 10px !important; }
 
-.records-view { display: grid; gap: 15px; }
-.records-view .page-intro { margin-bottom: 4px; }
+.nssi-records-view { display: grid; gap: 15px; }
+.nssi-records-view .page-intro { margin-bottom: 4px; }
 .trend-card, .mood-card, .effect-card, .skill-log-card { padding: 25px; }
 .record-bars { height: 190px; display: flex; align-items: end; gap: 8px; margin-top: 18px; padding-top: 20px; border-bottom: 1px solid var(--nssi-line); overflow-x: auto; }
 .record-bars > div { height: 100%; min-width: 20px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: end; gap: 5px; }
@@ -403,6 +414,37 @@ body {
 .mood-card > div i { display: block; height: 9px; max-width: 100%; border-radius: 999px; background: linear-gradient(90deg, #5b9a86, #b8d7c9); }
 .mood-card small, .mood-card > p { color: var(--nssi-muted); }
 
+@media (min-width: 1180px) {
+  .nssi-app { padding-bottom: 28px; }
+  .nssi-content {
+    width: min(1240px, calc(100% - 250px));
+    margin-right: auto;
+    margin-left: max(220px, calc((100% - 1240px) / 2 + 100px));
+  }
+  .nssi-bottom-nav {
+    left: max(20px, calc((100% - 1600px) / 2 + 20px));
+    top: 106px;
+    bottom: auto;
+    width: 180px;
+    height: auto;
+    grid-template-columns: 1fr;
+    gap: 5px;
+    padding: 10px;
+    border-radius: 20px;
+    transform: none;
+  }
+  .nssi-bottom-nav button { min-height: 52px; justify-content: flex-start; padding: 0 16px; }
+  .nssi-bottom-nav span { font-size: 13px; }
+  .nssi-page { padding: 38px 34px 48px; }
+  .module-source-list { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .nssi-records-view { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; }
+  .nssi-records-view .page-intro { grid-column: 1 / -1; max-width: none; }
+  .nssi-records-view .trend-card { grid-column: 1 / span 7; }
+  .nssi-records-view .mood-card { grid-column: 8 / -1; }
+  .nssi-records-view .effect-card { grid-column: 1 / span 6; }
+  .nssi-records-view .skill-log-card { grid-column: 7 / -1; }
+}
+
 @media (max-width: 800px) {
   .nssi-onboarding { grid-template-columns: 1fr; }
   .onboarding-visual { min-height: 370px; padding: 30px 24px; }
@@ -424,7 +466,6 @@ body {
   .module-hero { padding: 27px 21px; }
   .module-hero h1 { font-size: 36px; }
   .learning-card, .exercise-card { padding: 21px 17px; }
-  .module-sources article header { display: grid; }
   .chat-header { align-items: stretch; flex-direction: column; }
   .mode-switch { align-self: stretch; }
   .mode-switch button { flex: 1; justify-content: center; }
@@ -447,10 +488,10 @@ body {
   .nssi-brand strong { font-size: 16px; }
   .global-help { width: 43px; padding: 0; justify-content: center; font-size: 0; }
   .global-help svg { width: 19px; }
-  .nssi-bottom-nav { bottom: 8px; height: 62px; width: calc(100% - 14px); border-radius: 18px; }
+  .nssi-bottom-nav { bottom: max(8px, env(safe-area-inset-bottom)); height: 64px; width: calc(100% - 14px); border-radius: 18px; }
   .nssi-bottom-nav button { flex-direction: column; gap: 2px; border-radius: 12px; }
   .nssi-bottom-nav svg { width: 17px; height: 17px; }
-  .nssi-bottom-nav span { font-size: 9px; }
+  .nssi-bottom-nav span { font-size: 10px; }
   .today-hero { border-radius: 22px; }
   .today-hero h1 { font-size: 32px; }
   .current-module-card, .ema-card { min-height: 260px; padding: 21px; border-radius: 19px; }
@@ -460,6 +501,12 @@ body {
   .week-modules > button > svg { display: none; }
   .module-number { width: 36px; height: 36px; border-radius: 11px; }
   .module-hero, .learning-card, .exercise-card, .module-sources { border-radius: 18px; }
+  .module-sources > summary { min-height: 60px; padding: 14px; }
+  .module-source-list { padding: 0 10px 10px; }
+  .module-source-item > summary { min-height: 64px; padding: 12px; }
+  .module-source-item > summary strong { font-size: 16px; }
+  .module-source-item > div { padding: 0 12px 13px; }
+  .module-sources blockquote { font-size: 13px; line-height: 1.7; }
   .scale-choices button { flex: 1 0 13%; min-width: 34px; padding: 0; }
   .chat-header h1 { font-size: 30px; }
   .mode-switch button { padding: 0 8px; font-size: 12px; }
@@ -469,6 +516,14 @@ body {
   .sheet-backdrop, .crisis-backdrop, .source-modal { padding: 8px; }
   .safety-plan-form textarea { min-height: 98px; }
   .skill-log-card > div { grid-template-columns: 1fr; }
+  .onboarding-visual { min-height: 300px; padding: 22px 18px 58px; }
+  .onboarding-visual h1 { margin: 14px 0; font-size: 34px; }
+  .onboarding-visual p { font-size: 15px; line-height: 1.65; }
+  .onboarding-card { margin-top: -38px; padding: 22px 18px; }
+  .onboarding-card h2 { font-size: 31px; }
+  .onboarding-card > p { margin-bottom: 16px; line-height: 1.65; }
+  .disclosure-list { gap: 8px; margin: 16px 0; }
+  .disclosure-list > div { padding: 11px; }
 }
 
 /* The legacy demo also used .source-modal; keep the NSSI modal a true backdrop. */
@@ -4023,6 +4078,13 @@ input[type="range"] {
 .notification-stack span { display: grid; gap: 4px; }
 .notification-stack small { color: #5d706a; line-height: 1.55; }
 .notification-stack svg { width: 16px; flex: 0 0 auto; }
+.notification-mark { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; color: var(--nssi-green); font-size: 11px; white-space: nowrap; }
+.notification-mark span { display: inline; }
+@media (max-width: 430px) {
+  .notification-stack > button { align-items: flex-start; gap: 8px; padding: 13px; }
+  .notification-mark { width: 32px; height: 32px; justify-content: center; border-radius: 50%; background: #e4f1eb; }
+  .notification-mark span { display: none; }
+}
 .privacy-sheet { max-width: 620px; }
 .privacy-sheet > p { color: #5d706a; line-height: 1.75; }
 .privacy-actions { display: grid; gap: 14px; margin: 22px 0; }

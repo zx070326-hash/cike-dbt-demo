@@ -51,7 +51,7 @@ npm test
 npm run eval:phase1
 ```
 
-当前自动化回归 66/66 通过。冻结评测包含 212 条安全输入和 112 条忠实度输入；最新机器评测见 [评测结果](reports/nssi-phase1-evaluation-latest.json)，需求追踪与人工验收边界见 [一期追踪矩阵](docs/NSSI_PHASE1_TRACEABILITY.md)。自动评测不构成临床有效性、伦理或医疗器械结论；语气 30 条双人盲评仍需临床团队执行。
+当前自动化回归 67/67 通过。冻结评测包含 212 条安全输入和 112 条忠实度输入；最新机器评测见 [评测结果](reports/nssi-phase1-evaluation-latest.json)，需求追踪与人工验收边界见 [一期追踪矩阵](docs/NSSI_PHASE1_TRACEABILITY.md)。自动评测不构成临床有效性、伦理或医疗器械结论；语气 30 条双人盲评仍需临床团队执行。
 
 ## Cloudflare 部署
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "generatedAt": "2026-08-13T17:06:42.802Z",
+  "generatedAt": "2026-08-18T09:31:42.508Z",
   "knowledgeVersion": "2.0",
   "corpus": {
     "indexedPageCount": 1176,
@@ -24,7 +24,7 @@
     "cardRecallAt1": 0.9828,
     "cardRecallAt3": 1,
     "cardRecallAt5": 1,
-    "cardMRR": 0.9914,
+    "cardMRR": 0.9885,
     "evidenceCaseCount": 58,
     "evidenceTermRecallAt5": 1,
     "parentBlockResolutionRate": 1,
@@ -46,20 +46,20 @@
       "evidenceMatched": true,
       "topHits": [
         {
-          "chunkId": "17f40ce1b37599cd",
+          "chunkId": "5ea46d730032ce31",
           "section": "通用讲义7a",
-          "pdfPage": 241,
-          "score": 220.75,
+          "pdfPage": 35,
+          "score": 400.73,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
           ]
         },
         {
-          "chunkId": "5ea46d730032ce31",
+          "chunkId": "17f40ce1b37599cd",
           "section": "通用讲义7a",
-          "pdfPage": 35,
-          "score": 213.73,
+          "pdfPage": 241,
+          "score": 344.25,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -69,27 +69,27 @@
           "chunkId": "2c89ee635050f708",
           "section": "通用讲义7",
           "pdfPage": 34,
-          "score": 213.25,
+          "score": 343.25,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
           ]
         },
         {
-          "chunkId": "b0102bf095e8cb98",
-          "section": "通用讲义7",
-          "pdfPage": 45,
-          "score": 204.86,
+          "chunkId": "6e34fe8b57ee9feb",
+          "section": "通用讲义7a",
+          "pdfPage": 36,
+          "score": 321.6,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
           ]
         },
         {
-          "chunkId": "109e1238507b1598",
-          "section": "通用讲义7",
-          "pdfPage": 41,
-          "score": 199.57,
+          "chunkId": "5ca2d3647af8f338",
+          "section": "通用讲义7一7a",
+          "pdfPage": 239,
+          "score": 318.5,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -114,7 +114,7 @@
           "chunkId": "c04b5805b9179233",
           "section": "痛苦忍受讲义4",
           "pdfPage": 679,
-          "score": 514.77,
+          "score": 943.13,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -123,21 +123,10 @@
           ]
         },
         {
-          "chunkId": "057dd936cd0310e9",
-          "section": "痛苦忍受讲义4",
-          "pdfPage": 354,
-          "score": 430.38,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-stop",
-            "distress-crisis-survival"
-          ]
-        },
-        {
-          "chunkId": "6ba753498d72f02e",
-          "section": "痛苦忍受练习单2",
-          "pdfPage": 315,
-          "score": 416.39,
+          "chunkId": "c2e0c8622b1c04f9",
+          "section": "第九章第",
+          "pdfPage": 665,
+          "score": 815.45,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -148,7 +137,7 @@
           "chunkId": "1b4ee6794bcbb00a",
           "section": "痛苦忍受练习单1",
           "pdfPage": 305,
-          "score": 389.22,
+          "score": 797.42,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -157,10 +146,21 @@
           ]
         },
         {
-          "chunkId": "c2e0c8622b1c04f9",
-          "section": "第九章第",
-          "pdfPage": 665,
-          "score": 382.64,
+          "chunkId": "6ba753498d72f02e",
+          "section": "痛苦忍受练习单2",
+          "pdfPage": 315,
+          "score": 764.42,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-stop",
+            "distress-crisis-survival"
+          ]
+        },
+        {
+          "chunkId": "057dd936cd0310e9",
+          "section": "痛苦忍受练习单2",
+          "pdfPage": 354,
+          "score": 747.65,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -182,20 +182,20 @@
       "evidenceMatched": true,
       "topHits": [
         {
-          "chunkId": "17f40ce1b37599cd",
+          "chunkId": "5ea46d730032ce31",
           "section": "通用讲义7a",
-          "pdfPage": 241,
-          "score": 220.75,
+          "pdfPage": 35,
+          "score": 405.2,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
           ]
         },
         {
-          "chunkId": "5ea46d730032ce31",
+          "chunkId": "17f40ce1b37599cd",
           "section": "通用讲义7a",
-          "pdfPage": 35,
-          "score": 218.2,
+          "pdfPage": 241,
+          "score": 344.25,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -205,27 +205,27 @@
           "chunkId": "2c89ee635050f708",
           "section": "通用讲义7",
           "pdfPage": 34,
-          "score": 213.25,
+          "score": 343.25,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
           ]
         },
         {
-          "chunkId": "b0102bf095e8cb98",
-          "section": "通用讲义7",
-          "pdfPage": 45,
-          "score": 204.86,
+          "chunkId": "6e34fe8b57ee9feb",
+          "section": "通用讲义7a",
+          "pdfPage": 36,
+          "score": 321.6,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
           ]
         },
         {
-          "chunkId": "109e1238507b1598",
-          "section": "通用讲义7",
-          "pdfPage": 41,
-          "score": 199.57,
+          "chunkId": "5ca2d3647af8f338",
+          "section": "通用讲义7一7a",
+          "pdfPage": 239,
+          "score": 318.5,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -250,7 +250,7 @@
           "chunkId": "c04b5805b9179233",
           "section": "痛苦忍受讲义4",
           "pdfPage": 679,
-          "score": 488.2,
+          "score": 916.57,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -258,21 +258,10 @@
           ]
         },
         {
-          "chunkId": "6ba753498d72f02e",
-          "section": "痛苦忍受练习单2",
-          "pdfPage": 315,
-          "score": 446.16,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-stop",
-            "distress-crisis-survival"
-          ]
-        },
-        {
-          "chunkId": "057dd936cd0310e9",
-          "section": "痛苦忍受讲义4",
-          "pdfPage": 354,
-          "score": 430.38,
+          "chunkId": "c2e0c8622b1c04f9",
+          "section": "第九章第",
+          "pdfPage": 665,
+          "score": 815.45,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -283,7 +272,7 @@
           "chunkId": "1b4ee6794bcbb00a",
           "section": "痛苦忍受练习单1",
           "pdfPage": 305,
-          "score": 389.22,
+          "score": 797.42,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -292,10 +281,21 @@
           ]
         },
         {
-          "chunkId": "c2e0c8622b1c04f9",
-          "section": "第九章第",
-          "pdfPage": 665,
-          "score": 382.64,
+          "chunkId": "6ba753498d72f02e",
+          "section": "痛苦忍受练习单2",
+          "pdfPage": 315,
+          "score": 793.63,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-stop",
+            "distress-crisis-survival"
+          ]
+        },
+        {
+          "chunkId": "057dd936cd0310e9",
+          "section": "痛苦忍受练习单2",
+          "pdfPage": 354,
+          "score": 747.65,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -317,10 +317,20 @@
       "evidenceMatched": true,
       "topHits": [
         {
+          "chunkId": "5ea46d730032ce31",
+          "section": "通用讲义7a",
+          "pdfPage": 35,
+          "score": 400.14,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "behavior-chain"
+          ]
+        },
+        {
           "chunkId": "17f40ce1b37599cd",
           "section": "通用讲义7a",
           "pdfPage": 241,
-          "score": 228.05,
+          "score": 351.55,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -330,17 +340,7 @@
           "chunkId": "2c89ee635050f708",
           "section": "通用讲义7",
           "pdfPage": 34,
-          "score": 213.25,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "behavior-chain"
-          ]
-        },
-        {
-          "chunkId": "5ea46d730032ce31",
-          "section": "通用讲义7a",
-          "pdfPage": 35,
-          "score": 213.14,
+          "score": 343.25,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -348,9 +348,9 @@
         },
         {
           "chunkId": "5ca2d3647af8f338",
-          "section": "通用讲义7",
+          "section": "通用讲义7一7a",
           "pdfPage": 239,
-          "score": 211.93,
+          "score": 335.43,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -360,7 +360,7 @@
           "chunkId": "6e34fe8b57ee9feb",
           "section": "通用讲义7a",
           "pdfPage": 36,
-          "score": 206.99,
+          "score": 331.49,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -385,7 +385,7 @@
           "chunkId": "c04b5805b9179233",
           "section": "痛苦忍受讲义4",
           "pdfPage": 679,
-          "score": 500.75,
+          "score": 929.11,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -393,21 +393,10 @@
           ]
         },
         {
-          "chunkId": "057dd936cd0310e9",
-          "section": "痛苦忍受讲义4",
-          "pdfPage": 354,
-          "score": 438.92,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-stop",
-            "distress-crisis-survival"
-          ]
-        },
-        {
-          "chunkId": "6ba753498d72f02e",
-          "section": "痛苦忍受练习单2",
-          "pdfPage": 315,
-          "score": 416.28,
+          "chunkId": "c2e0c8622b1c04f9",
+          "section": "第九章第",
+          "pdfPage": 665,
+          "score": 825.85,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -418,7 +407,7 @@
           "chunkId": "1b4ee6794bcbb00a",
           "section": "痛苦忍受练习单1",
           "pdfPage": 305,
-          "score": 398.73,
+          "score": 806.75,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -427,10 +416,21 @@
           ]
         },
         {
-          "chunkId": "c2e0c8622b1c04f9",
-          "section": "第九章第",
-          "pdfPage": 665,
-          "score": 393.04,
+          "chunkId": "6ba753498d72f02e",
+          "section": "痛苦忍受练习单2",
+          "pdfPage": 315,
+          "score": 764.31,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-stop",
+            "distress-crisis-survival"
+          ]
+        },
+        {
+          "chunkId": "057dd936cd0310e9",
+          "section": "痛苦忍受练习单2",
+          "pdfPage": 354,
+          "score": 755.7,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -456,57 +456,55 @@
           "chunkId": "2427252e02848852",
           "section": "练习单9：全然接纳）",
           "pdfPage": 191,
-          "score": 232.93,
+          "score": 378.18,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
             "distress-crisis-survival",
-            "distress-stop",
-            "distress-tip"
+            "distress-stop"
           ]
         },
         {
           "chunkId": "ae5c4a5009ae8f3a",
           "section": "练习单9：全然接纳）",
           "pdfPage": 200,
-          "score": 222.64,
+          "score": 370.92,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
             "distress-crisis-survival"
+          ]
+        },
+        {
+          "chunkId": "f262793efa85f5c4",
+          "section": "情绪调节讲义11：找出相反行为",
+          "pdfPage": 224,
+          "score": 361.02,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "emotion-check-facts",
+            "emotion-opposite-action"
+          ]
+        },
+        {
+          "chunkId": "0a1344e8f77dc84d",
+          "section": "练习单9：全然接纳）DT练习单9：全然接纳",
+          "pdfPage": 204,
+          "score": 359.55,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-radical-acceptance",
+            "distress-stop"
           ]
         },
         {
           "chunkId": "1d65b2e33c7aa705",
-          "section": "痛苦忍受练习单8",
+          "section": "痛苦忍受讲义9a：感官觉察，分解步骤，是让你改善当下的放松行",
           "pdfPage": 307,
-          "score": 217.36,
+          "score": 347.36,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
-            "distress-crisis-survival"
-          ]
-        },
-        {
-          "chunkId": "709da06c6be8a688",
-          "section": "痛苦忍受讲义11：全然接纳”",
-          "pdfPage": 720,
-          "score": 216.16,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-radical-acceptance",
-            "distress-crisis-survival"
-          ]
-        },
-        {
-          "chunkId": "ca9f45d0ee6b0b0b",
-          "section": "通用练习单2",
-          "pdfPage": 607,
-          "score": 215.53,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-radical-acceptance",
-            "emotion-check-facts",
             "distress-crisis-survival"
           ]
         }
@@ -528,7 +526,7 @@
           "chunkId": "b5503deed616cb5a",
           "section": "第十二节）与改变情绪反应有关，方法是学 习如何核对事实，当情绪不",
           "pdfPage": 519,
-          "score": 174.49,
+          "score": 241.49,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -538,9 +536,9 @@
         },
         {
           "chunkId": "f262793efa85f5c4",
-          "section": "情绪调节讲义8",
+          "section": "情绪调节讲义11：找出相反行为",
           "pdfPage": 224,
-          "score": 168.64,
+          "score": 237.64,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -551,7 +549,7 @@
           "chunkId": "2b70467924f9f7dd",
           "section": "情绪调节讲义8：核对事实",
           "pdfPage": 198,
-          "score": 164.03,
+          "score": 233.03,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -560,9 +558,9 @@
         },
         {
           "chunkId": "bd23e2e43316e3e3",
-          "section": "情绪调节讲义10",
+          "section": "情绪调节讲义10（情绪调节练习单7）",
           "pdfPage": 227,
-          "score": 158.32,
+          "score": 227.35,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -571,9 +569,9 @@
         },
         {
           "chunkId": "3a3ef4ddc57154a2",
-          "section": "情绪调节讲义7",
+          "section": "情绪调节讲义7：概论一改变情绪反应",
           "pdfPage": 565,
-          "score": 150.66,
+          "score": 213.23,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -597,9 +595,9 @@
       "topHits": [
         {
           "chunkId": "844b75f936fecd6d",
-          "section": "人际效能讲义5",
+          "section": "情绪调节讲义19）",
           "pdfPage": 176,
-          "score": 498.83,
+          "score": 673.72,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -611,7 +609,7 @@
           "chunkId": "dae666187add5b47",
           "section": "第八章chapter8 355",
           "pdfPage": 378,
-          "score": 439.14,
+          "score": 640.14,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -622,40 +620,39 @@
         },
         {
           "chunkId": "be2764babe7b6767",
-          "section": "人际效能练习单4",
+          "section": "人际效能讲义17、18对认可有更多描述），可与人际效能练习单4、5并",
           "pdfPage": 120,
-          "score": 421.8,
+          "score": 628.03,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
             "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "62ea67d2a46d0c16",
+          "section": "人际效能讲义3",
+          "pdfPage": 129,
+          "score": 596.31,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
+            "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "a94bebda60cb64aa",
+          "section": "人际效能讲义2a：阻碍人际效能的误解",
+          "pdfPage": 119,
+          "score": 575.23,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
             "interpersonal-give"
-          ]
-        },
-        {
-          "chunkId": "7bc5b5549a3e6e44",
-          "section": "练习单6：找出办法改变不良情",
-          "pdfPage": 196,
-          "score": 416.11,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
-          ]
-        },
-        {
-          "chunkId": "5f4ffd7ec38b733f",
-          "section": "练习单9：全然接",
-          "pdfPage": 199,
-          "score": 415.9,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
           ]
         }
       ]
@@ -674,10 +671,23 @@
       "evidenceMatched": true,
       "topHits": [
         {
+          "chunkId": "dae666187add5b47",
+          "section": "第八章chapter8 355",
+          "pdfPage": 378,
+          "score": 667.58,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
+            "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
           "chunkId": "844b75f936fecd6d",
-          "section": "人际效能讲义5",
+          "section": "情绪调节讲义19）",
           "pdfPage": 176,
-          "score": 489.83,
+          "score": 665.07,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -686,49 +696,36 @@
           ]
         },
         {
-          "chunkId": "dae666187add5b47",
-          "section": "第八章chapter8 355",
-          "pdfPage": 378,
-          "score": 466.58,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
-          ]
-        },
-        {
-          "chunkId": "5f4ffd7ec38b733f",
-          "section": "练习单9：全然接",
-          "pdfPage": 199,
-          "score": 450.49,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
-          ]
-        },
-        {
-          "chunkId": "7bc5b5549a3e6e44",
-          "section": "练习单6：找出办法改变不良情",
-          "pdfPage": 196,
-          "score": 442,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
-          ]
-        },
-        {
           "chunkId": "be2764babe7b6767",
-          "section": "人际效能练习单4",
+          "section": "人际效能讲义17、18对认可有更多描述），可与人际效能练习单4、5并",
           "pdfPage": 120,
-          "score": 437.61,
+          "score": 661.84,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
+            "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "62ea67d2a46d0c16",
+          "section": "人际效能讲义3",
+          "pdfPage": 129,
+          "score": 625.39,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
+            "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "88428091bc6ae00c",
+          "section": "人际效能练习单10（人际效能讲义13）（第2一1页）",
+          "pdfPage": 185,
+          "score": 596.04,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -754,53 +751,52 @@
           "chunkId": "2427252e02848852",
           "section": "练习单9：全然接纳）",
           "pdfPage": 191,
-          "score": 232.93,
+          "score": 378.18,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
             "distress-crisis-survival",
-            "distress-stop",
-            "distress-tip"
+            "distress-stop"
           ]
         },
         {
           "chunkId": "ae5c4a5009ae8f3a",
           "section": "练习单9：全然接纳）",
           "pdfPage": 200,
-          "score": 222.64,
+          "score": 370.92,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
             "distress-crisis-survival"
+          ]
+        },
+        {
+          "chunkId": "f262793efa85f5c4",
+          "section": "情绪调节讲义11：找出相反行为",
+          "pdfPage": 224,
+          "score": 361.02,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "emotion-check-facts",
+            "emotion-opposite-action"
+          ]
+        },
+        {
+          "chunkId": "0a1344e8f77dc84d",
+          "section": "练习单9：全然接纳）DT练习单9：全然接纳",
+          "pdfPage": 204,
+          "score": 359.55,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-radical-acceptance",
+            "distress-stop"
           ]
         },
         {
           "chunkId": "1d65b2e33c7aa705",
-          "section": "痛苦忍受练习单8",
+          "section": "痛苦忍受讲义9a：感官觉察，分解步骤，是让你改善当下的放松行",
           "pdfPage": 307,
-          "score": 217.36,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-radical-acceptance",
-            "distress-crisis-survival"
-          ]
-        },
-        {
-          "chunkId": "709da06c6be8a688",
-          "section": "痛苦忍受讲义11：全然接纳”",
-          "pdfPage": 720,
-          "score": 216.16,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-radical-acceptance",
-            "distress-crisis-survival"
-          ]
-        },
-        {
-          "chunkId": "5f4ffd7ec38b733f",
-          "section": "练习单9：全然接",
-          "pdfPage": 199,
-          "score": 211.05,
+          "score": 347.36,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
@@ -823,9 +819,9 @@
       "topHits": [
         {
           "chunkId": "f262793efa85f5c4",
-          "section": "情绪调节讲义8",
+          "section": "情绪调节讲义11：找出相反行为",
           "pdfPage": 224,
-          "score": 171.32,
+          "score": 240.32,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -836,7 +832,7 @@
           "chunkId": "b5503deed616cb5a",
           "section": "第十二节）与改变情绪反应有关，方法是学 习如何核对事实，当情绪不",
           "pdfPage": 519,
-          "score": 170.37,
+          "score": 237.37,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -845,21 +841,10 @@
           ]
         },
         {
-          "chunkId": "3a3ef4ddc57154a2",
-          "section": "情绪调节讲义7",
-          "pdfPage": 565,
-          "score": 170.08,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "emotion-check-facts",
-            "emotion-opposite-action"
-          ]
-        },
-        {
           "chunkId": "2b70467924f9f7dd",
           "section": "情绪调节讲义8：核对事实",
           "pdfPage": 198,
-          "score": 164.03,
+          "score": 233.03,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -867,14 +852,25 @@
           ]
         },
         {
-          "chunkId": "aada36d00760bbb0",
-          "section": "情绪调节讲义8",
-          "pdfPage": 277,
-          "score": 156.57,
+          "chunkId": "3a3ef4ddc57154a2",
+          "section": "情绪调节讲义7：概论一改变情绪反应",
+          "pdfPage": 565,
+          "score": 232.65,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
-            "emotion-problem-solving"
+            "emotion-opposite-action"
+          ]
+        },
+        {
+          "chunkId": "bd23e2e43316e3e3",
+          "section": "情绪调节讲义10（情绪调节练习单7）",
+          "pdfPage": 227,
+          "score": 216.07,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "emotion-check-facts",
+            "emotion-opposite-action"
           ]
         }
       ]
@@ -894,9 +890,9 @@
       "topHits": [
         {
           "chunkId": "844b75f936fecd6d",
-          "section": "人际效能讲义5",
+          "section": "情绪调节讲义19）",
           "pdfPage": 176,
-          "score": 492.78,
+          "score": 667.9,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -908,7 +904,7 @@
           "chunkId": "dae666187add5b47",
           "section": "第八章chapter8 355",
           "pdfPage": 378,
-          "score": 452.24,
+          "score": 653.24,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -919,40 +915,39 @@
         },
         {
           "chunkId": "be2764babe7b6767",
-          "section": "人际效能练习单4",
+          "section": "人际效能讲义17、18对认可有更多描述），可与人际效能练习单4、5并",
           "pdfPage": 120,
-          "score": 421.8,
+          "score": 628.03,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
             "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "62ea67d2a46d0c16",
+          "section": "人际效能讲义3",
+          "pdfPage": 129,
+          "score": 596.31,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
+            "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "a94bebda60cb64aa",
+          "section": "人际效能讲义2a：阻碍人际效能的误解",
+          "pdfPage": 119,
+          "score": 582.77,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
             "interpersonal-give"
-          ]
-        },
-        {
-          "chunkId": "7bc5b5549a3e6e44",
-          "section": "练习单6：找出办法改变不良情",
-          "pdfPage": 196,
-          "score": 416.11,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
-          ]
-        },
-        {
-          "chunkId": "5f4ffd7ec38b733f",
-          "section": "练习单9：全然接",
-          "pdfPage": 199,
-          "score": 415.9,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
           ]
         }
       ]
@@ -972,9 +967,9 @@
       "topHits": [
         {
           "chunkId": "844b75f936fecd6d",
-          "section": "人际效能讲义5",
+          "section": "情绪调节讲义19）",
           "pdfPage": 176,
-          "score": 510.28,
+          "score": 684.73,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -986,7 +981,7 @@
           "chunkId": "dae666187add5b47",
           "section": "第八章chapter8 355",
           "pdfPage": 378,
-          "score": 452.15,
+          "score": 653.15,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -997,21 +992,9 @@
         },
         {
           "chunkId": "be2764babe7b6767",
-          "section": "人际效能练习单4",
+          "section": "人际效能讲义17、18对认可有更多描述），可与人际效能练习单4、5并",
           "pdfPage": 120,
-          "score": 439.86,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-give",
-            "interpersonal-fast"
-          ]
-        },
-        {
-          "chunkId": "5f4ffd7ec38b733f",
-          "section": "练习单9：全然接",
-          "pdfPage": 199,
-          "score": 430.98,
+          "score": 646.09,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -1021,16 +1004,27 @@
           ]
         },
         {
-          "chunkId": "7bc5b5549a3e6e44",
-          "section": "练习单6：找出办法改变不良情",
-          "pdfPage": 196,
-          "score": 422.61,
+          "chunkId": "62ea67d2a46d0c16",
+          "section": "人际效能讲义3",
+          "pdfPage": 129,
+          "score": 605.01,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
             "interpersonal-give",
             "interpersonal-fast",
             "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "a94bebda60cb64aa",
+          "section": "人际效能讲义2a：阻碍人际效能的误解",
+          "pdfPage": 119,
+          "score": 585.69,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
+            "interpersonal-give"
           ]
         }
       ]
@@ -1051,7 +1045,7 @@
           "chunkId": "709da06c6be8a688",
           "section": "痛苦忍受讲义11：全然接纳”",
           "pdfPage": 720,
-          "score": 284.62,
+          "score": 516.62,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
@@ -1060,9 +1054,9 @@
         },
         {
           "chunkId": "1d65b2e33c7aa705",
-          "section": "痛苦忍受练习单8",
+          "section": "痛苦忍受讲义9a：感官觉察，分解步骤，是让你改善当下的放松行",
           "pdfPage": 307,
-          "score": 270.17,
+          "score": 510.17,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
@@ -1073,20 +1067,19 @@
           "chunkId": "2427252e02848852",
           "section": "练习单9：全然接纳）",
           "pdfPage": 191,
-          "score": 253.6,
+          "score": 446.9,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
             "distress-crisis-survival",
-            "distress-stop",
-            "distress-tip"
+            "distress-stop"
           ]
         },
         {
-          "chunkId": "de06db6ad81b47bc",
-          "section": "痛苦忍受讲义13",
-          "pdfPage": 747,
-          "score": 253.28,
+          "chunkId": "5f4ffd7ec38b733f",
+          "section": "练习单9：全然接",
+          "pdfPage": 199,
+          "score": 432.21,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
@@ -1094,10 +1087,10 @@
           ]
         },
         {
-          "chunkId": "862761b7b67507b1",
-          "section": "痛苦忍受讲义12",
-          "pdfPage": 744,
-          "score": 246.07,
+          "chunkId": "51e7a0d679162d4f",
+          "section": "痛苦忍受讲义10",
+          "pdfPage": 327,
+          "score": 429.32,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
@@ -1122,7 +1115,7 @@
           "chunkId": "3fc1da6ddcfd086a",
           "section": "情绪调节讲义12",
           "pdfPage": 603,
-          "score": 150.51,
+          "score": 152.01,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-problem-solving",
@@ -1133,29 +1126,19 @@
           "chunkId": "720b51a0f1c3796c",
           "section": "情绪调节讲义13",
           "pdfPage": 612,
-          "score": 140.59,
+          "score": 142.09,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-problem-solving",
             "emotion-check-facts",
             "emotion-opposite-action"
-          ]
-        },
-        {
-          "chunkId": "f5b370bc253d6806",
-          "section": "表9.1解决方案的利分析表",
-          "pdfPage": 611,
-          "score": 133.87,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "emotion-problem-solving"
           ]
         },
         {
           "chunkId": "7792cbaa381c65c1",
           "section": "情绪调节讲义6",
           "pdfPage": 199,
-          "score": 124.07,
+          "score": 132.07,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-problem-solving",
@@ -1164,15 +1147,24 @@
           ]
         },
         {
-          "chunkId": "06a11bb8da509a5c",
-          "section": "情绪调节讲义9",
-          "pdfPage": 581,
-          "score": 123.36,
+          "chunkId": "e59a3f80b60a19f1",
+          "section": "通用讲义1a",
+          "pdfPage": 26,
+          "score": 125.95,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-problem-solving",
-            "emotion-check-facts",
-            "emotion-opposite-action"
+            "distress-radical-acceptance"
+          ]
+        },
+        {
+          "chunkId": "ed91c1f664e959b3",
+          "section": "第九节）教授参与者如何应用具体 的人际问题解决、社交和自信技能",
+          "pdfPage": 377,
+          "score": 124.52,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "emotion-problem-solving"
           ]
         }
       ]
@@ -1193,7 +1185,7 @@
           "chunkId": "041e23876b6943cf",
           "section": "痛苦忍受讲义11：全然接纳”和“痛苦忍受讲义13：我愿意”",
           "pdfPage": 656,
-          "score": 177.98,
+          "score": 238.98,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
@@ -1201,31 +1193,10 @@
           ]
         },
         {
-          "chunkId": "2427252e02848852",
-          "section": "练习单9：全然接纳）",
-          "pdfPage": 191,
-          "score": 159.69,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-radical-acceptance",
-            "distress-crisis-survival"
-          ]
-        },
-        {
-          "chunkId": "0a1344e8f77dc84d",
-          "section": "练习单9：全然接纳）DT练习单9：全然接纳",
-          "pdfPage": 204,
-          "score": 158.06,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-radical-acceptance"
-          ]
-        },
-        {
-          "chunkId": "ae5c4a5009ae8f3a",
-          "section": "练习单9：全然接纳）",
-          "pdfPage": 200,
-          "score": 155.37,
+          "chunkId": "1d65b2e33c7aa705",
+          "section": "痛苦忍受讲义9a：感官觉察，分解步骤，是让你改善当下的放松行",
+          "pdfPage": 307,
+          "score": 221.41,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
@@ -1236,7 +1207,29 @@
           "chunkId": "709da06c6be8a688",
           "section": "痛苦忍受讲义11：全然接纳”",
           "pdfPage": 720,
-          "score": 153.41,
+          "score": 214.41,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-radical-acceptance",
+            "distress-crisis-survival"
+          ]
+        },
+        {
+          "chunkId": "ba42eb772edc460e",
+          "section": "痛苦忍受讲义11b：练习全然接纳，分解步骤”及“痛苦忍受",
+          "pdfPage": 500,
+          "score": 212.39,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-radical-acceptance",
+            "distress-crisis-survival"
+          ]
+        },
+        {
+          "chunkId": "de06db6ad81b47bc",
+          "section": "痛苦忍受讲义13",
+          "pdfPage": 747,
+          "score": 204.8,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
@@ -1262,19 +1255,7 @@
           "chunkId": "720b51a0f1c3796c",
           "section": "情绪调节讲义13",
           "pdfPage": 612,
-          "score": 207.76,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "emotion-opposite-action",
-            "emotion-problem-solving",
-            "emotion-check-facts"
-          ]
-        },
-        {
-          "chunkId": "06a11bb8da509a5c",
-          "section": "情绪调节讲义9",
-          "pdfPage": 581,
-          "score": 181.76,
+          "score": 331.26,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-opposite-action",
@@ -1286,7 +1267,7 @@
           "chunkId": "7792cbaa381c65c1",
           "section": "情绪调节讲义6",
           "pdfPage": 199,
-          "score": 179.98,
+          "score": 309.98,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-opposite-action",
@@ -1295,26 +1276,36 @@
           ]
         },
         {
-          "chunkId": "6d7b869da4c53f9b",
-          "section": "情绪调节讲义9",
-          "pdfPage": 226,
-          "score": 177.3,
+          "chunkId": "06a11bb8da509a5c",
+          "section": "情绪调节讲义9：相反行为与问题解决一决定要用哪一个",
+          "pdfPage": 581,
+          "score": 306.35,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-opposite-action",
-            "emotion-problem-solving",
-            "emotion-check-facts"
+            "emotion-problem-solving"
           ]
         },
         {
           "chunkId": "b5503deed616cb5a",
           "section": "第十二节）与改变情绪反应有关，方法是学 习如何核对事实，当情绪不",
           "pdfPage": 519,
-          "score": 160.49,
+          "score": 288.49,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-opposite-action",
             "emotion-problem-solving",
+            "emotion-check-facts"
+          ]
+        },
+        {
+          "chunkId": "2b70467924f9f7dd",
+          "section": "情绪调节讲义8：核对事实",
+          "pdfPage": 198,
+          "score": 284.04,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "emotion-opposite-action",
             "emotion-check-facts"
           ]
         }
@@ -1334,9 +1325,9 @@
       "topHits": [
         {
           "chunkId": "3a3ef4ddc57154a2",
-          "section": "情绪调节讲义7",
+          "section": "情绪调节讲义7：概论一改变情绪反应",
           "pdfPage": 565,
-          "score": 115.73,
+          "score": 117.23,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-opposite-action",
@@ -1354,22 +1345,10 @@
           ]
         },
         {
-          "chunkId": "06a11bb8da509a5c",
-          "section": "情绪调节讲义9",
-          "pdfPage": 581,
-          "score": 106.5,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "emotion-opposite-action",
-            "emotion-check-facts",
-            "emotion-problem-solving"
-          ]
-        },
-        {
-          "chunkId": "72b4a21b5a6fbbea",
-          "section": "情绪调节讲义6",
-          "pdfPage": 590,
-          "score": 105.12,
+          "chunkId": "3d2cf673aa3c927d",
+          "section": "情绪调节讲义7（情绪调节练习单5一8）",
+          "pdfPage": 223,
+          "score": 108.5,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-opposite-action",
@@ -1377,10 +1356,21 @@
           ]
         },
         {
-          "chunkId": "720b51a0f1c3796c",
-          "section": "情绪调节讲义13",
-          "pdfPage": 612,
-          "score": 102.51,
+          "chunkId": "06a11bb8da509a5c",
+          "section": "情绪调节讲义9：相反行为与问题解决一决定要用哪一个",
+          "pdfPage": 581,
+          "score": 105.5,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "emotion-opposite-action",
+            "emotion-problem-solving"
+          ]
+        },
+        {
+          "chunkId": "b5503deed616cb5a",
+          "section": "第十二节）与改变情绪反应有关，方法是学 习如何核对事实，当情绪不",
+          "pdfPage": 519,
+          "score": 105.37,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-opposite-action",
@@ -1406,7 +1396,7 @@
           "chunkId": "709da06c6be8a688",
           "section": "痛苦忍受讲义11：全然接纳”",
           "pdfPage": 720,
-          "score": 291.6,
+          "score": 523.6,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
@@ -1415,9 +1405,9 @@
         },
         {
           "chunkId": "1d65b2e33c7aa705",
-          "section": "痛苦忍受练习单8",
+          "section": "痛苦忍受讲义9a：感官觉察，分解步骤，是让你改善当下的放松行",
           "pdfPage": 307,
-          "score": 273.62,
+          "score": 517.52,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
@@ -1428,20 +1418,19 @@
           "chunkId": "2427252e02848852",
           "section": "练习单9：全然接纳）",
           "pdfPage": 191,
-          "score": 261.57,
+          "score": 454.33,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
             "distress-crisis-survival",
-            "distress-stop",
-            "distress-tip"
+            "distress-stop"
           ]
         },
         {
           "chunkId": "5f4ffd7ec38b733f",
           "section": "练习单9：全然接",
           "pdfPage": 199,
-          "score": 254.18,
+          "score": 441.89,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
@@ -1449,10 +1438,10 @@
           ]
         },
         {
-          "chunkId": "de06db6ad81b47bc",
-          "section": "痛苦忍受讲义13",
-          "pdfPage": 747,
-          "score": 243.8,
+          "chunkId": "51e7a0d679162d4f",
+          "section": "痛苦忍受讲义10",
+          "pdfPage": 327,
+          "score": 437.51,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
@@ -1477,7 +1466,7 @@
           "chunkId": "c04b5805b9179233",
           "section": "痛苦忍受讲义4",
           "pdfPage": 679,
-          "score": 490.33,
+          "score": 918.69,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -1485,21 +1474,10 @@
           ]
         },
         {
-          "chunkId": "057dd936cd0310e9",
-          "section": "痛苦忍受讲义4",
-          "pdfPage": 354,
-          "score": 430.38,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-stop",
-            "distress-crisis-survival"
-          ]
-        },
-        {
-          "chunkId": "6ba753498d72f02e",
-          "section": "痛苦忍受练习单2",
-          "pdfPage": 315,
-          "score": 408.71,
+          "chunkId": "c2e0c8622b1c04f9",
+          "section": "第九章第",
+          "pdfPage": 665,
+          "score": 817.37,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -1510,7 +1488,7 @@
           "chunkId": "1b4ee6794bcbb00a",
           "section": "痛苦忍受练习单1",
           "pdfPage": 305,
-          "score": 391.38,
+          "score": 799.54,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -1519,10 +1497,21 @@
           ]
         },
         {
-          "chunkId": "c2e0c8622b1c04f9",
-          "section": "第九章第",
-          "pdfPage": 665,
-          "score": 384.56,
+          "chunkId": "6ba753498d72f02e",
+          "section": "痛苦忍受练习单2",
+          "pdfPage": 315,
+          "score": 756.89,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-stop",
+            "distress-crisis-survival"
+          ]
+        },
+        {
+          "chunkId": "057dd936cd0310e9",
+          "section": "痛苦忍受练习单2",
+          "pdfPage": 354,
+          "score": 747.65,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -1546,9 +1535,9 @@
       "topHits": [
         {
           "chunkId": "bd23e2e43316e3e3",
-          "section": "情绪调节讲义10",
+          "section": "情绪调节讲义10（情绪调节练习单7）",
           "pdfPage": 227,
-          "score": 208.94,
+          "score": 277.97,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1559,7 +1548,7 @@
           "chunkId": "2b70467924f9f7dd",
           "section": "情绪调节讲义8：核对事实",
           "pdfPage": 198,
-          "score": 203.46,
+          "score": 272.46,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1570,7 +1559,7 @@
           "chunkId": "720b51a0f1c3796c",
           "section": "情绪调节讲义13",
           "pdfPage": 612,
-          "score": 195.33,
+          "score": 257.83,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1580,9 +1569,9 @@
         },
         {
           "chunkId": "3a3ef4ddc57154a2",
-          "section": "情绪调节讲义7",
+          "section": "情绪调节讲义7：概论一改变情绪反应",
           "pdfPage": 565,
-          "score": 192.85,
+          "score": 255.42,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1590,10 +1579,10 @@
           ]
         },
         {
-          "chunkId": "b5503deed616cb5a",
-          "section": "第十二节）与改变情绪反应有关，方法是学 习如何核对事实，当情绪不",
-          "pdfPage": 519,
-          "score": 173.87,
+          "chunkId": "7792cbaa381c65c1",
+          "section": "情绪调节讲义6",
+          "pdfPage": 199,
+          "score": 242.66,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1619,7 +1608,7 @@
           "chunkId": "2b70467924f9f7dd",
           "section": "情绪调节讲义8：核对事实",
           "pdfPage": 198,
-          "score": 117,
+          "score": 125,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1630,7 +1619,7 @@
           "chunkId": "b5503deed616cb5a",
           "section": "第十二节）与改变情绪反应有关，方法是学 习如何核对事实，当情绪不",
           "pdfPage": 519,
-          "score": 111,
+          "score": 117,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1639,10 +1628,20 @@
           ]
         },
         {
-          "chunkId": "3a3ef4ddc57154a2",
-          "section": "情绪调节讲义7",
-          "pdfPage": 565,
-          "score": 108,
+          "chunkId": "5ea46d730032ce31",
+          "section": "通用讲义7a",
+          "pdfPage": 35,
+          "score": 116.12,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "emotion-check-facts"
+          ]
+        },
+        {
+          "chunkId": "f262793efa85f5c4",
+          "section": "情绪调节讲义11：找出相反行为",
+          "pdfPage": 224,
+          "score": 113,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1650,20 +1649,10 @@
           ]
         },
         {
-          "chunkId": "748a3b01c3907f24",
-          "section": "痛苦忍受讲义6a",
-          "pdfPage": 577,
-          "score": 108,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "emotion-check-facts"
-          ]
-        },
-        {
           "chunkId": "ba72848a5f1dcbc8",
           "section": "√1.诱发事件",
           "pdfPage": 547,
-          "score": 106.78,
+          "score": 112.78,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts"
@@ -1685,9 +1674,9 @@
       "topHits": [
         {
           "chunkId": "f262793efa85f5c4",
-          "section": "情绪调节讲义8",
+          "section": "情绪调节讲义11：找出相反行为",
           "pdfPage": 224,
-          "score": 171.32,
+          "score": 240.32,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1698,7 +1687,7 @@
           "chunkId": "b5503deed616cb5a",
           "section": "第十二节）与改变情绪反应有关，方法是学 习如何核对事实，当情绪不",
           "pdfPage": 519,
-          "score": 170.37,
+          "score": 237.37,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1710,7 +1699,7 @@
           "chunkId": "2b70467924f9f7dd",
           "section": "情绪调节讲义8：核对事实",
           "pdfPage": 198,
-          "score": 164.03,
+          "score": 233.03,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1718,21 +1707,21 @@
           ]
         },
         {
-          "chunkId": "aada36d00760bbb0",
-          "section": "情绪调节讲义8",
-          "pdfPage": 277,
-          "score": 152.28,
+          "chunkId": "bd23e2e43316e3e3",
+          "section": "情绪调节讲义10（情绪调节练习单7）",
+          "pdfPage": 227,
+          "score": 216.07,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
-            "emotion-problem-solving"
+            "emotion-opposite-action"
           ]
         },
         {
           "chunkId": "3a3ef4ddc57154a2",
-          "section": "情绪调节讲义7",
+          "section": "情绪调节讲义7：概论一改变情绪反应",
           "pdfPage": 565,
-          "score": 151.93,
+          "score": 214.5,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1754,10 +1743,21 @@
       "evidenceMatched": true,
       "topHits": [
         {
+          "chunkId": "f262793efa85f5c4",
+          "section": "情绪调节讲义11：找出相反行为",
+          "pdfPage": 224,
+          "score": 237.64,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "emotion-check-facts",
+            "emotion-opposite-action"
+          ]
+        },
+        {
           "chunkId": "b5503deed616cb5a",
           "section": "第十二节）与改变情绪反应有关，方法是学 习如何核对事实，当情绪不",
           "pdfPage": 519,
-          "score": 170.37,
+          "score": 237.37,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1766,10 +1766,10 @@
           ]
         },
         {
-          "chunkId": "f262793efa85f5c4",
-          "section": "情绪调节讲义8",
-          "pdfPage": 224,
-          "score": 168.64,
+          "chunkId": "2b70467924f9f7dd",
+          "section": "情绪调节讲义8：核对事实",
+          "pdfPage": 198,
+          "score": 233.03,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1777,10 +1777,10 @@
           ]
         },
         {
-          "chunkId": "2b70467924f9f7dd",
-          "section": "情绪调节讲义8：核对事实",
-          "pdfPage": 198,
-          "score": 164.03,
+          "chunkId": "bd23e2e43316e3e3",
+          "section": "情绪调节讲义10（情绪调节练习单7）",
+          "pdfPage": 227,
+          "score": 216.07,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1789,24 +1789,13 @@
         },
         {
           "chunkId": "3a3ef4ddc57154a2",
-          "section": "情绪调节讲义7",
+          "section": "情绪调节讲义7：概论一改变情绪反应",
           "pdfPage": 565,
-          "score": 150.66,
+          "score": 213.23,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
             "emotion-opposite-action"
-          ]
-        },
-        {
-          "chunkId": "aada36d00760bbb0",
-          "section": "情绪调节讲义8",
-          "pdfPage": 277,
-          "score": 149.93,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "emotion-check-facts",
-            "emotion-problem-solving"
           ]
         }
       ]
@@ -1824,10 +1813,21 @@
       "evidenceMatched": true,
       "topHits": [
         {
+          "chunkId": "f262793efa85f5c4",
+          "section": "情绪调节讲义11：找出相反行为",
+          "pdfPage": 224,
+          "score": 237.64,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "emotion-check-facts",
+            "emotion-opposite-action"
+          ]
+        },
+        {
           "chunkId": "b5503deed616cb5a",
           "section": "第十二节）与改变情绪反应有关，方法是学 习如何核对事实，当情绪不",
           "pdfPage": 519,
-          "score": 170.37,
+          "score": 237.37,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1836,32 +1836,21 @@
           ]
         },
         {
-          "chunkId": "f262793efa85f5c4",
-          "section": "情绪调节讲义8",
-          "pdfPage": 224,
-          "score": 168.64,
+          "chunkId": "2b70467924f9f7dd",
+          "section": "情绪调节讲义8：核对事实",
+          "pdfPage": 198,
+          "score": 233.03,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
             "emotion-opposite-action"
-          ]
-        },
-        {
-          "chunkId": "ca9f45d0ee6b0b0b",
-          "section": "通用练习单2",
-          "pdfPage": 607,
-          "score": 165.69,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "emotion-check-facts",
-            "distress-crisis-survival"
           ]
         },
         {
           "chunkId": "3a3ef4ddc57154a2",
-          "section": "情绪调节讲义7",
+          "section": "情绪调节讲义7：概论一改变情绪反应",
           "pdfPage": 565,
-          "score": 164.09,
+          "score": 226.65,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1869,10 +1858,10 @@
           ]
         },
         {
-          "chunkId": "2b70467924f9f7dd",
-          "section": "情绪调节讲义8：核对事实",
-          "pdfPage": 198,
-          "score": 164.03,
+          "chunkId": "bd23e2e43316e3e3",
+          "section": "情绪调节讲义10（情绪调节练习单7）",
+          "pdfPage": 227,
+          "score": 216.07,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1897,7 +1886,7 @@
           "chunkId": "b5503deed616cb5a",
           "section": "第十二节）与改变情绪反应有关，方法是学 习如何核对事实，当情绪不",
           "pdfPage": 519,
-          "score": 168.79,
+          "score": 235.79,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1909,7 +1898,7 @@
           "chunkId": "2b70467924f9f7dd",
           "section": "情绪调节讲义8：核对事实",
           "pdfPage": 198,
-          "score": 159.01,
+          "score": 228.01,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1917,20 +1906,21 @@
           ]
         },
         {
-          "chunkId": "ca9f45d0ee6b0b0b",
-          "section": "通用练习单2",
-          "pdfPage": 607,
-          "score": 149.95,
+          "chunkId": "f262793efa85f5c4",
+          "section": "情绪调节讲义11：找出相反行为",
+          "pdfPage": 224,
+          "score": 212.45,
           "qualityScore": 1,
           "matchedSkillCardIds": [
-            "emotion-check-facts"
+            "emotion-check-facts",
+            "emotion-opposite-action"
           ]
         },
         {
-          "chunkId": "f262793efa85f5c4",
-          "section": "情绪调节讲义8",
-          "pdfPage": 224,
-          "score": 143.45,
+          "chunkId": "bd23e2e43316e3e3",
+          "section": "情绪调节讲义10（情绪调节练习单7）",
+          "pdfPage": 227,
+          "score": 210.92,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1939,9 +1929,9 @@
         },
         {
           "chunkId": "3a3ef4ddc57154a2",
-          "section": "情绪调节讲义7",
+          "section": "情绪调节讲义7：概论一改变情绪反应",
           "pdfPage": 565,
-          "score": 142.33,
+          "score": 204.83,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1964,9 +1954,9 @@
       "topHits": [
         {
           "chunkId": "f262793efa85f5c4",
-          "section": "情绪调节讲义8",
+          "section": "情绪调节讲义11：找出相反行为",
           "pdfPage": 224,
-          "score": 205.5,
+          "score": 274.5,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1977,7 +1967,7 @@
           "chunkId": "2b70467924f9f7dd",
           "section": "情绪调节讲义8：核对事实",
           "pdfPage": 198,
-          "score": 176.9,
+          "score": 245.9,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1988,7 +1978,7 @@
           "chunkId": "b5503deed616cb5a",
           "section": "第十二节）与改变情绪反应有关，方法是学 习如何核对事实，当情绪不",
           "pdfPage": 519,
-          "score": 173.49,
+          "score": 240.49,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -1997,21 +1987,21 @@
           ]
         },
         {
-          "chunkId": "aada36d00760bbb0",
-          "section": "情绪调节讲义8",
-          "pdfPage": 277,
-          "score": 156.84,
+          "chunkId": "3a3ef4ddc57154a2",
+          "section": "情绪调节讲义7：概论一改变情绪反应",
+          "pdfPage": 565,
+          "score": 218.34,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
-            "emotion-problem-solving"
+            "emotion-opposite-action"
           ]
         },
         {
-          "chunkId": "3a3ef4ddc57154a2",
-          "section": "情绪调节讲义7",
-          "pdfPage": 565,
-          "score": 155.77,
+          "chunkId": "bd23e2e43316e3e3",
+          "section": "情绪调节讲义10（情绪调节练习单7）",
+          "pdfPage": 227,
+          "score": 216.07,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-check-facts",
@@ -2037,41 +2027,7 @@
           "chunkId": "c04b5805b9179233",
           "section": "痛苦忍受讲义4",
           "pdfPage": 679,
-          "score": 488.2,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-stop",
-            "distress-crisis-survival"
-          ]
-        },
-        {
-          "chunkId": "057dd936cd0310e9",
-          "section": "痛苦忍受讲义4",
-          "pdfPage": 354,
-          "score": 445.03,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-stop",
-            "distress-crisis-survival"
-          ]
-        },
-        {
-          "chunkId": "1b4ee6794bcbb00a",
-          "section": "痛苦忍受练习单1",
-          "pdfPage": 305,
-          "score": 407.22,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-stop",
-            "distress-crisis-survival",
-            "distress-tip"
-          ]
-        },
-        {
-          "chunkId": "6ba753498d72f02e",
-          "section": "痛苦忍受练习单2",
-          "pdfPage": 315,
-          "score": 406.3,
+          "score": 916.57,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -2082,7 +2038,41 @@
           "chunkId": "c2e0c8622b1c04f9",
           "section": "第九章第",
           "pdfPage": 665,
-          "score": 382.64,
+          "score": 815.45,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-stop",
+            "distress-crisis-survival"
+          ]
+        },
+        {
+          "chunkId": "1b4ee6794bcbb00a",
+          "section": "痛苦忍受练习单1",
+          "pdfPage": 305,
+          "score": 815.07,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-stop",
+            "distress-crisis-survival",
+            "distress-tip"
+          ]
+        },
+        {
+          "chunkId": "057dd936cd0310e9",
+          "section": "痛苦忍受练习单2",
+          "pdfPage": 354,
+          "score": 761.45,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-stop",
+            "distress-crisis-survival"
+          ]
+        },
+        {
+          "chunkId": "6ba753498d72f02e",
+          "section": "痛苦忍受练习单2",
+          "pdfPage": 315,
+          "score": 754.53,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -2108,7 +2098,7 @@
           "chunkId": "c04b5805b9179233",
           "section": "痛苦忍受讲义4",
           "pdfPage": 679,
-          "score": 490.33,
+          "score": 918.69,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -2116,21 +2106,10 @@
           ]
         },
         {
-          "chunkId": "057dd936cd0310e9",
-          "section": "痛苦忍受讲义4",
-          "pdfPage": 354,
-          "score": 430.38,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-stop",
-            "distress-crisis-survival"
-          ]
-        },
-        {
-          "chunkId": "6ba753498d72f02e",
-          "section": "痛苦忍受练习单2",
-          "pdfPage": 315,
-          "score": 408.71,
+          "chunkId": "c2e0c8622b1c04f9",
+          "section": "第九章第",
+          "pdfPage": 665,
+          "score": 817.37,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -2141,7 +2120,7 @@
           "chunkId": "1b4ee6794bcbb00a",
           "section": "痛苦忍受练习单1",
           "pdfPage": 305,
-          "score": 391.38,
+          "score": 799.54,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -2150,10 +2129,21 @@
           ]
         },
         {
-          "chunkId": "c2e0c8622b1c04f9",
-          "section": "第九章第",
-          "pdfPage": 665,
-          "score": 384.56,
+          "chunkId": "6ba753498d72f02e",
+          "section": "痛苦忍受练习单2",
+          "pdfPage": 315,
+          "score": 756.89,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-stop",
+            "distress-crisis-survival"
+          ]
+        },
+        {
+          "chunkId": "057dd936cd0310e9",
+          "section": "痛苦忍受练习单2",
+          "pdfPage": 354,
+          "score": 747.65,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -2178,7 +2168,18 @@
           "chunkId": "df222fbf8a68241e",
           "section": "痛苦忍受讲义6",
           "pdfPage": 317,
-          "score": 138.89,
+          "score": 146.89,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-tip",
+            "distress-crisis-survival"
+          ]
+        },
+        {
+          "chunkId": "dedfe3b575fd114b",
+          "section": "情绪调节讲义20b",
+          "pdfPage": 255,
+          "score": 133.01,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-tip",
@@ -2187,9 +2188,9 @@
         },
         {
           "chunkId": "9276d5a4d8d70d4a",
-          "section": "痛苦忍受练习单4b",
+          "section": "痛苦忍受讲义6c：有效地重新思考与配对式放松，分解步骤",
           "pdfPage": 689,
-          "score": 130.73,
+          "score": 132.23,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-tip",
@@ -2200,7 +2201,7 @@
           "chunkId": "f151c1e1d0e95fd8",
           "section": "痛苦忍受讲义6一6c",
           "pdfPage": 688,
-          "score": 129.97,
+          "score": 131.47,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-tip",
@@ -2208,22 +2209,10 @@
           ]
         },
         {
-          "chunkId": "1b4ee6794bcbb00a",
-          "section": "痛苦忍受练习单1",
-          "pdfPage": 305,
-          "score": 126.15,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-tip",
-            "distress-stop",
-            "distress-crisis-survival"
-          ]
-        },
-        {
-          "chunkId": "dedfe3b575fd114b",
-          "section": "情绪调节讲义20b",
-          "pdfPage": 255,
-          "score": 125.01,
+          "chunkId": "9ed80f68282ab4f5",
+          "section": "第九章第二十节",
+          "pdfPage": 690,
+          "score": 123.12,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-tip",
@@ -2245,22 +2234,10 @@
       "evidenceMatched": true,
       "topHits": [
         {
-          "chunkId": "304cc613293a4bc7",
-          "section": "痛苦忍受练习单1a",
-          "pdfPage": 352,
-          "score": 185.84,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-crisis-survival",
-            "distress-stop",
-            "distress-tip"
-          ]
-        },
-        {
           "chunkId": "d9f83186e9dd480f",
           "section": "痛苦忍受讲义1：痛苦忍受的目标",
           "pdfPage": 304,
-          "score": 185.25,
+          "score": 322.93,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-crisis-survival",
@@ -2271,7 +2248,7 @@
           "chunkId": "808c230e8e907fd8",
           "section": "痛苦忍受讲义3",
           "pdfPage": 674,
-          "score": 181.76,
+          "score": 312.96,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-crisis-survival",
@@ -2279,10 +2256,21 @@
           ]
         },
         {
-          "chunkId": "c77964f264184e5e",
-          "section": "痛苦忍受练习单1",
-          "pdfPage": 351,
-          "score": 177.89,
+          "chunkId": "d8a40d86a40b107f",
+          "section": "痛苦忍受讲义2",
+          "pdfPage": 313,
+          "score": 306.33,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-crisis-survival",
+            "distress-stop"
+          ]
+        },
+        {
+          "chunkId": "304cc613293a4bc7",
+          "section": "痛苦忍受练习单1a",
+          "pdfPage": 352,
+          "score": 294.54,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-crisis-survival",
@@ -2291,16 +2279,15 @@
           ]
         },
         {
-          "chunkId": "2427252e02848852",
-          "section": "练习单9：全然接纳）",
-          "pdfPage": 191,
-          "score": 170.64,
+          "chunkId": "c77964f264184e5e",
+          "section": "痛苦忍受练习单1",
+          "pdfPage": 351,
+          "score": 287.09,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-crisis-survival",
             "distress-stop",
-            "distress-tip",
-            "distress-radical-acceptance"
+            "distress-tip"
           ]
         }
       ]
@@ -2321,7 +2308,7 @@
           "chunkId": "c04b5805b9179233",
           "section": "痛苦忍受讲义4",
           "pdfPage": 679,
-          "score": 221.26,
+          "score": 283.76,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -2332,7 +2319,7 @@
           "chunkId": "1ad6db99694ea755",
           "section": "第十章chapter10 659",
           "pdfPage": 682,
-          "score": 216.51,
+          "score": 283.51,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -2343,7 +2330,7 @@
           "chunkId": "1b4ee6794bcbb00a",
           "section": "痛苦忍受练习单1",
           "pdfPage": 305,
-          "score": 195.73,
+          "score": 248.86,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -2352,10 +2339,10 @@
           ]
         },
         {
-          "chunkId": "057dd936cd0310e9",
-          "section": "痛苦忍受讲义4",
-          "pdfPage": 354,
-          "score": 186.31,
+          "chunkId": "c2e0c8622b1c04f9",
+          "section": "第九章第",
+          "pdfPage": 665,
+          "score": 246.83,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -2366,7 +2353,7 @@
           "chunkId": "6ba753498d72f02e",
           "section": "痛苦忍受练习单2",
           "pdfPage": 315,
-          "score": 182.89,
+          "score": 236.27,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-stop",
@@ -2389,24 +2376,12 @@
       "topHits": [
         {
           "chunkId": "9276d5a4d8d70d4a",
-          "section": "痛苦忍受练习单4b",
+          "section": "痛苦忍受讲义6c：有效地重新思考与配对式放松，分解步骤",
           "pdfPage": 689,
-          "score": 174.83,
+          "score": 233.33,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-tip",
-            "distress-crisis-survival"
-          ]
-        },
-        {
-          "chunkId": "1b4ee6794bcbb00a",
-          "section": "痛苦忍受练习单1",
-          "pdfPage": 305,
-          "score": 159.22,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-tip",
-            "distress-stop",
             "distress-crisis-survival"
           ]
         },
@@ -2414,7 +2389,7 @@
           "chunkId": "f151c1e1d0e95fd8",
           "section": "痛苦忍受讲义6一6c",
           "pdfPage": 688,
-          "score": 158.83,
+          "score": 217.33,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-tip",
@@ -2425,7 +2400,7 @@
           "chunkId": "dedfe3b575fd114b",
           "section": "情绪调节讲义20b",
           "pdfPage": 255,
-          "score": 151.69,
+          "score": 216.69,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-tip",
@@ -2433,13 +2408,25 @@
           ]
         },
         {
-          "chunkId": "9ed80f68282ab4f5",
-          "section": "情绪调节讲义23：管理极端情绪”",
-          "pdfPage": 690,
-          "score": 151.48,
+          "chunkId": "df222fbf8a68241e",
+          "section": "痛苦忍受讲义6",
+          "pdfPage": 317,
+          "score": 214.48,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-tip",
+            "distress-crisis-survival"
+          ]
+        },
+        {
+          "chunkId": "1b4ee6794bcbb00a",
+          "section": "痛苦忍受练习单1",
+          "pdfPage": 305,
+          "score": 209.12,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-tip",
+            "distress-stop",
             "distress-crisis-survival"
           ]
         }
@@ -2459,9 +2446,9 @@
       "topHits": [
         {
           "chunkId": "383b8cbdc1a9933c",
-          "section": "人际效能讲义15",
+          "section": "人际效能练习单11b（人际效能讲义15、16）",
           "pdfPage": 191,
-          "score": 64.79,
+          "score": 60.61,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-missing-links"
@@ -2471,15 +2458,15 @@
           "chunkId": "d2bad2c7c56566e5",
           "section": "4.不认可会造成伤害",
           "pdfPage": 485,
-          "score": 37.08,
+          "score": 43.08,
           "qualityScore": 1,
           "matchedSkillCardIds": []
         },
         {
           "chunkId": "5ca2d3647af8f338",
-          "section": "通用讲义7",
+          "section": "通用讲义7一7a",
           "pdfPage": 239,
-          "score": 36.38,
+          "score": 40.01,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -2489,7 +2476,7 @@
           "chunkId": "2db08043c289b501",
           "section": "所在，就必须找出解决办法，让来访者知道作业是什么",
           "pdfPage": 143,
-          "score": 32.32,
+          "score": 38.32,
           "qualityScore": 1,
           "matchedSkillCardIds": []
         },
@@ -2497,7 +2484,7 @@
           "chunkId": "ea508d2633b8d702",
           "section": "人际效能讲义16a",
           "pdfPage": 156,
-          "score": 30.98,
+          "score": 37.48,
           "qualityScore": 1,
           "matchedSkillCardIds": []
         }
@@ -2517,19 +2504,9 @@
       "topHits": [
         {
           "chunkId": "5ca2d3647af8f338",
-          "section": "通用讲义7",
+          "section": "通用讲义7一7a",
           "pdfPage": 239,
-          "score": 141.3,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "behavior-chain"
-          ]
-        },
-        {
-          "chunkId": "818fbdbda723f6d3",
-          "section": "通用讲义7",
-          "pdfPage": 240,
-          "score": 128.55,
+          "score": 203.8,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -2539,7 +2516,27 @@
           "chunkId": "5ea46d730032ce31",
           "section": "通用讲义7a",
           "pdfPage": 35,
-          "score": 128.54,
+          "score": 197.54,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "behavior-chain"
+          ]
+        },
+        {
+          "chunkId": "2c89ee635050f708",
+          "section": "通用讲义7",
+          "pdfPage": 34,
+          "score": 191.42,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "behavior-chain"
+          ]
+        },
+        {
+          "chunkId": "fdfffaaa62c14860",
+          "section": "通用讲义3：技能训练的准则",
+          "pdfPage": 23,
+          "score": 189.46,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -2549,17 +2546,7 @@
           "chunkId": "dd70f2a84e59fe49",
           "section": "通用讲义6",
           "pdfPage": 238,
-          "score": 126.36,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "behavior-chain"
-          ]
-        },
-        {
-          "chunkId": "109e1238507b1598",
-          "section": "通用讲义7",
-          "pdfPage": 41,
-          "score": 125.38,
+          "score": 188.86,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -2583,7 +2570,7 @@
           "chunkId": "5ea46d730032ce31",
           "section": "通用讲义7a",
           "pdfPage": 35,
-          "score": 260.67,
+          "score": 447.67,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -2593,7 +2580,7 @@
           "chunkId": "2c89ee635050f708",
           "section": "通用讲义7",
           "pdfPage": 34,
-          "score": 224.76,
+          "score": 354.76,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -2603,27 +2590,27 @@
           "chunkId": "17f40ce1b37599cd",
           "section": "通用讲义7a",
           "pdfPage": 241,
-          "score": 220.75,
+          "score": 344.25,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
           ]
         },
         {
-          "chunkId": "b0102bf095e8cb98",
-          "section": "通用讲义7",
-          "pdfPage": 45,
-          "score": 204.86,
+          "chunkId": "5ca2d3647af8f338",
+          "section": "通用讲义7一7a",
+          "pdfPage": 239,
+          "score": 318.5,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
           ]
         },
         {
-          "chunkId": "109e1238507b1598",
-          "section": "通用讲义7",
-          "pdfPage": 41,
-          "score": 199.57,
+          "chunkId": "fdfffaaa62c14860",
+          "section": "通用讲义3：技能训练的准则",
+          "pdfPage": 23,
+          "score": 311.96,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -2644,10 +2631,20 @@
       "evidenceMatched": true,
       "topHits": [
         {
+          "chunkId": "5ea46d730032ce31",
+          "section": "通用讲义7a",
+          "pdfPage": 35,
+          "score": 394.74,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "behavior-chain"
+          ]
+        },
+        {
           "chunkId": "17f40ce1b37599cd",
           "section": "通用讲义7a",
           "pdfPage": 241,
-          "score": 227.18,
+          "score": 350.68,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -2657,37 +2654,27 @@
           "chunkId": "2c89ee635050f708",
           "section": "通用讲义7",
           "pdfPage": 34,
-          "score": 213.25,
+          "score": 343.25,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
           ]
         },
         {
-          "chunkId": "5ea46d730032ce31",
+          "chunkId": "6e34fe8b57ee9feb",
           "section": "通用讲义7a",
-          "pdfPage": 35,
-          "score": 207.74,
+          "pdfPage": 36,
+          "score": 321.6,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
           ]
         },
         {
-          "chunkId": "b0102bf095e8cb98",
-          "section": "通用讲义7",
-          "pdfPage": 45,
-          "score": 204.86,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "behavior-chain"
-          ]
-        },
-        {
-          "chunkId": "109e1238507b1598",
-          "section": "通用讲义7",
-          "pdfPage": 41,
-          "score": 199.57,
+          "chunkId": "fdfffaaa62c14860",
+          "section": "通用讲义3：技能训练的准则",
+          "pdfPage": 23,
+          "score": 321.04,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -2709,10 +2696,10 @@
       "evidenceMatched": true,
       "topHits": [
         {
-          "chunkId": "17f40ce1b37599cd",
-          "section": "通用讲义7a",
-          "pdfPage": 241,
-          "score": 154.86,
+          "chunkId": "5b600899e85820fc",
+          "section": "情绪调节讲义5（情绪调节练习单4、4a）",
+          "pdfPage": 211,
+          "score": 163.16,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -2722,7 +2709,17 @@
           "chunkId": "2c89ee635050f708",
           "section": "通用讲义7",
           "pdfPage": 34,
-          "score": 151.17,
+          "score": 159.17,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "behavior-chain"
+          ]
+        },
+        {
+          "chunkId": "17f40ce1b37599cd",
+          "section": "通用讲义7a",
+          "pdfPage": 241,
+          "score": 156.36,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -2732,27 +2729,17 @@
           "chunkId": "5ea46d730032ce31",
           "section": "通用讲义7a",
           "pdfPage": 35,
-          "score": 136.11,
+          "score": 144.11,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
           ]
         },
         {
-          "chunkId": "b0102bf095e8cb98",
-          "section": "通用讲义7",
-          "pdfPage": 45,
-          "score": 133.05,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "behavior-chain"
-          ]
-        },
-        {
-          "chunkId": "109e1238507b1598",
-          "section": "通用讲义7",
-          "pdfPage": 41,
-          "score": 124.86,
+          "chunkId": "6e34fe8b57ee9feb",
+          "section": "通用讲义7a",
+          "pdfPage": 36,
+          "score": 129.14,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-chain"
@@ -2769,22 +2756,30 @@
       "expectedCardIds": [
         "behavior-missing-links"
       ],
-      "firstExpectedCardRank": 2,
+      "firstExpectedCardRank": 3,
       "evidenceMatched": true,
       "topHits": [
         {
           "chunkId": "3f093f30e0da3dde",
           "section": "痛苦耐受技能讲义与练习单",
           "pdfPage": 659,
-          "score": 76.82,
+          "score": 82.78,
+          "qualityScore": 1,
+          "matchedSkillCardIds": []
+        },
+        {
+          "chunkId": "1f384abc65f51828",
+          "section": "情绪调节讲义10），帮助他们使用他们知道该用，但不",
+          "pdfPage": 438,
+          "score": 75.05,
           "qualityScore": 1,
           "matchedSkillCardIds": []
         },
         {
           "chunkId": "383b8cbdc1a9933c",
-          "section": "人际效能讲义15",
+          "section": "人际效能练习单11b（人际效能讲义15、16）",
           "pdfPage": 191,
-          "score": 73.79,
+          "score": 69.43,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "behavior-missing-links"
@@ -2794,7 +2789,7 @@
           "chunkId": "134b38d4b1820bf8",
           "section": "人际效能讲义2",
           "pdfPage": 126,
-          "score": 58.62,
+          "score": 65.1,
           "qualityScore": 1,
           "matchedSkillCardIds": []
         },
@@ -2802,15 +2797,7 @@
           "chunkId": "a4e9b79e417bb46d",
           "section": "人际效能讲义5a",
           "pdfPage": 133,
-          "score": 49.34,
-          "qualityScore": 1,
-          "matchedSkillCardIds": []
-        },
-        {
-          "chunkId": "1f384abc65f51828",
-          "section": "痛苦忍受讲义4",
-          "pdfPage": 438,
-          "score": 48.69,
+          "score": 55.82,
           "qualityScore": 1,
           "matchedSkillCardIds": []
         }
@@ -2830,9 +2817,9 @@
       "topHits": [
         {
           "chunkId": "844b75f936fecd6d",
-          "section": "人际效能讲义5",
+          "section": "情绪调节讲义19）",
           "pdfPage": 176,
-          "score": 491.03,
+          "score": 666.22,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -2844,33 +2831,7 @@
           "chunkId": "dae666187add5b47",
           "section": "第八章chapter8 355",
           "pdfPage": 378,
-          "score": 450.17,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
-          ]
-        },
-        {
-          "chunkId": "5f4ffd7ec38b733f",
-          "section": "练习单9：全然接",
-          "pdfPage": 199,
-          "score": 424.82,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
-          ]
-        },
-        {
-          "chunkId": "9c7f810994984d22",
-          "section": "练习单7：解",
-          "pdfPage": 193,
-          "score": 423.01,
+          "score": 651.17,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -2881,13 +2842,38 @@
         },
         {
           "chunkId": "be2764babe7b6767",
-          "section": "人际效能练习单4",
+          "section": "人际效能讲义17、18对认可有更多描述），可与人际效能练习单4、5并",
           "pdfPage": 120,
-          "score": 421.8,
+          "score": 628.03,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
             "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "62ea67d2a46d0c16",
+          "section": "人际效能讲义3",
+          "pdfPage": 129,
+          "score": 596.31,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
+            "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "a94bebda60cb64aa",
+          "section": "人际效能讲义2a：阻碍人际效能的误解",
+          "pdfPage": 119,
+          "score": 575.23,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
             "interpersonal-give"
           ]
         }
@@ -2907,9 +2893,9 @@
       "topHits": [
         {
           "chunkId": "844b75f936fecd6d",
-          "section": "人际效能讲义5",
+          "section": "情绪调节讲义19）",
           "pdfPage": 176,
-          "score": 488.99,
+          "score": 664.26,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -2921,7 +2907,7 @@
           "chunkId": "dae666187add5b47",
           "section": "第八章chapter8 355",
           "pdfPage": 378,
-          "score": 449.91,
+          "score": 650.91,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -2932,40 +2918,39 @@
         },
         {
           "chunkId": "be2764babe7b6767",
-          "section": "人际效能练习单4",
+          "section": "人际效能讲义17、18对认可有更多描述），可与人际效能练习单4、5并",
           "pdfPage": 120,
-          "score": 436.19,
+          "score": 642.43,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
             "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "62ea67d2a46d0c16",
+          "section": "人际效能讲义3",
+          "pdfPage": 129,
+          "score": 596.31,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
+            "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "a94bebda60cb64aa",
+          "section": "人际效能讲义2a：阻碍人际效能的误解",
+          "pdfPage": 119,
+          "score": 575.23,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
             "interpersonal-give"
-          ]
-        },
-        {
-          "chunkId": "7bc5b5549a3e6e44",
-          "section": "练习单6：找出办法改变不良情",
-          "pdfPage": 196,
-          "score": 416.11,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
-          ]
-        },
-        {
-          "chunkId": "5f4ffd7ec38b733f",
-          "section": "练习单9：全然接",
-          "pdfPage": 199,
-          "score": 415.9,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
           ]
         }
       ]
@@ -2983,6 +2968,17 @@
       "evidenceMatched": true,
       "topHits": [
         {
+          "chunkId": "62ea67d2a46d0c16",
+          "section": "人际效能讲义3",
+          "pdfPage": 129,
+          "score": 155.91,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-priorities",
+            "interpersonal-dear-man"
+          ]
+        },
+        {
           "chunkId": "e8a56dcc5bb8b9f2",
           "section": "讲义14和19）",
           "pdfPage": 429,
@@ -2993,32 +2989,10 @@
           ]
         },
         {
-          "chunkId": "62ea67d2a46d0c16",
-          "section": "人际效能讲义3",
-          "pdfPage": 129,
-          "score": 147.91,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-priorities",
-            "interpersonal-dear-man"
-          ]
-        },
-        {
-          "chunkId": "50a24baef5f89768",
-          "section": "练习单6：找出如何改变不想要",
-          "pdfPage": 194,
-          "score": 135.4,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-priorities",
-            "interpersonal-dear-man"
-          ]
-        },
-        {
-          "chunkId": "1bc5450daa6276ef",
-          "section": "练习单7：解决人际效能技能中的难题",
-          "pdfPage": 197,
-          "score": 135.26,
+          "chunkId": "be2764babe7b6767",
+          "section": "人际效能讲义17、18对认可有更多描述），可与人际效能练习单4、5并",
+          "pdfPage": 120,
+          "score": 148.94,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-priorities",
@@ -3027,12 +3001,23 @@
         },
         {
           "chunkId": "5780b2d3d7b5af11",
-          "section": "人际效能讲义4",
+          "section": "人际效能讲义4（人际效能练习单3）",
           "pdfPage": 130,
-          "score": 128.21,
+          "score": 136.21,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "dae666187add5b47",
+          "section": "第八章chapter8 355",
+          "pdfPage": 378,
+          "score": 133.45,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-priorities",
+            "interpersonal-dear-man"
           ]
         }
       ]
@@ -3051,9 +3036,9 @@
       "topHits": [
         {
           "chunkId": "844b75f936fecd6d",
-          "section": "人际效能讲义5",
+          "section": "情绪调节讲义19）",
           "pdfPage": 176,
-          "score": 498.59,
+          "score": 673.49,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -3065,7 +3050,7 @@
           "chunkId": "dae666187add5b47",
           "section": "第八章chapter8 355",
           "pdfPage": 378,
-          "score": 451.82,
+          "score": 652.82,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -3076,40 +3061,39 @@
         },
         {
           "chunkId": "be2764babe7b6767",
-          "section": "人际效能练习单4",
+          "section": "人际效能讲义17、18对认可有更多描述），可与人际效能练习单4、5并",
           "pdfPage": 120,
-          "score": 435.01,
+          "score": 641.24,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
             "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "62ea67d2a46d0c16",
+          "section": "人际效能讲义3",
+          "pdfPage": 129,
+          "score": 601.31,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
+            "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "a94bebda60cb64aa",
+          "section": "人际效能讲义2a：阻碍人际效能的误解",
+          "pdfPage": 119,
+          "score": 587.17,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
             "interpersonal-give"
-          ]
-        },
-        {
-          "chunkId": "7bc5b5549a3e6e44",
-          "section": "练习单6：找出办法改变不良情",
-          "pdfPage": 196,
-          "score": 416.11,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
-          ]
-        },
-        {
-          "chunkId": "5f4ffd7ec38b733f",
-          "section": "练习单9：全然接",
-          "pdfPage": 199,
-          "score": 415.9,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
           ]
         }
       ]
@@ -3129,9 +3113,9 @@
       "topHits": [
         {
           "chunkId": "844b75f936fecd6d",
-          "section": "人际效能讲义5",
+          "section": "情绪调节讲义19）",
           "pdfPage": 176,
-          "score": 491.58,
+          "score": 666.75,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -3143,7 +3127,7 @@
           "chunkId": "dae666187add5b47",
           "section": "第八章chapter8 355",
           "pdfPage": 378,
-          "score": 457.2,
+          "score": 658.2,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -3154,40 +3138,39 @@
         },
         {
           "chunkId": "be2764babe7b6767",
-          "section": "人际效能练习单4",
+          "section": "人际效能讲义17、18对认可有更多描述），可与人际效能练习单4、5并",
           "pdfPage": 120,
-          "score": 439.34,
+          "score": 645.57,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
             "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "62ea67d2a46d0c16",
+          "section": "人际效能讲义3",
+          "pdfPage": 129,
+          "score": 598.69,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
+            "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "a94bebda60cb64aa",
+          "section": "人际效能讲义2a：阻碍人际效能的误解",
+          "pdfPage": 119,
+          "score": 585.39,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
             "interpersonal-give"
-          ]
-        },
-        {
-          "chunkId": "5f4ffd7ec38b733f",
-          "section": "练习单9：全然接",
-          "pdfPage": 199,
-          "score": 426.33,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
-          ]
-        },
-        {
-          "chunkId": "9c7f810994984d22",
-          "section": "练习单7：解",
-          "pdfPage": 193,
-          "score": 424.41,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
           ]
         }
       ]
@@ -3207,34 +3190,23 @@
       "evidenceMatched": true,
       "topHits": [
         {
-          "chunkId": "844b75f936fecd6d",
-          "section": "人际效能讲义5",
-          "pdfPage": 176,
-          "score": 424.33,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give"
-          ]
-        },
-        {
           "chunkId": "be2764babe7b6767",
-          "section": "人际效能练习单4",
+          "section": "人际效能讲义17、18对认可有更多描述），可与人际效能练习单4、5并",
           "pdfPage": 120,
-          "score": 417.77,
+          "score": 623.27,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
             "interpersonal-fast",
-            "interpersonal-give"
+            "interpersonal-give",
+            "interpersonal-priorities"
           ]
         },
         {
           "chunkId": "dae666187add5b47",
           "section": "第八章chapter8 355",
           "pdfPage": 378,
-          "score": 406.95,
+          "score": 607.95,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -3244,23 +3216,33 @@
           ]
         },
         {
-          "chunkId": "9c7f810994984d22",
-          "section": "练习单7：解",
-          "pdfPage": 193,
-          "score": 380.35,
+          "chunkId": "844b75f936fecd6d",
+          "section": "情绪调节讲义19）",
+          "pdfPage": 176,
+          "score": 603.24,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
             "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
+            "interpersonal-give"
           ]
         },
         {
-          "chunkId": "50a24baef5f89768",
-          "section": "练习单6：找出如何改变不想要",
-          "pdfPage": 194,
-          "score": 373.46,
+          "chunkId": "a94bebda60cb64aa",
+          "section": "人际效能讲义2a：阻碍人际效能的误解",
+          "pdfPage": 119,
+          "score": 577.47,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
+            "interpersonal-give"
+          ]
+        },
+        {
+          "chunkId": "62ea67d2a46d0c16",
+          "section": "人际效能讲义3",
+          "pdfPage": 129,
+          "score": 561.76,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -3286,9 +3268,9 @@
       "topHits": [
         {
           "chunkId": "844b75f936fecd6d",
-          "section": "人际效能讲义5",
+          "section": "情绪调节讲义19）",
           "pdfPage": 176,
-          "score": 488.23,
+          "score": 663.53,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -3300,7 +3282,7 @@
           "chunkId": "dae666187add5b47",
           "section": "第八章chapter8 355",
           "pdfPage": 378,
-          "score": 453.77,
+          "score": 654.77,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -3311,40 +3293,39 @@
         },
         {
           "chunkId": "be2764babe7b6767",
-          "section": "人际效能练习单4",
+          "section": "人际效能讲义17、18对认可有更多描述），可与人际效能练习单4、5并",
           "pdfPage": 120,
-          "score": 435.6,
+          "score": 641.84,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
             "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "62ea67d2a46d0c16",
+          "section": "人际效能讲义3",
+          "pdfPage": 129,
+          "score": 605.01,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
+            "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "a94bebda60cb64aa",
+          "section": "人际效能讲义2a：阻碍人际效能的误解",
+          "pdfPage": 119,
+          "score": 581.11,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
             "interpersonal-give"
-          ]
-        },
-        {
-          "chunkId": "5f4ffd7ec38b733f",
-          "section": "练习单9：全然接",
-          "pdfPage": 199,
-          "score": 423.64,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
-          ]
-        },
-        {
-          "chunkId": "7bc5b5549a3e6e44",
-          "section": "练习单6：找出办法改变不良情",
-          "pdfPage": 196,
-          "score": 422.61,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
           ]
         }
       ]
@@ -3364,21 +3345,34 @@
       "topHits": [
         {
           "chunkId": "844b75f936fecd6d",
-          "section": "人际效能讲义5",
+          "section": "情绪调节讲义19）",
           "pdfPage": 176,
-          "score": 498.87,
+          "score": 673.76,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
             "interpersonal-fast",
             "interpersonal-give"
+          ]
+        },
+        {
+          "chunkId": "be2764babe7b6767",
+          "section": "人际效能讲义17、18对认可有更多描述），可与人际效能练习单4、5并",
+          "pdfPage": 120,
+          "score": 660.7,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
+            "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
           ]
         },
         {
           "chunkId": "dae666187add5b47",
           "section": "第八章chapter8 355",
           "pdfPage": 378,
-          "score": 457.18,
+          "score": 658.18,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
@@ -3388,41 +3382,27 @@
           ]
         },
         {
-          "chunkId": "be2764babe7b6767",
-          "section": "人际效能练习单4",
-          "pdfPage": 120,
-          "score": 454.46,
+          "chunkId": "62ea67d2a46d0c16",
+          "section": "人际效能讲义3",
+          "pdfPage": 129,
+          "score": 612.42,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "interpersonal-dear-man",
             "interpersonal-fast",
+            "interpersonal-give",
+            "interpersonal-priorities"
+          ]
+        },
+        {
+          "chunkId": "a94bebda60cb64aa",
+          "section": "人际效能讲义2a：阻碍人际效能的误解",
+          "pdfPage": 119,
+          "score": 590.7,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "interpersonal-dear-man",
             "interpersonal-give"
-          ]
-        },
-        {
-          "chunkId": "5f4ffd7ec38b733f",
-          "section": "练习单9：全然接",
-          "pdfPage": 199,
-          "score": 425.33,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
-          ]
-        },
-        {
-          "chunkId": "7bc5b5549a3e6e44",
-          "section": "练习单6：找出办法改变不良情",
-          "pdfPage": 196,
-          "score": 424.84,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "interpersonal-dear-man",
-            "interpersonal-fast",
-            "interpersonal-give",
-            "interpersonal-priorities"
           ]
         }
       ]
@@ -3442,9 +3422,9 @@
       "topHits": [
         {
           "chunkId": "01737037862605bc",
-          "section": "情绪调节讲义2",
+          "section": "情绪调节讲义2：概论一了解并命名情绪",
           "pdfPage": 529,
-          "score": 98.56,
+          "score": 100.06,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-understand"
@@ -3454,7 +3434,17 @@
           "chunkId": "e318dec880432adb",
           "section": "第九章chapter9 495",
           "pdfPage": 518,
-          "score": 93.27,
+          "score": 99.27,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "emotion-understand"
+          ]
+        },
+        {
+          "chunkId": "612f196e1f1e3482",
+          "section": "情绪调节讲义1（情绪调节练习单1）",
+          "pdfPage": 205,
+          "score": 98.16,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-understand"
@@ -3464,7 +3454,7 @@
           "chunkId": "5fd89f73a5305e30",
           "section": "情绪调节讲义6",
           "pdfPage": 273,
-          "score": 90.31,
+          "score": 94.53,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-understand",
@@ -3472,20 +3462,10 @@
           ]
         },
         {
-          "chunkId": "612f196e1f1e3482",
-          "section": "情绪调节讲义1",
-          "pdfPage": 205,
-          "score": 90.16,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "emotion-understand"
-          ]
-        },
-        {
-          "chunkId": "76d236a901f0f22f",
-          "section": "情绪调节讲义3",
-          "pdfPage": 531,
-          "score": 88.83,
+          "chunkId": "aed4c07aab3415df",
+          "section": "情绪调节讲义1：情绪调节的目标",
+          "pdfPage": 196,
+          "score": 92.83,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-understand"
@@ -3506,30 +3486,30 @@
       "evidenceMatched": true,
       "topHits": [
         {
-          "chunkId": "76d236a901f0f22f",
-          "section": "情绪调节讲义3",
-          "pdfPage": 531,
-          "score": 100.54,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "emotion-understand"
-          ]
-        },
-        {
           "chunkId": "aed4c07aab3415df",
           "section": "情绪调节讲义1：情绪调节的目标",
           "pdfPage": 196,
-          "score": 98.95,
+          "score": 106.95,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-understand"
           ]
         },
         {
-          "chunkId": "a2741d8c5a432e0c",
-          "section": "情绪调节讲义6",
-          "pdfPage": 560,
-          "score": 95.67,
+          "chunkId": "76d236a901f0f22f",
+          "section": "情绪调节讲义3：情绪的功能",
+          "pdfPage": 531,
+          "score": 102.11,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "emotion-understand"
+          ]
+        },
+        {
+          "chunkId": "f262793efa85f5c4",
+          "section": "情绪调节讲义11：找出相反行为",
+          "pdfPage": 224,
+          "score": 96.6,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-understand",
@@ -3538,22 +3518,23 @@
         },
         {
           "chunkId": "01737037862605bc",
-          "section": "情绪调节讲义2",
+          "section": "情绪调节讲义2：概论一了解并命名情绪",
           "pdfPage": 529,
-          "score": 92.56,
+          "score": 94.12,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-understand"
           ]
         },
         {
-          "chunkId": "8e7c6fbb00c0519c",
+          "chunkId": "5fd89f73a5305e30",
           "section": "情绪调节讲义6",
-          "pdfPage": 544,
-          "score": 90.82,
+          "pdfPage": 273,
+          "score": 92.71,
           "qualityScore": 1,
           "matchedSkillCardIds": [
-            "emotion-understand"
+            "emotion-understand",
+            "emotion-check-facts"
           ]
         }
       ]
@@ -3572,9 +3553,9 @@
       "topHits": [
         {
           "chunkId": "9eb610b158ac405d",
-          "section": "正念讲义3",
+          "section": "正念讲义3（正念练习单3）",
           "pdfPage": 62,
-          "score": 96.41,
+          "score": 104.41,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "mindfulness-wise-mind"
@@ -3584,17 +3565,7 @@
           "chunkId": "503d92520c2201bc",
           "section": "第十节之中",
           "pdfPage": 253,
-          "score": 93.21,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "mindfulness-wise-mind"
-          ]
-        },
-        {
-          "chunkId": "b42eb38e6fc7c2e8",
-          "section": "正念练习单10a：中庸之道的分析",
-          "pdfPage": 373,
-          "score": 90.57,
+          "score": 99.21,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "mindfulness-wise-mind"
@@ -3602,9 +3573,9 @@
         },
         {
           "chunkId": "86320660fddc86d8",
-          "section": "正念讲义3一3a",
+          "section": "正念讲义3：智慧心念一心的状态",
           "pdfPage": 275,
-          "score": 86.8,
+          "score": 88.3,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "mindfulness-wise-mind",
@@ -3612,10 +3583,22 @@
           ]
         },
         {
-          "chunkId": "752f9f40aa3eaa82",
-          "section": "正念练习单10a：中庸之道的分析",
-          "pdfPage": 54,
-          "score": 83.55,
+          "chunkId": "cd6e817efe7d5b26",
+          "section": "正念讲义4：掌握你的心一一“是什么”（What）技能",
+          "pdfPage": 51,
+          "score": 87.3,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "mindfulness-wise-mind",
+            "mindfulness-what",
+            "mindfulness-how"
+          ]
+        },
+        {
+          "chunkId": "861edd373be8ea30",
+          "section": "8.找到智慧心念需要大量的练习",
+          "pdfPage": 283,
+          "score": 84.43,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "mindfulness-wise-mind"
@@ -3637,9 +3620,9 @@
       "topHits": [
         {
           "chunkId": "771ca04d211fd84d",
-          "section": "正念练习单4",
+          "section": "正念练习单5b：不评判、专一地做、有效地做的记录日历，提供每日检查",
           "pdfPage": 52,
-          "score": 161.57,
+          "score": 212.62,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "mindfulness-how",
@@ -3648,9 +3631,9 @@
         },
         {
           "chunkId": "95fc226ed38165ab",
-          "section": "正念练习单2",
+          "section": "正念讲义5b：练习专一地做的方法（自选）",
           "pdfPage": 343,
-          "score": 149.32,
+          "score": 207.73,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "mindfulness-how"
@@ -3658,9 +3641,19 @@
         },
         {
           "chunkId": "2c47656b6383fba1",
-          "section": "正念讲义5b",
+          "section": "正念讲义5：掌握你的心一“怎样做”技能",
           "pdfPage": 347,
-          "score": 136.62,
+          "score": 197.5,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "mindfulness-how"
+          ]
+        },
+        {
+          "chunkId": "dac8a5d0e63505f3",
+          "section": "正念讲义5（正念练习单2-2c、5一5c）",
+          "pdfPage": 72,
+          "score": 195.56,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "mindfulness-how"
@@ -3668,23 +3661,12 @@
         },
         {
           "chunkId": "9d76061ac988f1e2",
-          "section": "正念练习单2",
+          "section": "正念讲义5a：练习不评判的方法",
           "pdfPage": 329,
-          "score": 135.29,
+          "score": 194.83,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "mindfulness-how"
-          ]
-        },
-        {
-          "chunkId": "a1f9c3d895d00bef",
-          "section": "正念练习单5a",
-          "pdfPage": 99,
-          "score": 134.29,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "mindfulness-how",
-            "mindfulness-wise-mind"
           ]
         }
       ]
@@ -3703,19 +3685,9 @@
       "topHits": [
         {
           "chunkId": "7f7ad50ab34b4d2a",
-          "section": "正念练习单2",
+          "section": "正念讲义4c：练习参与的方法",
           "pdfPage": 317,
-          "score": 209.96,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "mindfulness-what"
-          ]
-        },
-        {
-          "chunkId": "d9223f3906fedbd4",
-          "section": "正念练习单4a：观察、描述、",
-          "pdfPage": 310,
-          "score": 191.8,
+          "score": 370.97,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "mindfulness-what"
@@ -3723,9 +3695,9 @@
         },
         {
           "chunkId": "9c762bfc5aa78726",
-          "section": "正念讲义4一4a",
+          "section": "正念讲义4a：练习观察的方法（自选）",
           "pdfPage": 291,
-          "score": 184.91,
+          "score": 344.34,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "mindfulness-what",
@@ -3734,9 +3706,9 @@
         },
         {
           "chunkId": "cd6e817efe7d5b26",
-          "section": "正念练习单2",
+          "section": "正念讲义4：掌握你的心一一“是什么”（What）技能",
           "pdfPage": 51,
-          "score": 168.15,
+          "score": 335.15,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "mindfulness-what",
@@ -3745,14 +3717,24 @@
           ]
         },
         {
-          "chunkId": "8a9a423c2ede2493",
-          "section": "正念练习单4",
-          "pdfPage": 94,
-          "score": 163.52,
+          "chunkId": "294c6dac03646b20",
+          "section": "第七章chapter7 297",
+          "pdfPage": 320,
+          "score": 327.84,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "mindfulness-what",
-            "mindfulness-wise-mind"
+            "emotion-problem-solving"
+          ]
+        },
+        {
+          "chunkId": "d9223f3906fedbd4",
+          "section": "正念练习单4b：观察、描述、参与的记录日历",
+          "pdfPage": 310,
+          "score": 326.72,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "mindfulness-what"
           ]
         }
       ]
@@ -3771,9 +3753,9 @@
       "topHits": [
         {
           "chunkId": "dbce0bbb9d6a1393",
-          "section": "情绪调节练习单9",
+          "section": "情绪调节练习单9及13除了其他ABCPLEASE技能之外，还提供一",
           "pdfPage": 200,
-          "score": 95.86,
+          "score": 91.07,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-vulnerability",
@@ -3781,10 +3763,10 @@
           ]
         },
         {
-          "chunkId": "e9e4468b0c1d000f",
-          "section": "情绪调节讲义19",
-          "pdfPage": 294,
-          "score": 84.4,
+          "chunkId": "e0c4a7da498b446a",
+          "section": "情绪调节讲义21：概论一一管理极端情绪",
+          "pdfPage": 201,
+          "score": 85.21,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-vulnerability",
@@ -3803,21 +3785,20 @@
           ]
         },
         {
-          "chunkId": "2f8c979f45097e23",
-          "section": "情绪调节讲义15一16",
-          "pdfPage": 619,
-          "score": 78.86,
+          "chunkId": "c24cf7e74561e995",
+          "section": "第十七节）介绍积累正面情绪，建立自我掌 控，学习提前应对困难的情",
+          "pdfPage": 521,
+          "score": 82.23,
           "qualityScore": 1,
           "matchedSkillCardIds": [
-            "emotion-vulnerability",
-            "emotion-understand"
+            "emotion-vulnerability"
           ]
         },
         {
-          "chunkId": "e0c4a7da498b446a",
-          "section": "情绪调节讲义20b：睡眠卫生指南",
-          "pdfPage": 201,
-          "score": 77.21,
+          "chunkId": "3155c3cf137c1d42",
+          "section": "第九章chapter9 595",
+          "pdfPage": 618,
+          "score": 80.38,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-vulnerability",
@@ -3842,18 +3823,7 @@
           "chunkId": "2f8c979f45097e23",
           "section": "情绪调节讲义15一16",
           "pdfPage": 619,
-          "score": 98.94,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "emotion-vulnerability",
-            "emotion-understand"
-          ]
-        },
-        {
-          "chunkId": "dbce0bbb9d6a1393",
-          "section": "情绪调节练习单9",
-          "pdfPage": 200,
-          "score": 96.95,
+          "score": 100.44,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-vulnerability",
@@ -3864,7 +3834,7 @@
           "chunkId": "3155c3cf137c1d42",
           "section": "第九章chapter9 595",
           "pdfPage": 618,
-          "score": 90.5,
+          "score": 96.5,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-vulnerability",
@@ -3875,17 +3845,28 @@
           "chunkId": "c24cf7e74561e995",
           "section": "第十七节）介绍积累正面情绪，建立自我掌 控，学习提前应对困难的情",
           "pdfPage": 521,
-          "score": 90.4,
+          "score": 96.4,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-vulnerability"
           ]
         },
         {
-          "chunkId": "1bc5450daa6276ef",
-          "section": "练习单7：解决人际效能技能中的难题",
-          "pdfPage": 197,
-          "score": 83.88,
+          "chunkId": "dbce0bbb9d6a1393",
+          "section": "情绪调节练习单9及13除了其他ABCPLEASE技能之外，还提供一",
+          "pdfPage": 200,
+          "score": 92.14,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "emotion-vulnerability",
+            "emotion-understand"
+          ]
+        },
+        {
+          "chunkId": "e0c4a7da498b446a",
+          "section": "情绪调节讲义21：概论一一管理极端情绪",
+          "pdfPage": 201,
+          "score": 81.05,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-vulnerability",
@@ -3908,32 +3889,10 @@
       "evidenceMatched": true,
       "topHits": [
         {
-          "chunkId": "9c762bfc5aa78726",
-          "section": "正念讲义4一4a",
-          "pdfPage": 291,
-          "score": 148.84,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "mindfulness-what",
-            "mindfulness-wise-mind"
-          ]
-        },
-        {
-          "chunkId": "d314680b650c2485",
-          "section": "正念讲义5a",
-          "pdfPage": 309,
-          "score": 147.11,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "mindfulness-what",
-            "mindfulness-wise-mind"
-          ]
-        },
-        {
           "chunkId": "cd6e817efe7d5b26",
-          "section": "正念练习单2",
+          "section": "正念讲义4：掌握你的心一一“是什么”（What）技能",
           "pdfPage": 51,
-          "score": 146.82,
+          "score": 207.82,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "mindfulness-what",
@@ -3943,19 +3902,41 @@
         },
         {
           "chunkId": "a7013229ee023d72",
-          "section": "正念讲义4b",
+          "section": "正念讲义4b列出了很多练习描述的方法，务必和成员一起讨论这些",
           "pdfPage": 316,
-          "score": 146.45,
+          "score": 205.45,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "mindfulness-what"
           ]
         },
         {
-          "chunkId": "d9223f3906fedbd4",
-          "section": "正念练习单4a：观察、描述、",
-          "pdfPage": 310,
-          "score": 146.34,
+          "chunkId": "9c762bfc5aa78726",
+          "section": "正念讲义4a：练习观察的方法（自选）",
+          "pdfPage": 291,
+          "score": 201.84,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "mindfulness-what",
+            "mindfulness-wise-mind"
+          ]
+        },
+        {
+          "chunkId": "d314680b650c2485",
+          "section": "正念讲义4b：练习描述的方法（自选）",
+          "pdfPage": 309,
+          "score": 201.61,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "mindfulness-what",
+            "mindfulness-wise-mind"
+          ]
+        },
+        {
+          "chunkId": "7f7ad50ab34b4d2a",
+          "section": "正念讲义4c：练习参与的方法",
+          "pdfPage": 317,
+          "score": 193.79,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "mindfulness-what"
@@ -4043,8 +4024,20 @@
       "evidenceMatched": true,
       "topHits": [
         {
+          "chunkId": "720b51a0f1c3796c",
+          "section": "情绪调节讲义13",
+          "pdfPage": 612,
+          "score": 117.19,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "emotion-opposite-action",
+            "emotion-check-facts",
+            "emotion-problem-solving"
+          ]
+        },
+        {
           "chunkId": "873e919eab0d0d41",
-          "section": "情绪调节讲义10",
+          "section": "情绪调节讲义10关于相反行为的所有步骤，确保整个程序按照指",
           "pdfPage": 602,
           "score": 115.7,
           "qualityScore": 1,
@@ -4054,50 +4047,37 @@
           ]
         },
         {
-          "chunkId": "720b51a0f1c3796c",
-          "section": "情绪调节讲义13",
-          "pdfPage": 612,
-          "score": 115.69,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "emotion-opposite-action",
-            "emotion-check-facts",
-            "emotion-problem-solving"
-          ]
-        },
-        {
           "chunkId": "06a11bb8da509a5c",
-          "section": "情绪调节讲义9",
+          "section": "情绪调节讲义9：相反行为与问题解决一决定要用哪一个",
           "pdfPage": 581,
-          "score": 112.07,
+          "score": 111.07,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-opposite-action",
-            "emotion-check-facts",
             "emotion-problem-solving"
-          ]
-        },
-        {
-          "chunkId": "3a3ef4ddc57154a2",
-          "section": "情绪调节讲义7",
-          "pdfPage": 565,
-          "score": 104.66,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "emotion-opposite-action",
-            "emotion-check-facts"
           ]
         },
         {
           "chunkId": "b5503deed616cb5a",
           "section": "第十二节）与改变情绪反应有关，方法是学 习如何核对事实，当情绪不",
           "pdfPage": 519,
-          "score": 103.39,
+          "score": 109.39,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "emotion-opposite-action",
             "emotion-check-facts",
             "emotion-problem-solving"
+          ]
+        },
+        {
+          "chunkId": "f262793efa85f5c4",
+          "section": "情绪调节讲义11：找出相反行为",
+          "pdfPage": 224,
+          "score": 107.43,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "emotion-opposite-action",
+            "emotion-check-facts"
           ]
         }
       ]
@@ -4116,54 +4096,56 @@
       "evidenceMatched": true,
       "topHits": [
         {
-          "chunkId": "2427252e02848852",
-          "section": "练习单9：全然接纳）",
-          "pdfPage": 191,
-          "score": 151.01,
+          "chunkId": "c05a978a229e6757",
+          "section": "自己后悔的事、从未拥有或错失的机会",
+          "pdfPage": 737,
+          "score": 229.28,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
+            "emotion-problem-solving"
+          ]
+        },
+        {
+          "chunkId": "f172de279375b1bc",
+          "section": "第十章chapter10 709",
+          "pdfPage": 732,
+          "score": 229.12,
+          "qualityScore": 1,
+          "matchedSkillCardIds": [
+            "distress-radical-acceptance",
+            "emotion-problem-solving",
             "distress-crisis-survival"
           ]
         },
         {
-          "chunkId": "709da06c6be8a688",
-          "section": "痛苦忍受讲义11：全然接纳”",
-          "pdfPage": 720,
-          "score": 141.38,
+          "chunkId": "50d808a34854ff75",
+          "section": "人际效能讲义16b",
+          "pdfPage": 157,
+          "score": 223.31,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
-            "distress-crisis-survival"
+            "emotion-problem-solving"
           ]
         },
         {
-          "chunkId": "ae5c4a5009ae8f3a",
-          "section": "练习单9：全然接纳）",
-          "pdfPage": 200,
-          "score": 141.14,
+          "chunkId": "e59a3f80b60a19f1",
+          "section": "通用讲义1a",
+          "pdfPage": 26,
+          "score": 211.77,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
+            "emotion-problem-solving",
             "distress-crisis-survival"
           ]
         },
         {
           "chunkId": "1d65b2e33c7aa705",
-          "section": "痛苦忍受练习单8",
+          "section": "痛苦忍受讲义9a：感官觉察，分解步骤，是让你改善当下的放松行",
           "pdfPage": 307,
-          "score": 140.55,
-          "qualityScore": 1,
-          "matchedSkillCardIds": [
-            "distress-radical-acceptance",
-            "distress-crisis-survival"
-          ]
-        },
-        {
-          "chunkId": "ba42eb772edc460e",
-          "section": "人际效能讲义19a：找出自我认",
-          "pdfPage": 500,
-          "score": 140.55,
+          "score": 209.55,
           "qualityScore": 1,
           "matchedSkillCardIds": [
             "distress-radical-acceptance",
