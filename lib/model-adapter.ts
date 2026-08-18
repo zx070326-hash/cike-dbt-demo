@@ -1,4 +1,5 @@
 import type { ChatPayload, SkillCard, SourceCitation } from "./dbt-content";
+import { resolveKnowledgeChunk } from "./knowledge-v2";
 import { conversationStarterReplies } from "./conversation-bridge";
 import type { RetrievalHit, RetrievalPlan } from "./rag";
 import { buildEvidenceBundle } from "./rag";
@@ -24,16 +25,40 @@ export type ConversationTurn = {
   content: string;
 };
 
+export type ModelRuntimeContext = {
+  currentWeek?: number;
+  currentModuleId?: string;
+  currentModuleTitle?: string;
+  emaSummary?: string;
+  recentSkillSummary?: string;
+  hasSafetyPlan?: boolean;
+  qualityRetry?: string;
+  clinicalGuidance?: string;
+};
+
+type RuntimeModelBindings = {
+  DEMO_MODEL_MODE?: string;
+  MODEL_API_KEY?: string;
+  MODEL_NAME?: string;
+  MODEL_PROVIDER?: string;
+  MODEL_BASE_URL?: string;
+  MODEL_TIMEOUT_MS?: string;
+  MODEL_VERIFY_GROUNDING?: string;
+};
+
+const runtimeGlobal = globalThis as typeof globalThis & { __NSSI_RUNTIME_ENV__?: RuntimeModelBindings };
+
 function readConfig(): ModelConfig | null {
-  if (process.env.DEMO_MODEL_MODE?.trim() === "retrieval") return null;
-  const apiKey = process.env.MODEL_API_KEY?.trim();
-  const model = process.env.MODEL_NAME?.trim();
+  const bound = runtimeGlobal.__NSSI_RUNTIME_ENV__ ?? {};
+  if ((bound.DEMO_MODEL_MODE ?? process.env.DEMO_MODEL_MODE)?.trim() === "retrieval") return null;
+  const apiKey = bound.MODEL_API_KEY?.trim() || process.env.MODEL_API_KEY?.trim();
+  const model = bound.MODEL_NAME?.trim() || process.env.MODEL_NAME?.trim();
   if (!apiKey || !model) return null;
-  const provider = process.env.MODEL_PROVIDER === "anthropic" ? "anthropic" : "openai-compatible";
+  const provider = (bound.MODEL_PROVIDER ?? process.env.MODEL_PROVIDER) === "anthropic" ? "anthropic" : "openai-compatible";
   const baseUrl =
-    process.env.MODEL_BASE_URL?.replace(/\/$/, "") ||
+    (bound.MODEL_BASE_URL ?? process.env.MODEL_BASE_URL)?.replace(/\/$/, "") ||
     (provider === "anthropic" ? "https://api.anthropic.com/v1" : "https://api.openai.com/v1");
-  const configuredTimeout = Number(process.env.MODEL_TIMEOUT_MS ?? 25_000);
+  const configuredTimeout = Number(bound.MODEL_TIMEOUT_MS ?? process.env.MODEL_TIMEOUT_MS ?? 25_000);
   const timeoutMs = Number.isFinite(configuredTimeout)
     ? Math.min(Math.max(configuredTimeout, 5_000), 60_000)
     : 25_000;
@@ -43,7 +68,7 @@ function readConfig(): ModelConfig | null {
     baseUrl,
     model,
     timeoutMs,
-    verifyGrounding: process.env.MODEL_VERIFY_GROUNDING !== "false",
+    verifyGrounding: (bound.MODEL_VERIFY_GROUNDING ?? process.env.MODEL_VERIFY_GROUNDING) !== "false",
     isDeepSeek: /^https:\/\/([^.]+\.)*deepseek\.com(?:\/|$)/iu.test(baseUrl),
   };
 }
@@ -52,11 +77,44 @@ export function isModelConfigured() {
   return readConfig() !== null;
 }
 
+export async function generateNssiReminderDraft(input: {
+  kind: "module-release" | "ema-reminder" | "inactivity-check";
+  templateTitle: string;
+  templateBody: string;
+  currentWeek: number;
+  completedModules: number;
+  currentModuleTitle?: string;
+  recentEmaCount: number;
+}) {
+  const config = readConfig();
+  if (!config) return null;
+  // Reminder copy must fail over to the clinically reviewed template inside
+  // the 500 ms product budget. Leave a small margin for promise cleanup and
+  // persistence after the network abort fires.
+  const compactConfig = { ...config, timeoutMs: Math.min(config.timeoutMs, 450) };
+  const instruction = `你是NSSI数字化干预系统唯一Agent服务中的提醒文案组件。只改写给定的临床预审模板，不新增心理知识、技能步骤、诊断、药物、自伤方式或疗效承诺。使用结构化状态做轻度个性化，不复述敏感记录，不制造依赖。标题不超过20个汉字，正文不超过70个汉字。输出严格JSON：{"title":string,"body":string}。`;
+  const prompt = `提醒类型：${input.kind}\n模板标题：${input.templateTitle}\n模板正文：${input.templateBody}\n当前周次：${input.currentWeek}\n已完成模块：${input.completedModules}/16\n当前模块：${input.currentModuleTitle ?? "未提供"}\n近7日有效EMA次数：${input.recentEmaCount}`;
+  try {
+    const raw = compactConfig.provider === "anthropic"
+      ? await callAnthropic(compactConfig, prompt, instruction, 180)
+      : await callOpenAiCompatible(compactConfig, prompt, instruction, 180);
+    const parsed = extractJson<{ title?: unknown; body?: unknown }>(raw);
+    const title = typeof parsed.title === "string" ? parsed.title.trim() : "";
+    const body = typeof parsed.body === "string" ? parsed.body.trim() : "";
+    const forbidden = /诊断|确诊|药物|剂量|保证|治愈|自伤方式|自杀方式/u;
+    if (!title || !body || title.length > 20 || body.length > 70 || forbidden.test(`${title}${body}`)) return null;
+    return { title, body, model: compactConfig.model, provider: compactConfig.provider };
+  } catch {
+    return null;
+  }
+}
+
 function buildPrompt(
   query: string,
   hits: RetrievalHit[],
   history: ConversationTurn[],
   plan?: RetrievalPlan,
+  runtimeContext: ModelRuntimeContext = {},
 ) {
   // Four high-quality primary fragments plus a small parent window are enough
   // for one DBT step. Keeping the evidence packet bounded materially reduces
@@ -84,7 +142,16 @@ function buildPrompt(
       `${binding.claimType} 只允许引用：${binding.allowedEvidenceIds.join(", ") || "无"}`,
     ).join("\n")
     : "没有预先绑定的技能卡主张；只能根据下方原文谨慎生成并逐条引用。";
-  return `最近对话仅用于理解指代和用户情境，不是专业知识证据：\n${conversation}\n\n用户当前问题：${query}\n\n${routeHint}\n\n引用规则：DBT定义、适用性和练习动作必须分别放入claims；每条claim必须列出直接支持它的证据编号。未经专业审核的技能卡只是导航，不能引用其草稿文字。\n候选主张允许范围：\n${claimPolicy}\n\n仅可使用以下书内原文证据：\n${evidence}`;
+  const protocolContext = [
+    Number.isInteger(runtimeContext.currentWeek) ? `当前第${runtimeContext.currentWeek}周` : "",
+    runtimeContext.currentModuleTitle ? `当前模块：${runtimeContext.currentModuleTitle.slice(0, 80)}` : "",
+    runtimeContext.emaSummary ? `近7日EMA结构化摘要：${runtimeContext.emaSummary.slice(0, 300)}` : "",
+    runtimeContext.recentSkillSummary ? `最近技能记录摘要：${runtimeContext.recentSkillSummary.slice(0, 220)}` : "",
+    typeof runtimeContext.hasSafetyPlan === "boolean" ? `已建立安全计划：${runtimeContext.hasSafetyPlan ? "是" : "否"}` : "",
+    runtimeContext.qualityRetry ? `上一候选未通过出站校验，必须修正：${runtimeContext.qualityRetry.slice(0, 180)}` : "",
+    runtimeContext.clinicalGuidance ? `当前临床表达规范：${runtimeContext.clinicalGuidance.slice(0, 500)}` : "",
+  ].filter(Boolean).join("；") || "（未提供协议上下文）";
+  return `协议上下文只用于个性化表达，不是专业知识证据，也不得据此推进模块：\n${protocolContext}\n\n最近对话仅用于理解指代和用户情境，不是专业知识证据：\n${conversation}\n\n用户当前问题：${query}\n\n${routeHint}\n\n引用规则：DBT定义、适用性和练习动作必须分别放入claims；每条claim必须列出直接支持它的证据编号。未经专业审核的技能卡只是导航，不能引用其草稿文字。\n候选主张允许范围：\n${claimPolicy}\n\n仅可使用以下书内原文证据：\n${evidence}`;
 }
 
 const systemPrompt = `你是面向18岁以上成人的DBT心理自助技能助手，不是真人咨询师。
@@ -215,18 +282,27 @@ function cleanText(value: unknown, maxLength: number) {
 
 function evidenceCitationMap(query: string, hits: RetrievalHit[]) {
   const bundle = buildEvidenceBundle(query, hits.slice(0, 4), 3);
-  return new Map<string, SourceCitation>(bundle.evidence.map((item) => [item.evidenceId, {
-    id: `rag-${item.chunkId}`,
-    sourceId: item.sourceId,
-    book: item.book,
-    section: item.section,
-    printedPage: item.printedPage,
-    pdfPage: item.pdfPage,
-    evidence: item.text,
-    chunkId: item.chunkId,
-    charStart: item.charStart,
-    charEnd: item.charEnd,
-  }]));
+  return new Map<string, SourceCitation>(bundle.evidence.map((item) => {
+    const sourceChunk = resolveKnowledgeChunk(item.chunkId);
+    const paragraphOrdinal = sourceChunk?.ordinal;
+    return [item.evidenceId, {
+      id: `rag-${item.chunkId}`,
+      sourceId: item.sourceId,
+      book: item.book,
+      section: item.section,
+      printedPage: item.printedPage,
+      pdfPage: item.pdfPage,
+      evidence: item.text,
+      chunkId: item.chunkId,
+      charStart: item.charStart,
+      charEnd: item.charEnd,
+      paragraphOrdinal,
+      paragraphAnchor: paragraphOrdinal === undefined
+        ? undefined
+        : `${item.sourceId}:${item.pdfPage}:p${paragraphOrdinal + 1}`,
+      sourceHash: item.chunkId,
+    }];
+  }));
 }
 
 function parsedClaims(
@@ -367,10 +443,11 @@ export async function generateGroundedAnswer(
   hits: RetrievalHit[],
   history: ConversationTurn[] = [],
   plan?: RetrievalPlan,
+  runtimeContext: ModelRuntimeContext = {},
 ): Promise<ChatPayload | null> {
   const config = readConfig();
   if (!config || !hits.length) return null;
-  const prompt = buildPrompt(query, hits, history, plan);
+  const prompt = buildPrompt(query, hits, history, plan, runtimeContext);
   const raw = config.provider === "anthropic"
     ? await callAnthropic(config, prompt)
     : await callOpenAiCompatible(config, prompt);
@@ -421,10 +498,11 @@ export async function generateCompanionAnswer(
   hits: RetrievalHit[],
   history: ConversationTurn[] = [],
   plan?: RetrievalPlan,
+  runtimeContext: ModelRuntimeContext = {},
 ): Promise<ChatPayload | null> {
   const config = readConfig();
   if (!config || !hits.length) return null;
-  const prompt = buildPrompt(query, hits, history, plan);
+  const prompt = buildPrompt(query, hits, history, plan, runtimeContext);
   const raw = config.provider === "anthropic"
     ? await callAnthropic(config, prompt, companionSystemPrompt, 900)
     : await callOpenAiCompatible(config, prompt, companionSystemPrompt, 900);

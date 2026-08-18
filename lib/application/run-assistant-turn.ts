@@ -14,12 +14,15 @@ import {
 import {
   buildClarificationResponse,
   buildRetrievalFallback,
+  hitToCitation,
   planRetrieval,
   retrievalMetadata,
   retrieveEvidence,
+  normalizeSourceCitation,
   type RetrievalPlan,
 } from "../rag";
 import { assessSafety } from "../safety/classifier";
+import type { ExternalRiskLexicon } from "../safety/classifier";
 import {
   type ConversationTurn,
   generateCompanionAnswer,
@@ -40,6 +43,20 @@ export function normalizeHistory(value: unknown): ConversationTurn[] {
     .filter((item) => item.content)
     .slice(-6);
 }
+
+export type AssistantRuntimeContext = {
+  currentWeek?: number;
+  currentModuleId?: string;
+  currentModuleTitle?: string;
+  allowedSkillCardIds?: string[];
+  emaSummary?: string;
+  recentSkillSummary?: string;
+  hasSafetyPlan?: boolean;
+  allowModel?: boolean;
+  qualityRetry?: string;
+  clinicalGuidance?: string;
+  riskLexicon?: ExternalRiskLexicon;
+};
 
 function comparisonText(value: string) {
   return value.normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
@@ -66,6 +83,28 @@ function payloadText(payload: ChatPayload) {
     ...(payload.skillCard?.takeaways ?? []),
     ...(payload.steps ?? []),
   ].filter(Boolean).join(" ");
+}
+
+const protocolGatedSkillNames: Array<[string, RegExp]> = [
+  ["emotion-check-facts", /核对事实/u],
+  ["emotion-opposite-action", /相反行为|相反行动/u],
+  ["emotion-problem-solving", /问题解决/u],
+  ["distress-radical-acceptance", /全然接纳|彻底接纳/u],
+  ["interpersonal-dear-man", /DEAR\s*MAN|DEARMAN/iu],
+  ["interpersonal-give", /\bGIVE\b/iu],
+  ["interpersonal-fast", /\bFAST\b/iu],
+  ["behavior-chain", /行为链|链式分析|链锁分析/u],
+];
+
+function violatesProtocolSkillBoundary(
+  payload: ChatPayload,
+  allowedSkills?: ReadonlySet<string>,
+) {
+  if (!allowedSkills?.size) return false;
+  const visible = payloadText(payload);
+  return protocolGatedSkillNames.some(([skillId, pattern]) => (
+    !allowedSkills.has(skillId) && pattern.test(visible)
+  ));
 }
 
 function similarity(left: string, right: string) {
@@ -184,12 +223,42 @@ function applyConversationDecisionToPlan(
   basePlan: RetrievalPlan,
   route: string,
   reasonCodes: string[],
+  allowedSkills?: ReadonlySet<string>,
 ): RetrievalPlan {
   const context = `${recentUserContext} ${message}`.trim();
+  const allowed = (skillId: string) => !allowedSkills?.size || allowedSkills.has(skillId);
+  const removeLockedSkillNames = (value: string) => value
+    .replace(/核对事实/gu, "")
+    .replace(/相反行为|相反行动/gu, "")
+    .replace(/问题解决/gu, "")
+    .replace(/全然接纳|彻底接纳/gu, "")
+    .replace(/DEAR\s*MAN|DEARMAN|GIVE|FAST/giu, "")
+    .replace(/行为链|链式分析|链锁分析/gu, "")
+    .trim();
+  const observeFirst = (): RetrievalPlan => ({
+    kind: "guided",
+    route: "direct",
+    // Do not leave the name of a locked skill in the retrieval query. Merely
+    // filtering the final hits is insufficient because a source paragraph can
+    // be tagged to both an unlocked and a future skill.
+    retrievalQuery: `${removeLockedSkillNames(context)} 正念 观察 描述 当前体验 身体感觉 行动冲动`,
+    label: "先观察和描述现在的体验",
+  });
 
-  // An explicitly named DBT skill remains authoritative. The state engine
-  // improves ordinary-language routing; it does not second-guess a clear ask.
-  if (basePlan.kind === "direct") return basePlan;
+  // A named skill is authoritative only inside the protocol content boundary.
+  // The protocol engine, not the model or retriever, decides that boundary.
+  if (basePlan.kind === "direct") {
+    const namedSkillAllowed =
+      (!/核对事实/u.test(message) || allowed("emotion-check-facts")) &&
+      (!/相反行为|相反行动/u.test(message) || allowed("emotion-opposite-action")) &&
+      (!/问题解决/u.test(message) || allowed("emotion-problem-solving")) &&
+      (!/全然接纳|彻底接纳/u.test(message) || allowed("distress-radical-acceptance")) &&
+      (!/DEAR\s*MAN|DEARMAN/iu.test(message) || allowed("interpersonal-dear-man")) &&
+      (!/GIVE/iu.test(message) || allowed("interpersonal-give")) &&
+      (!/FAST/iu.test(message) || allowed("interpersonal-fast")) &&
+      (!/行为链|链式分析|链锁分析/u.test(message) || allowed("behavior-chain"));
+    return namedSkillAllowed ? basePlan : observeFirst();
+  }
   if (reasonCodes.includes("USER_NAMED_SKILL")) {
     return {
       kind: "direct",
@@ -209,6 +278,7 @@ function applyConversationDecisionToPlan(
   }
 
   if (route === "behavior-chain") {
+    if (!allowed("behavior-chain")) return observeFirst();
     return {
       kind: "guided",
       route: "behavior-chain",
@@ -225,6 +295,7 @@ function applyConversationDecisionToPlan(
     };
   }
   if (route === "emotion-facts") {
+    if (!allowed("emotion-check-facts")) return observeFirst();
     return {
       kind: "guided",
       route: "emotion-facts",
@@ -233,6 +304,11 @@ function applyConversationDecisionToPlan(
     };
   }
   if (route === "acceptance") {
+    if (!allowed("distress-radical-acceptance")) return {
+      kind: "guided", route: "distress-survival",
+      retrievalQuery: `${context} 痛苦耐受 危机生存 STOP 观察 冲动`,
+      label: "先稳定再分析",
+    };
     return {
       kind: "guided",
       route: "acceptance",
@@ -242,6 +318,7 @@ function applyConversationDecisionToPlan(
     };
   }
   if (route === "interpersonal") {
+    if (!allowed("interpersonal-dear-man") && !allowed("interpersonal-give") && !allowed("interpersonal-fast")) return observeFirst();
     return {
       kind: "guided",
       route: "interpersonal",
@@ -262,18 +339,23 @@ export async function runAssistantTurn(
   message: string,
   history: ConversationTurn[] = [],
   experienceMode: ExperienceMode = "deep-read",
+  runtimeContext: AssistantRuntimeContext = {},
 ): Promise<ChatPayload> {
+  const allowedSkills = runtimeContext.allowedSkillCardIds?.length
+    ? new Set(runtimeContext.allowedSkillCardIds)
+    : undefined;
   const recentUserMessages = history
     .filter((turn) => turn.role === "user")
     .map((turn) => turn.content);
 
-  const safety = assessSafety(message, recentUserMessages);
+  const safety = assessSafety(message, recentUserMessages, runtimeContext.riskLexicon);
   const { state: sessionState, decision } = buildConversationDecision(message, history, safety);
   const finish = (payload: ChatPayload): ChatPayload => {
     const advanced = advanceRepeatedAnswer(message, history, payload);
-    const citations = advanced.citations ?? advanced.citationIds
+    const citations = (advanced.citations ?? advanced.citationIds
       ?.map((id) => sourceCitations[id])
-      .filter((citation) => Boolean(citation));
+      .filter((citation) => Boolean(citation)))
+      ?.map((citation) => normalizeSourceCitation(citation, message));
     return {
       ...advanced,
       citations,
@@ -285,7 +367,7 @@ export async function runAssistantTurn(
 
   // Invariant 1: deterministic crisis and clinical boundaries run before any
   // retrieval or model call.
-  const safetyResponse = getContextualSafetyResponse(message, recentUserMessages);
+  const safetyResponse = getContextualSafetyResponse(message, recentUserMessages, runtimeContext.riskLexicon);
   if (safetyResponse) return finish(safetyResponse);
 
   const simpleConversation = getSimpleConversationResponse(message);
@@ -310,6 +392,7 @@ export async function runAssistantTurn(
     basePlan,
     decision.route,
     decision.reasonCodes,
+    allowedSkills,
   );
   if (
     plan.kind === "out-of-scope" &&
@@ -344,9 +427,9 @@ export async function runAssistantTurn(
     return finish(buildRetrievalFallback(plan.retrievalQuery, [], undefined, plan));
   }
 
-  if (experienceMode === "companion" && plan.kind !== "out-of-scope") {
+  if (experienceMode === "companion") {
     const retrievalQuery = companionRetrievalQuery(contextualQuery, plan);
-    const hits = retrieveEvidence(retrievalQuery);
+    const hits = retrieveEvidence(retrievalQuery, 6, { allowedSkillCardIds: allowedSkills });
     if (
       sessionState.lastIntervention &&
       (sessionState.responseToIntervention === "no-change" || sessionState.responseToIntervention === "worse")
@@ -369,10 +452,10 @@ export async function runAssistantTurn(
       });
     }
     let generationStatus: "rejected" | "error" | undefined;
-    if (isModelConfigured() && hits.length > 0) {
+    if (runtimeContext.allowModel !== false && isModelConfigured() && hits.length > 0) {
       try {
-        const generated = await generateCompanionAnswer(message, hits, history, plan);
-        if (generated) {
+        const generated = await generateCompanionAnswer(message, hits, history, plan, runtimeContext);
+        if (generated && !violatesProtocolSkillBoundary(generated, allowedSkills)) {
           generated.retrieval = retrievalMetadata(retrievalQuery, hits);
           return finish(generated);
         }
@@ -384,12 +467,15 @@ export async function runAssistantTurn(
         console.warn(`[dbt-companion] falling back: ${reason.slice(0, 120)}`);
       }
     }
-    return finish(buildCompanionFallback(message, hits, plan, generationStatus));
+    const guideQuery = basePlan.kind === "direct" && plan.label === "先观察和描述现在的体验"
+      ? plan.retrievalQuery
+      : message;
+    return finish(buildCompanionFallback(guideQuery, hits, plan, generationStatus));
   }
 
   if (plan.kind === "clarify") {
     let bridgeStatus: "rejected" | "error" | undefined;
-    if (isModelConfigured()) {
+    if (runtimeContext.allowModel !== false && isModelConfigured()) {
       try {
         const generatedBridge = await generateConversationalBridge(message, history);
         if (generatedBridge) return finish(generatedBridge);
@@ -409,7 +495,7 @@ export async function runAssistantTurn(
   }
 
   const retrievalQuery = plan.kind === "direct" ? contextualQuery : plan.retrievalQuery;
-  const hits = retrieveEvidence(retrievalQuery);
+  const hits = retrieveEvidence(retrievalQuery, 6, { allowedSkillCardIds: allowedSkills });
 
   // Relationship distress is easy for a model to over-route into a named
   // communication skill before the user has said they want to communicate.
@@ -421,13 +507,13 @@ export async function runAssistantTurn(
     return finish(buildRetrievalFallback(retrievalQuery, hits, undefined, plan));
   }
 
-  const generatedAttempted = isModelConfigured() && hits.length > 0;
+  const generatedAttempted = runtimeContext.allowModel !== false && isModelConfigured() && hits.length > 0;
   let generationStatus: "rejected" | "error" | undefined;
 
   if (generatedAttempted) {
     try {
-      const generated = await generateGroundedAnswer(message, hits, history, plan);
-      if (generated) {
+      const generated = await generateGroundedAnswer(message, hits, history, plan, runtimeContext);
+      if (generated && !violatesProtocolSkillBoundary(generated, allowedSkills)) {
         generated.retrieval = retrievalMetadata(retrievalQuery, hits);
         return finish(generated);
       }
@@ -448,6 +534,10 @@ export async function runAssistantTurn(
       : null;
   if (verifiedSkill) {
     const verified = respondFromFrozenEvidence(verifiedSkill);
+    // Frozen copy controls wording, but provenance always comes from the
+    // current retrieval result. Legacy hand-authored citation IDs are never
+    // allowed to bypass the source-exact citation contract.
+    verified.citations = hits.slice(0, 4).map(hitToCitation);
     verified.retrieval = retrievalMetadata(retrievalQuery, hits);
     if (generationStatus) {
       verified.generation = { attempted: true, status: generationStatus };

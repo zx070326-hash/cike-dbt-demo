@@ -3,20 +3,20 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://cike-dbt-demo.zx070326.workers.dev"),
-  title: "此刻｜DBT 自助练习助手",
+  title: "此刻｜NSSI · DBT 数字化干预",
   description:
-    "默认从陪伴对话开始，也可切换到知识伴读；DBT 方法附有可核对的书本出处。",
+    "面向成年用户的八周结构化 DBT 自助训练，包含 EMA、EMI、数字安全计划、双模式对话与远程人工协助。",
   openGraph: {
-    title: "此刻｜先说说，再一起找办法",
-    description: "伴读引导与知识深读双模式，现已升级为陪伴对话与知识伴读，书中方法可追溯",
+    title: "此刻｜NSSI · DBT 数字化干预",
+    description: "结构化自助训练、每日状态记录、即时技能与数字安全计划",
     type: "website",
     locale: "zh_CN",
     images: [{ url: "/og.png", width: 1732, height: 909, alt: "此刻 DBT 自助练习助手" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "此刻｜先说说，再一起找办法",
-    description: "陪伴对话与知识伴读双模式，书中方法可追溯",
+    title: "此刻｜NSSI · DBT 数字化干预",
+    description: "结构化自助训练、每日状态记录、即时技能与数字安全计划",
     images: ["/og.png"],
   },
 };

@@ -6,6 +6,22 @@ interface Env {
   ASSETS?: Fetcher;
   DB?: D1Database;
   DEMO_EXPIRES_AT?: string;
+  DATA_ENCRYPTION_KEY?: string;
+  COACH_ACCESS_TOKEN?: string;
+  ADMIN_ACCESS_TOKEN?: string;
+  COACH_NOTIFICATION_WEBHOOK?: string;
+  MODEL_API_KEY?: string;
+  MODEL_NAME?: string;
+  MODEL_BASE_URL?: string;
+  MODEL_PROVIDER?: string;
+  MODEL_TIMEOUT_MS?: string;
+  MODEL_VERIFY_GROUNDING?: string;
+  DEMO_MODEL_MODE?: string;
+  RISK_MODEL_API_KEY?: string;
+  RISK_MODEL_NAME?: string;
+  RISK_MODEL_BASE_URL?: string;
+  RISK_MODEL_TIMEOUT_MS?: string;
+  NSSI_SEMANTIC_RISK_MODE?: string;
   IMAGES?: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {
@@ -40,6 +56,12 @@ interface ExecutionContext {
   passThroughOnException(): void;
 }
 
+interface ScheduledController {
+  scheduledTime: number;
+  cron: string;
+  noRetry(): void;
+}
+
 // Image security config. SVG sources with .svg extension auto-skip the
 // optimization endpoint on the client side (served directly, no proxy).
 // To route SVGs through the optimizer (with security headers), set
@@ -48,6 +70,10 @@ interface ExecutionContext {
 
 const worker = {
   async fetch(request: Request, env: Env | undefined, ctx: ExecutionContext): Promise<Response> {
+    // Route modules read bindings through a runtime-global bridge. Bindings are
+    // deployment-scoped and immutable, so sharing the reference inside one
+    // Worker isolate does not mix participant request state.
+    (globalThis as typeof globalThis & { __NSSI_RUNTIME_ENV__?: Env }).__NSSI_RUNTIME_ENV__ = env ?? {};
     const url = new URL(request.url);
 
     if (env?.DEMO_EXPIRES_AT) {
@@ -58,17 +84,33 @@ const worker = {
     }
 
     if (url.pathname === "/_vinext/image" && env?.ASSETS && env.IMAGES) {
+      const assets = env.ASSETS;
+      const images = env.IMAGES;
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
       return handleImageOptimization(request, {
-        fetchAsset: (path) => env.ASSETS.fetch(new Request(new URL(path, request.url))),
+        fetchAsset: (path) => assets.fetch(new Request(new URL(path, request.url))),
         transformImage: async (body, { width, format, quality }) => {
-          const result = await env.IMAGES.input(body).transform(width > 0 ? { width } : {}).output({ format, quality });
+          const result = await images.input(body).transform(width > 0 ? { width } : {}).output({ format, quality });
           return result.response();
         },
       }, allowedWidths);
     }
 
     return handler.fetch(request, env ?? {}, ctx);
+  },
+  async scheduled(controller: ScheduledController, env: Env | undefined, ctx: ExecutionContext) {
+    (globalThis as typeof globalThis & { __NSSI_RUNTIME_ENV__?: Env }).__NSSI_RUNTIME_ENV__ = env ?? {};
+    const task = Promise.all([import("../lib/nssi/store"), import("../lib/nssi/agent")])
+      .then(([{ processDueScheduledJobs }, { personalizeScheduledNotification }]) => processDueScheduledJobs(
+        new Date(controller.scheduledTime).toISOString(),
+        100,
+        personalizeScheduledNotification,
+      ))
+      .catch((error) => {
+        console.error("[nssi-scheduler]", error instanceof Error ? error.message : "unknown error");
+        throw error;
+      });
+    ctx.waitUntil(task);
   },
 };
 

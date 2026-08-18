@@ -11,6 +11,11 @@ export type SourceCitation = {
   chunkId?: string;
   charStart?: number;
   charEnd?: number;
+  /** Stable paragraph order within the source page. */
+  paragraphOrdinal?: number;
+  /** Human-readable source anchor, e.g. upper:567:p2. */
+  paragraphAnchor?: string;
+  sourceHash?: string;
 };
 
 export type ExperienceMode = "companion" | "deep-read";
@@ -313,8 +318,9 @@ export function getSafetyBoundaryResponse(input: string): ChatPayload | null {
 export function getContextualSafetyResponse(
   input: string,
   recentUserMessages: string[] = [],
+  externalLexicon: ExternalRiskLexicon = {},
 ): ChatPayload | null {
-  const safety = assessSafety(input, recentUserMessages);
+  const safety = assessSafety(input, recentUserMessages, externalLexicon);
   return safety.category === "none" ? null : buildSafetyResponse(safety);
 }
 import type {
@@ -326,6 +332,7 @@ import {
   clinicalBoundaryPatterns,
   crisisPatterns,
   unsafeBehaviorPatterns,
+  type ExternalRiskLexicon,
   type SafetyAssessment,
 } from "./safety/classifier";
 

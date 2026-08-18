@@ -130,6 +130,9 @@ export function createRetrievalEngine(knowledge: KnowledgeV2): RetrievalEngine {
 
     const directCardIds = new Set(cardMatches.map(({ card }) => card.id));
     const relatedCardIds = new Set(cardMatches.flatMap(({ card }) => card.related));
+    const namedPhrases = [...new Set(cardMatches.flatMap(({ card }) => [card.label, ...card.aliases])
+      .map(normalizeRetrievalText)
+      .filter((phrase) => phrase.length >= 2 && normalizedQuery.includes(phrase)))];
     const evidenceBoosts = new Map<string, number>();
     for (const { card, score: cardScore } of cardMatches) {
       for (const evidence of card.evidence) {
@@ -170,6 +173,13 @@ export function createRetrievalEngine(knowledge: KnowledgeV2): RetrievalEngine {
         const lengthNormalization = 1.2 * (0.25 + 0.75 * (documentLength / averageDocumentLength));
         score += inverseDocumentFrequency * ((frequency * 2.2) / (frequency + lengthNormalization)) * 3;
       }
+      // When the user names a skill or subskill, at least one source that
+      // literally contains that phrase must outrank generic card evidence.
+      // Skill cards navigate; they do not replace the book text.
+      const exactNamedPhraseHits = namedPhrases.filter((phrase) => (
+        normalizedText.includes(phrase) || normalizedTitle.includes(phrase)
+      ));
+      score += exactNamedPhraseHits.reduce((sum, phrase) => sum + 45 + Math.min(phrase.length * 4, 32), 0);
       if (normalizedQuery.length >= 4 && normalizedText.includes(normalizedQuery)) score += 20;
 
       const cardIds = new Set(chunk.skillCardIds);

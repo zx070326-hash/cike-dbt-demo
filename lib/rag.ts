@@ -1,5 +1,5 @@
 import rawIndex from "../data/rag/index-v1.json";
-import type { ChatPayload, SourceCitation } from "./dbt-content";
+import type { ChatPayload, ClaimCitation, SourceCitation } from "./dbt-content";
 import { knowledgeV2 } from "./knowledge-v2";
 import { createRetrievalEngine, type EngineRetrievalHit } from "./retrieval/engine";
 import { createEvidenceBundle, type EvidenceBundle } from "./retrieval/evidence-bundle";
@@ -22,6 +22,7 @@ type RagPage = {
   pageId?: string;
   charStart?: number;
   charEnd?: number;
+  paragraphOrdinal?: number;
 };
 
 type RagIndex = {
@@ -101,8 +102,21 @@ export function buildClarificationResponse(): ChatPayload {
   };
 }
 
-export function retrieveEvidence(query: string, limit = 6): RetrievalHit[] {
-  return retrievalEngine.retrieve(query, limit).map((hit) => ({
+export function retrieveEvidence(
+  query: string,
+  limit = 6,
+  options?: { allowedSkillCardIds?: ReadonlySet<string> },
+): RetrievalHit[] {
+  const requestedLimit = options?.allowedSkillCardIds ? Math.max(limit * 4, 24) : limit;
+  return retrievalEngine.retrieve(query, requestedLimit)
+    .filter((hit) => {
+      const allowed = options?.allowedSkillCardIds;
+      if (!allowed?.size) return true;
+      const skillIds = new Set([...hit.chunk.skillCardIds, ...hit.matchedSkillCardIds]);
+      return [...skillIds].some((id) => allowed.has(id));
+    })
+    .slice(0, limit)
+    .map((hit) => ({
     page: {
       id: hit.chunk.id,
       pageId: hit.chunk.pageId,
@@ -118,13 +132,14 @@ export function retrieveEvidence(query: string, limit = 6): RetrievalHit[] {
       renderDpi: 0,
       charStart: hit.chunk.charStart,
       charEnd: hit.chunk.charEnd,
+      paragraphOrdinal: hit.chunk.ordinal,
     },
     score: hit.score,
     matchedTerms: hit.matchedTerms,
     matchedSkillCardIds: hit.matchedSkillCardIds,
     qualityScore: hit.qualityScore,
     parentBlock: hit.parentBlock,
-  }));
+    }));
 }
 
 /**
@@ -154,6 +169,9 @@ export function buildEvidenceBundle(
 }
 
 export function hitToCitation(hit: RetrievalHit): SourceCitation {
+  const passage = sourceExactPassage(hit.page.text, hit.matchedTerms);
+  const chunkStart = hit.page.charStart ?? 0;
+  const paragraphOrdinal = passage.ordinal;
   return {
     id: `rag-${hit.page.id}`,
     sourceId: hit.page.sourceId,
@@ -161,11 +179,110 @@ export function hitToCitation(hit: RetrievalHit): SourceCitation {
     section: hit.page.section,
     printedPage: hit.page.printedPage,
     pdfPage: hit.page.pdfPage,
-    evidence: hit.page.excerpt,
+    evidence: passage.text,
     ocrScore: hit.page.ocrScore,
     chunkId: hit.page.id,
-    charStart: hit.page.charStart,
-    charEnd: hit.page.charEnd,
+    charStart: chunkStart + passage.start,
+    charEnd: chunkStart + passage.end,
+    paragraphOrdinal,
+    paragraphAnchor: `${hit.page.sourceId}:${hit.page.pdfPage}:c${(hit.page.paragraphOrdinal ?? 0) + 1}:p${passage.ordinal + 1}`,
+    sourceHash: hit.page.id,
+  };
+}
+
+type SourcePassage = { text: string; start: number; end: number; ordinal: number };
+
+/**
+ * Turn OCR line wraps into stable, source-exact passages. The text is never
+ * rewritten: start/end offsets point back into the immutable source chunk.
+ */
+function sourcePassages(text: string): SourcePassage[] {
+  const lines = [...text.matchAll(/[^\n]+(?:\n|$)/gu)];
+  const passages: SourcePassage[] = [];
+  let start = 0;
+  let end = 0;
+  let buffer = "";
+  const flush = () => {
+    const trimmed = buffer.replace(/\n+$/u, "").trim();
+    if (trimmed) {
+      const leading = buffer.indexOf(trimmed);
+      passages.push({ text: trimmed, start: start + Math.max(0, leading), end: start + Math.max(0, leading) + trimmed.length, ordinal: passages.length });
+    }
+    buffer = "";
+  };
+  for (const match of lines) {
+    const raw = match[0];
+    const line = raw.replace(/\n$/u, "");
+    if (!buffer) start = match.index ?? end;
+    buffer += raw;
+    end = (match.index ?? end) + raw.length;
+    const visibleLength = buffer.replace(/\s/gu, "").length;
+    const sentenceBoundary = /[。！？；：.!?]$/u.test(line.trim());
+    const shortHeading = visibleLength <= 28 && !/[，,。；;]/u.test(line);
+    if ((sentenceBoundary && visibleLength >= 30) || visibleLength >= 260 || (shortHeading && passages.length === 0)) flush();
+  }
+  if (buffer) flush();
+  return passages.length ? passages : [{ text, start: 0, end: text.length, ordinal: 0 }];
+}
+
+function sourceExactPassage(text: string, terms: string[] = []) {
+  const passages = sourcePassages(text);
+  const normalizedTerms = terms.map(normalize).filter((term) => term.length >= 2);
+  let best = passages[0];
+  let bestScore = -1;
+  for (const passage of passages) {
+    const normalizedPassage = normalize(passage.text);
+    const score = normalizedTerms.reduce((sum, term) => sum + (normalizedPassage.includes(term) ? term.length : 0), 0);
+    if (score > bestScore) {
+      best = passage;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+/** Upgrade legacy/manual citations at the application boundary. */
+export function normalizeSourceCitation(citation: SourceCitation, query = ""): SourceCitation {
+  if (
+    citation.chunkId &&
+    /:c\d+:p\d+$/u.test(citation.paragraphAnchor ?? "") &&
+    Number.isInteger(citation.charStart) &&
+    Number.isInteger(citation.charEnd)
+  ) {
+    return citation;
+  }
+  const exactChunk = citation.chunkId
+    ? knowledgeV2.chunks.find((chunk) => chunk.id === citation.chunkId)
+    : undefined;
+  const candidates = exactChunk ? [exactChunk] : knowledgeV2.chunks.filter((chunk) => (
+    chunk.pdfPage === citation.pdfPage &&
+    (citation.sourceId ? chunk.sourceId === citation.sourceId : chunk.book === citation.book) &&
+    chunk.sourceQuality.groundingEligible
+  ));
+  if (!candidates.length) return citation;
+  const citationTerms = `${query} ${citation.section} ${citation.evidence}`
+    .match(/[\p{Script=Han}]{2,8}|[a-z][a-z0-9-]{1,}/giu) ?? [];
+  const selected = candidates
+    .map((chunk) => ({
+      chunk,
+      score: citationTerms.reduce((sum, term) => sum + (normalize(chunk.text).includes(normalize(term)) ? term.length : 0), 0),
+    }))
+    .sort((left, right) => right.score - left.score)[0].chunk;
+  const passageTerms = `${query} ${citation.section}`
+    .match(/[\p{Script=Han}]{2,8}|[a-z][a-z0-9-]{1,}/giu) ?? [];
+  const passage = sourceExactPassage(selected.text, passageTerms);
+  return {
+    ...citation,
+    sourceId: selected.sourceId,
+    section: selected.displaySection,
+    evidence: passage.text,
+    ocrScore: selected.ocrScore,
+    chunkId: selected.id,
+    charStart: selected.charStart + passage.start,
+    charEnd: selected.charStart + passage.end,
+    paragraphOrdinal: passage.ordinal,
+    paragraphAnchor: `${selected.sourceId}:${selected.pdfPage}:c${selected.ordinal + 1}:p${passage.ordinal + 1}`,
+    sourceHash: selected.id,
   };
 }
 
@@ -176,6 +293,47 @@ type GroundedTemplate = {
   steps: string[];
   nextAction?: "practice" | "none";
 };
+
+function claimBigrams(value: string) {
+  const normalized = normalize(value);
+  const terms = new Set<string>();
+  for (let index = 0; index < normalized.length - 1; index += 1) {
+    terms.add(normalized.slice(index, index + 2));
+  }
+  return terms;
+}
+
+function bindFallbackClaim(
+  text: string,
+  citations: SourceCitation[],
+  kind: ClaimCitation["kind"],
+): ClaimCitation {
+  const claimTerms = claimBigrams(text);
+  const ranked = citations.map((citation) => {
+    const evidenceTerms = claimBigrams(citation.evidence);
+    let overlap = 0;
+    for (const term of claimTerms) if (evidenceTerms.has(term)) overlap += 1;
+    return { id: citation.id, overlap };
+  }).sort((left, right) => right.overlap - left.overlap);
+  const positive = ranked.filter((item) => item.overlap > 0).slice(0, 2);
+  return {
+    text,
+    citationIds: (positive.length ? positive : ranked.slice(0, 1)).map((item) => item.id),
+    kind,
+  };
+}
+
+function fallbackClaims(
+  message: string,
+  steps: string[],
+  citations: SourceCitation[],
+): ClaimCitation[] {
+  if (!citations.length) return [];
+  return [
+    bindFallbackClaim(message, citations, "definition"),
+    ...steps.map((step) => bindFallbackClaim(step, citations, "practice")),
+  ];
+}
 
 function groundedTemplate(query: string, hits: RetrievalHit[]): GroundedTemplate | null {
   const normalizedQuery = normalize(query);
@@ -317,23 +475,25 @@ export function buildRetrievalFallback(
 
   const top = hits[0];
   if (plan?.situation === "relationship-attachment") {
+    const message = "你可以一边舍不得，一边慢慢看清这段关系。先不用要求自己马上忘掉他，也不用因为还在意，就忽略那些让你受伤的事实。现在更重要的是弄清：你舍不得的究竟是什么，以及继续靠近会不会让你越来越委屈自己。";
+    const steps = [
+      "先完成一句：我最舍不得的是这个人、曾经的感觉，还是对未来的期待？",
+      "再写一句：即使我舍不得，目前已经能确认的事实是……",
+      "想一想：如果好朋友处在同样的关系里，我会希望她守住什么底线？",
+      "今天只决定一个小步骤：继续观察、确认一件事，或者先拉开一点距离照顾自己。",
+    ];
     return {
       kind: "answer",
       title: "放不下，不是逼自己说一句“算了”就能做到",
-      message:
-        "你可以一边舍不得，一边慢慢看清这段关系。先不用要求自己马上忘掉他，也不用因为还在意，就忽略那些让你受伤的事实。现在更重要的是弄清：你舍不得的究竟是什么，以及继续靠近会不会让你越来越委屈自己。",
-      steps: [
-        "先完成一句：我最舍不得的是这个人、曾经的感觉，还是对未来的期待？",
-        "再写一句：即使我舍不得，目前已经能确认的事实是……",
-        "想一想：如果好朋友处在同样的关系里，我会希望她守住什么底线？",
-        "今天只决定一个小步骤：继续观察、确认一件事，或者先拉开一点距离照顾自己。",
-      ],
+      message,
+      steps,
       suggestedReplies: [
         "我最舍不得的是……",
         "我已经能确认的事实是……",
         "我最怕放下以后会……",
       ],
       citations,
+      claims: fallbackClaims(message, steps, citations),
       nextAction: "none",
       mode: "guided",
       generation: generationStatus
@@ -343,23 +503,25 @@ export function buildRetrievalFallback(
     };
   }
   if (plan?.situation === "relationship-distress") {
+    const message = "你一边在意他，一边又被他的态度弄得难受，这两种感受可以同时存在。先不用逼自己马上离开或继续，也先不把“薄情”当成已经核实的全部事实。更有用的是看清：他实际怎么对待你、这段关系让你付出了什么，以及你真正想要怎样的关系。";
+    const steps = [
+      "选一件最近发生的具体小事，只写他实际说了什么、做了什么。",
+      "再写下这件事带给你的感受，以及你脑中对他的解释；把事实和解释暂时分开。",
+      "问问自己：我想从这段关系得到什么？我需要守住什么底线，才不会越来越委屈自己？",
+      "如果你想和他谈，再把最想确认的一件事或最重要的一个请求说清楚。",
+    ];
     return {
       kind: "answer",
       title: "喜欢上一个让你反复受伤的人，确实很难一下放下",
-      message:
-        "你一边在意他，一边又被他的态度弄得难受，这两种感受可以同时存在。先不用逼自己马上离开或继续，也先不把“薄情”当成已经核实的全部事实。更有用的是看清：他实际怎么对待你、这段关系让你付出了什么，以及你真正想要怎样的关系。",
-      steps: [
-        "选一件最近发生的具体小事，只写他实际说了什么、做了什么。",
-        "再写下这件事带给你的感受，以及你脑中对他的解释；把事实和解释暂时分开。",
-        "问问自己：我想从这段关系得到什么？我需要守住什么底线，才不会越来越委屈自己？",
-        "如果你想和他谈，再把最想确认的一件事或最重要的一个请求说清楚。",
-      ],
+      message,
+      steps,
       suggestedReplies: [
         "我想先说一件他最近做的事",
         "我想看看哪些是事实，哪些是我的猜测",
         "我想想清楚自己的底线",
       ],
       citations,
+      claims: fallbackClaims(message, steps, citations),
       nextAction: "none",
       mode: "guided",
       generation: generationStatus
@@ -378,16 +540,19 @@ export function buildRetrievalFallback(
     ? "DEAR MAN"
     : conceptGroups.find((group) => group.some((concept) => normalizedQuery.includes(normalize(concept))))?.[0]
       ?? "这个问题";
+  const message = `${guidedPrefix}${template?.message ?? "下面是书里和你刚才说的事最接近的部分。你可以先看看哪些说得像自己，不贴合的地方不用勉强套进去。"}`;
+  const steps = template?.steps ?? [
+    "先用一句话写下刚才实际发生了什么，暂时别猜对方的原因。",
+    "再想想现在最想改变什么：情绪、下一步行动，还是沟通结果。",
+    `可以点开“${top.page.section}”对照原文，再决定要不要继续练这个方法。`,
+  ];
   return {
     kind: "answer",
     title: template?.title ?? `书里有一部分正好讲到“${queryLabel}”`,
-    message: `${guidedPrefix}${template?.message ?? "下面是书里和你刚才说的事最接近的部分。你可以先看看哪些说得像自己，不贴合的地方不用勉强套进去。"}`,
-    steps: template?.steps ?? [
-      "先用一句话写下刚才实际发生了什么，暂时别猜对方的原因。",
-      "再想想现在最想改变什么：情绪、下一步行动，还是沟通结果。",
-      `可以点开“${top.page.section}”对照原文，再决定要不要继续练这个方法。`,
-    ],
+    message,
+    steps,
     citations,
+    claims: fallbackClaims(template?.message ?? message, steps, citations),
     nextAction: template?.nextAction ?? (plan?.route === "emotion-facts" || /核对事实|解释|假设|证据/u.test(query) ? "practice" : "none"),
     mode: plan?.kind === "guided" ? "guided" : "retrieval",
     generation: generationStatus

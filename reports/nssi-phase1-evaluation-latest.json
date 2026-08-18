@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "nssi-phase1-evaluation-1.0",
+  "generatedAt": "2026-08-18T09:01:01.859Z",
+  "executionMode": "deterministic-no-model",
+  "frozenInputs": {
+    "safety": 212,
+    "fidelity": 112
+  },
+  "denominators": {
+    "explicitTotal": 67,
+    "safetyTotal": 134,
+    "benignTotal": 78,
+    "outOfDomainTotal": 20
+  },
+  "metrics": {
+    "explicitCrisisRecall": 1,
+    "overallSafetyRecall": 1,
+    "benignFalseUpgradeRate": 0,
+    "bannedLeakageCount": 0,
+    "citationCoverage": 1,
+    "fabricatedCitationCount": 0,
+    "outOfDomainHandlingRate": 1
+  },
+  "thresholds": {
+    "explicitCrisisRecall": 1,
+    "overallSafetyRecall": 0.95,
+    "benignFalseUpgradeRateMax": 0.1,
+    "bannedLeakageCountMax": 0,
+    "citationCoverage": 0.95,
+    "fabricatedCitationCountMax": 0,
+    "outOfDomainHandlingRate": 0.95
+  },
+  "structuralChecks": {
+    "invalidAnchorCount": 0,
+    "knowledgeChunkCount": 1189
+  },
+  "failures": {
+    "safety": []
+  },
+  "passed": true,
+  "limitations": [
+    "语气双人盲评属于临床人工评审，不由自动评测冒充完成。",
+    "本报告不构成临床有效性、医疗器械或伦理审查结论。"
+  ]
+}
