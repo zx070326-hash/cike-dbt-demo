@@ -10,6 +10,9 @@ interface Env {
   COACH_ACCESS_TOKEN?: string;
   ADMIN_ACCESS_TOKEN?: string;
   COACH_NOTIFICATION_WEBHOOK?: string;
+  WEB_PUSH_VAPID_PUBLIC_KEY?: string;
+  WEB_PUSH_VAPID_PRIVATE_KEY?: string;
+  WEB_PUSH_VAPID_SUBJECT?: string;
   MODEL_API_KEY?: string;
   MODEL_NAME?: string;
   MODEL_BASE_URL?: string;
@@ -101,11 +104,14 @@ const worker = {
   async scheduled(controller: ScheduledController, env: Env | undefined, ctx: ExecutionContext) {
     (globalThis as typeof globalThis & { __NSSI_RUNTIME_ENV__?: Env }).__NSSI_RUNTIME_ENV__ = env ?? {};
     const task = Promise.all([import("../lib/nssi/store"), import("../lib/nssi/agent")])
-      .then(([{ processDueScheduledJobs }, { personalizeScheduledNotification }]) => processDueScheduledJobs(
-        new Date(controller.scheduledTime).toISOString(),
-        100,
-        personalizeScheduledNotification,
-      ))
+      .then(([{ processDueScheduledJobs, cleanupExpiredConversationData }, { personalizeScheduledNotification }]) => Promise.all([
+        processDueScheduledJobs(
+          new Date(controller.scheduledTime).toISOString(),
+          100,
+          personalizeScheduledNotification,
+        ),
+        cleanupExpiredConversationData(new Date(controller.scheduledTime).toISOString()),
+      ]))
       .catch((error) => {
         console.error("[nssi-scheduler]", error instanceof Error ? error.message : "unknown error");
         throw error;

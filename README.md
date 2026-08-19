@@ -51,16 +51,17 @@ npm test
 npm run eval:phase1
 ```
 
-当前自动化回归 67/67 通过。冻结评测包含 212 条安全输入和 112 条忠实度输入；最新机器评测见 [评测结果](reports/nssi-phase1-evaluation-latest.json)，需求追踪与人工验收边界见 [一期追踪矩阵](docs/NSSI_PHASE1_TRACEABILITY.md)。自动评测不构成临床有效性、伦理或医疗器械结论；语气 30 条双人盲评仍需临床团队执行。
+当前自动化回归 68/68 通过。冻结评测包含 212 条安全输入和 112 条忠实度输入；最新机器评测见 [评测结果](reports/nssi-phase1-evaluation-latest.json)，需求追踪与人工验收边界见 [一期追踪矩阵](docs/NSSI_PHASE1_TRACEABILITY.md)。自动评测不构成临床有效性、伦理或医疗器械结论；语气 30 条双人盲评仍需临床团队执行。
 
 ## Cloudflare 部署
 
-生产部署使用 `wrangler.deploy.jsonc`、D1 与 Worker Secret。先按顺序执行 `drizzle/0000` 至 `0003` 迁移，再配置以下 Secret：
+生产部署使用 `wrangler.deploy.jsonc`、D1 与 Worker Secret。首次建库按顺序执行 `drizzle/0000` 至 `0005`；既有数据库只执行尚未应用的增量迁移。随后配置以下 Secret：
 
 - `DATA_ENCRYPTION_KEY`
 - `MODEL_API_KEY`
 - `COACH_ACCESS_TOKEN`
 - `ADMIN_ACCESS_TOKEN`
+- `WEB_PUSH_VAPID_PRIVATE_KEY`（公钥只放 Worker 普通变量，私钥只放 Secret）
 - `COACH_NOTIFICATION_WEBHOOK`（甲方确认真实通知通道后配置）
 
 ```powershell

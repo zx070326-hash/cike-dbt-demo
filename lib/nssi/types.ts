@@ -41,6 +41,23 @@ export type ModuleProgress = {
   completedAt: string | null;
 };
 
+export type ModuleExerciseSummary = {
+  id: string;
+  moduleId: string;
+  moduleTitle: string;
+  exerciseId: string;
+  submittedAt: string;
+  answers: Array<{ fieldId: string; label: string; value: string }>;
+};
+
+export type LearningFeedback = {
+  moduleId: string;
+  title: string;
+  reflection: string;
+  suggestedSkillIds: string[];
+  nextSteps: Array<"practice" | "chat" | "ema">;
+};
+
 export type ProtocolState = {
   schemaVersion: "1.0";
   enrollmentAt: string;
@@ -102,8 +119,61 @@ export type SkillLog = {
   intensityBefore: number;
   intensityAfter: number;
   targetType?: string;
+  /** Optional participant-authored context, stored encrypted and excluded from research exports. */
+  targetCustom?: string;
   outcomes: string[];
   note?: string;
+};
+
+export type PracticeStats = {
+  totalSessions: number;
+  sessionsLast7Days: number;
+  averageIntensityChange: number | null;
+  improvedSessions: number;
+  unchangedSessions: number;
+  worsenedSessions: number;
+};
+
+export type ConversationRetention = "summary-only" | "7-days" | "30-days" | "keep";
+
+export type ConversationReviewSource = {
+  chunkId: string;
+  book: string;
+  section: string;
+  pdfPage: number;
+  printedPage?: number;
+  paragraphAnchor?: string;
+  evidence: string;
+};
+
+/**
+ * A participant-facing recap, not a diagnostic note and not an AI memory dump.
+ * User-authored text remains distinguishable from the assistant's response.
+ */
+export type ConversationReview = {
+  id: string;
+  conversationId: string;
+  title: string;
+  userFocus: string;
+  assistantTakeaway: string;
+  followUpQuestion?: string;
+  skillId?: string;
+  skillLabel?: string;
+  nextAction: "practice" | "none";
+  sources: ConversationReviewSource[];
+  exchangeCount: number;
+  rawRetention: ConversationRetention;
+  rawExpiresAt?: string;
+  rawAvailable: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ConversationTranscriptTurn = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
 };
 
 export type RiskLevel = "suspected" | "high" | "imminent";
@@ -148,12 +218,22 @@ export type ProductNotification = {
   readAt?: string;
 };
 
+export type PushDeliveryStatus = {
+  supported: boolean;
+  configured: boolean;
+  subscribed: boolean;
+};
+
 export type ParticipantSnapshot = {
   userId: string;
   protocol: ProtocolState;
   todayEma: EmaRecord | null;
   safetyPlan: SafetyPlanVersion | null;
   recentSkillLogs: SkillLog[];
+  practiceStats?: PracticeStats;
   activeRiskEvent: RiskEvent | null;
   notifications?: ProductNotification[];
+  recentModuleExercises?: ModuleExerciseSummary[];
+  recentConversationReviews?: ConversationReview[];
+  push?: PushDeliveryStatus;
 };

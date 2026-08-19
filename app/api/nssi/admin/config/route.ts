@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   activateConfigVersion,
+  attachConfigEvaluationReport,
   authorizeStaff,
   createConfigDraft,
   defaultPhase1Config,
@@ -33,6 +34,13 @@ export async function POST(request: Request) {
       return NextResponse.json(await activateConfigVersion({
         id: String(body.id ?? ""),
         approvedBy: String(body.adminId ?? "admin-internal").slice(0, 80),
+      }));
+    }
+    if (body.action === "attach-evaluation") {
+      return NextResponse.json(await attachConfigEvaluationReport({
+        id: String(body.id ?? ""),
+        report: body.evaluationReport as Record<string, unknown>,
+        attachedBy: String(body.adminId ?? "admin-internal").slice(0, 80),
       }));
     }
     return NextResponse.json({ error: "UNKNOWN_CONFIG_ACTION" }, { status: 400 });

@@ -1,9 +1,9 @@
 import { runAssistantTurn, type AssistantRuntimeContext } from "../application/run-assistant-turn";
 import type { ChatPayload, ExperienceMode } from "../dbt-content";
+import type { ConversationRetention } from "./types";
 import type { ConversationTurn } from "../model-adapter";
-import { generateNssiReminderDraft } from "../model-adapter";
+import { generateEmiSelfReminderDraft, generateNssiReminderDraft } from "../model-adapter";
 import { assessSafety } from "../safety/classifier";
-import { nssiPhase1Modules } from "./curriculum";
 import { classifySemanticRisk } from "./semantic-risk";
 import {
   createTextRisk,
@@ -26,12 +26,28 @@ function emaSummary(ema: Awaited<ReturnType<typeof getParticipantSnapshot>>["rec
 function skillSummary(snapshot: Awaited<ReturnType<typeof getParticipantSnapshot>>) {
   const recent = snapshot.recentSkillLogs.slice(0, 3);
   if (!recent.length) return "暂无技能记录";
-  return recent.map((item) => `${item.skillId}:${item.intensityBefore}→${item.intensityAfter}`).join("；");
+  return recent.map((item) => {
+    const skills = (item.skillIds?.length ? item.skillIds : [item.skillId]).join("+");
+    const outcomes = item.outcomes?.length ? `，结果:${item.outcomes.join("+")}` : "";
+    return `${skills}:${item.intensityBefore}→${item.intensityAfter}${outcomes}`;
+  }).join("；");
 }
 
-function runtimeContext(snapshot: Awaited<ReturnType<typeof getParticipantSnapshot>>): AssistantRuntimeContext {
-  const unlocked = nssiPhase1Modules.filter((module) => snapshot.protocol.progress[module.id]?.status !== "locked");
-  const current = nssiPhase1Modules.find((module) => module.id === snapshot.protocol.currentModuleId);
+function exerciseSummary(snapshot: Awaited<ReturnType<typeof getParticipantSnapshot>>) {
+  const recent = snapshot.recentModuleExercises?.slice(0, 2) ?? [];
+  if (!recent.length) return "暂无课程练习记录";
+  return recent.map((submission) => {
+    const answers = submission.answers.slice(0, 3).map((answer) => `${answer.label}:${answer.value.slice(0, 80)}`).join("；");
+    return `${submission.moduleTitle}${answers ? `（${answers}）` : "（已完成）"}`;
+  }).join("；");
+}
+
+function runtimeContext(
+  snapshot: Awaited<ReturnType<typeof getParticipantSnapshot>>,
+  modules: ReturnType<typeof modulesWithConfig>,
+): AssistantRuntimeContext {
+  const unlocked = modules.filter((module) => snapshot.protocol.progress[module.id]?.status !== "locked");
+  const current = modules.find((module) => module.id === snapshot.protocol.currentModuleId);
   const allowedSkillCardIds = [...new Set([
     "mindfulness-what",
     "emotion-understand",
@@ -45,6 +61,7 @@ function runtimeContext(snapshot: Awaited<ReturnType<typeof getParticipantSnapsh
     allowedSkillCardIds,
     emaSummary: emaSummary(snapshot.recentEma),
     recentSkillSummary: skillSummary(snapshot),
+    recentExerciseSummary: exerciseSummary(snapshot),
     hasSafetyPlan: Boolean(snapshot.safetyPlan),
   };
 }
@@ -79,17 +96,18 @@ function validateOutbound(payload: ChatPayload, config: Phase1Config) {
   const bannedLeakage = /(?:建议|应该).{0,8}(?:停药|换药|加药|减药|剂量)|确诊为|保证治愈/u.test([
     payload.title, payload.message, ...(payload.steps ?? []), payload.skillCard?.summary,
   ].filter(Boolean).join(" "));
-  const primaryText = [
-    payload.title, payload.message, payload.followUpQuestion,
+  const conversationText = [payload.title, payload.message, payload.followUpQuestion, ...(payload.steps ?? [])].filter(Boolean).join("");
+  const knowledgeText = [
     payload.skillCard?.summary, payload.skillCard?.whyItMayHelp, payload.skillCard?.tryNow,
-    ...(payload.steps ?? []), ...(payload.skillCard?.takeaways ?? []),
+    ...(payload.skillCard?.takeaways ?? []),
   ].filter(Boolean).join("");
-  const lengthValid = primaryText.length <= config.agent.maxChineseCharacters * 2 + 20 && (payload.message?.length ?? 0) <= config.agent.maxChineseCharacters;
+  const primaryText = `${conversationText}${knowledgeText}`;
+  const lengthValid = conversationText.length <= config.agent.maxChineseCharacters && knowledgeText.length <= config.agent.maxChineseCharacters;
   const internalJargon = /暂定路由|低负担|知识摄取|召回率|本轮检索|专业结论/u.test(primaryText);
   const configuredToneViolation = config.tone.blockedTerms.some((term) => primaryText.includes(term));
   return {
     passed: !bannedLeakage && !internalJargon && !configuredToneViolation && lengthValid && sourceAnchorsValid && (!substantive || citations.length > 0 || payload.mode === "safety" || payload.mode === "bridge") && claimsGrounded,
-    checks: { substantive, citationsPresent: citations.length > 0, claimsGrounded, sourceAnchorsValid, bannedLeakage, internalJargon, configuredToneViolation, lengthValid, primaryCharacters: primaryText.length },
+    checks: { substantive, citationsPresent: citations.length > 0, claimsGrounded, sourceAnchorsValid, bannedLeakage, internalJargon, configuredToneViolation, lengthValid, conversationCharacters: conversationText.length, knowledgeCharacters: knowledgeText.length },
   };
 }
 
@@ -99,25 +117,28 @@ export async function runNssiAgentTurn(input: {
   message: string;
   history: ConversationTurn[];
   mode: ExperienceMode;
+  rawRetention?: ConversationRetention;
 }) {
   const startedAt = performance.now();
-  const snapshot = await getParticipantSnapshot(input.token);
-  const context = runtimeContext(snapshot);
-  const [activeConfig, usedToday] = await Promise.all([
+  const [snapshot, activeConfig, usedToday] = await Promise.all([
+    getParticipantSnapshot(input.token),
     getActivePhase1Config(),
     getParticipantDailyModelUsage(input.token),
   ]);
+  const configuredModules = modulesWithConfig(activeConfig.config);
+  const context = runtimeContext(snapshot, configuredModules);
   const conservativeTurnTokens = 2700;
   context.allowModel = usedToday + conservativeTurnTokens <= activeConfig.config.agent.dailyBudgetTokens;
   context.riskLexicon = activeConfig.config.riskLexicon;
   context.clinicalGuidance = activeConfig.config.agent.clinicalGuidance;
-  context.currentModuleTitle = modulesWithConfig(activeConfig.config).find((module) => module.id === snapshot.protocol.currentModuleId)?.title;
+  context.prompts = activeConfig.config.agent.prompts;
+  context.currentModuleTitle = configuredModules.find((module) => module.id === snapshot.protocol.currentModuleId)?.title;
 
   // Semantic classification is physically separate and never enters the
   // ordinary chat context. We may compute the ordinary candidate in parallel,
   // but never release it until the safety result is known.
   const [semanticRisk, ordinaryCandidate] = await Promise.all([
-    classifySemanticRisk(input.message),
+    classifySemanticRisk(input.message, undefined, activeConfig.config.agent.prompts.riskClassifier),
     runAssistantTurn(input.message, input.history, input.mode, context),
   ]);
 
@@ -191,10 +212,17 @@ export async function runNssiAgentTurn(input: {
       accountingMethod: "conservative-estimate",
     },
     promptVersion: activeConfig.config.agent.promptVersion,
+    rawRetention: input.rawRetention,
   });
   return { ...payload, riskEventId };
 }
 
 export async function personalizeScheduledNotification(input: Parameters<typeof generateNssiReminderDraft>[0]) {
-  return generateNssiReminderDraft(input);
+  const active = await getActivePhase1Config();
+  return generateNssiReminderDraft(input, active.config.agent.prompts.reminder);
+}
+
+export async function generateEmiSelfReminder(input: Parameters<typeof generateEmiSelfReminderDraft>[0]) {
+  const active = await getActivePhase1Config();
+  return generateEmiSelfReminderDraft(input, active.config.agent.prompts.emiSelfReminder);
 }

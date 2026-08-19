@@ -15,6 +15,7 @@
     "eval:phase1": "npm run build && node tools/eval/run-nssi-phase1-evaluation.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern .runtime --ignore-pattern .wrangler",
     "rag:build": ".venv\\Scripts\\python.exe tools\\rag\\build_index.py",
+    "rag:evaluate": "tsx tools/rag/evaluate_retrieval.mjs",
     "knowledge:build": ".venv\\Scripts\\python.exe tools\\knowledge\\build_knowledge_v2.py",
     "knowledge:validate": ".venv\\Scripts\\python.exe tools\\knowledge\\validate_knowledge_v2.py",
     "db:generate": "drizzle-kit generate"

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { normalizeHistory } from "../../../../lib/application/run-assistant-turn";
 import type { ExperienceMode } from "../../../../lib/dbt-content";
+import type { ConversationRetention } from "../../../../lib/nssi/types";
 import { runNssiAgentTurn } from "../../../../lib/nssi/agent";
 import { apiError, participantToken } from "../_http";
 
@@ -18,6 +19,9 @@ export async function POST(request: Request) {
       message,
       history: normalizeHistory(body.history),
       mode: mode as ExperienceMode,
+      rawRetention: (["summary-only", "7-days", "30-days", "keep"] as const).includes(body.rawRetention as ConversationRetention)
+        ? body.rawRetention as ConversationRetention
+        : "summary-only" as const,
     };
     if (request.headers.get("accept")?.includes("text/event-stream")) {
       const encoder = new TextEncoder();

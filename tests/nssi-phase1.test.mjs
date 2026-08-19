@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import test from "node:test";
+import { createHash } from "node:crypto";
 
 import { startProdServer } from "../node_modules/vinext/dist/server/prod-server.js";
 
@@ -48,14 +49,6 @@ test("NSSI phase-one product contracts hold end to end", async (t) => {
   assert.equal(catalog.body.knowledge.indexedPages, 1176);
   assert.equal(catalog.body.activeConfig.humanResponseSla, "pending-client-confirmation");
 
-  const moduleEvidence = await json("/api/nssi/module?moduleId=module-01");
-  assert.equal(moduleEvidence.response.status, 200);
-  assert.ok(moduleEvidence.body.citations.length >= 3 && moduleEvidence.body.citations.length <= 4);
-  assert.ok(moduleEvidence.body.citations.some((citation) => citation.presentationRole === "primary"));
-  assert.ok(moduleEvidence.body.citations.some((citation) => citation.contentType === "handout"));
-  assert.ok(moduleEvidence.body.citations.every((citation) => !/、\s*$/u.test(citation.section)), "display headings cannot end as truncated OCR lists");
-  assert.ok(moduleEvidence.body.citations.every((citation) => !/开始日期[：:]?\s*姓名/u.test(citation.evidence)), "blank form headers cannot lead module evidence");
-
   const minor = await json("/api/nssi/enroll", {
     method: "POST", headers: { "content-type": "application/json" },
     body: JSON.stringify({ accepted: true, ageDeclaredAdult: false }),
@@ -67,6 +60,17 @@ test("NSSI phase-one product contracts hold end to end", async (t) => {
   assert.ok(token.length >= 24);
   assert.equal(participant.snapshot.protocol.progress["module-01"].status, "available");
   assert.equal(participant.snapshot.protocol.progress["module-02"].status, "locked");
+  const unauthenticatedModule = await json("/api/nssi/module?moduleId=module-01");
+  assert.equal(unauthenticatedModule.response.status, 401, "module content requires a participant session");
+  const lockedModule = await json("/api/nssi/module?moduleId=module-02", { headers: { "x-participant-token": token } });
+  assert.equal(lockedModule.response.status, 403, "locked module detail cannot be bypassed through the API");
+  const moduleEvidence = await json("/api/nssi/module?moduleId=module-01", { headers: { "x-participant-token": token } });
+  assert.equal(moduleEvidence.response.status, 200);
+  assert.ok(moduleEvidence.body.citations.length >= 3 && moduleEvidence.body.citations.length <= 4);
+  assert.ok(moduleEvidence.body.citations.some((citation) => citation.presentationRole === "primary"));
+  assert.ok(moduleEvidence.body.citations.some((citation) => citation.contentType === "handout"));
+  assert.ok(moduleEvidence.body.citations.every((citation) => !/、\s*$/u.test(citation.section)), "display headings cannot end as truncated OCR lists");
+  assert.ok(moduleEvidence.body.citations.every((citation) => !/开始日期[：:]?\s*姓名/u.test(citation.evidence)), "blank form headers cannot lead module evidence");
 
   const firstByteStarted = performance.now();
   const streamedChat = await fetch(`${base}/api/nssi/chat`, {
@@ -83,8 +87,11 @@ test("NSSI phase-one product contracts hold end to end", async (t) => {
 
   const locked = await participantRequest(token, "protocol.exercise", { moduleId: "module-02", payload: { answer: "越权" } });
   assert.equal(locked.response.status, 400);
-  const exerciseOnly = await participantRequest(token, "protocol.exercise", { moduleId: "module-01", payload: { intention: "先观察" } });
+  const invalidExercise = await participantRequest(token, "protocol.exercise", { moduleId: "module-01", payload: { intention: "绕过字段" } });
+  assert.equal(invalidExercise.response.status, 400, "server validates required exercise fields");
+  const exerciseOnly = await participantRequest(token, "protocol.exercise", { moduleId: "module-01", payload: { goal: "先观察", support: "支持者" } });
   assert.equal(exerciseOnly.response.status, 200);
+  assert.equal(exerciseOnly.body.learningFeedback.moduleId, "module-01");
   assert.notEqual(exerciseOnly.body.progress["module-01"].status, "completed", "exercise alone cannot complete a module");
   const reading = await participantRequest(token, "protocol.reading", { moduleId: "module-01", progress: 1 });
   assert.equal(reading.body.progress["module-01"].status, "completed");
@@ -112,6 +119,46 @@ test("NSSI phase-one product contracts hold end to end", async (t) => {
   }
   const afterChatState = await json("/api/nssi/state", { headers: { "x-participant-token": token } });
   assert.deepEqual(afterChatState.body.protocol, beforeChatState.body.protocol, "Agent cannot mutate protocol state");
+  const defaultReview = afterChatState.body.recentConversationReviews.find((item) => item.conversationId === "phase-one-test");
+  assert.ok(defaultReview, "every completed conversation turn creates a participant-facing recap");
+  assert.equal(defaultReview.rawRetention, "summary-only");
+  assert.equal(defaultReview.rawAvailable, false, "raw transcript is not persisted by default");
+  const defaultDetail = await json("/api/nssi/conversations?conversationId=phase-one-test", { headers: { "x-participant-token": token } });
+  assert.equal(defaultDetail.response.status, 200);
+  assert.equal(defaultDetail.body.transcript.length, 0);
+  assert.ok(defaultDetail.body.review.userFocus.includes("STOP"));
+  const editedReview = await json("/api/nssi/conversations", {
+    method: "PATCH",
+    headers: { "content-type": "application/json", "x-participant-token": token },
+    body: JSON.stringify({ action: "review.update", conversationId: "phase-one-test", title: "我的 STOP 回顾", userFocus: "我想记住暂停这一步" }),
+  });
+  assert.equal(editedReview.body.review.title, "我的 STOP 回顾");
+  assert.equal(editedReview.body.review.userFocus, "我想记住暂停这一步");
+  const archivedChat = await json("/api/nssi/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-participant-token": token },
+    body: JSON.stringify({ message: "今天想练习观察情绪", history: [], experienceMode: "companion", conversationId: "retained-conversation-test", rawRetention: "7-days" }),
+  });
+  assert.equal(archivedChat.response.status, 200);
+  const archivedDetail = await json("/api/nssi/conversations?conversationId=retained-conversation-test", { headers: { "x-participant-token": token } });
+  assert.equal(archivedDetail.body.review.rawRetention, "7-days");
+  assert.equal(archivedDetail.body.review.rawAvailable, true);
+  assert.equal(archivedDetail.body.transcript.length, 2);
+  const removedTranscript = await json("/api/nssi/conversations", {
+    method: "PATCH",
+    headers: { "content-type": "application/json", "x-participant-token": token },
+    body: JSON.stringify({ action: "retention.update", conversationId: "retained-conversation-test", retention: "summary-only", transcript: archivedDetail.body.transcript }),
+  });
+  assert.equal(removedTranscript.body.review.rawAvailable, false);
+  assert.equal(removedTranscript.body.transcript.length, 0, "switching to summary-only deletes the saved transcript immediately");
+  const deletedReview = await json("/api/nssi/conversations", {
+    method: "DELETE",
+    headers: { "content-type": "application/json", "x-participant-token": token },
+    body: JSON.stringify({ conversationId: "retained-conversation-test" }),
+  });
+  assert.equal(deletedReview.body.ok, true);
+  const missingReview = await json("/api/nssi/conversations?conversationId=retained-conversation-test", { headers: { "x-participant-token": token } });
+  assert.equal(missingReview.response.status, 404);
   const lockedSkillChat = await json("/api/nssi/chat", {
     method: "POST",
     headers: { "content-type": "application/json", "x-participant-token": token },
@@ -184,11 +231,17 @@ test("NSSI phase-one product contracts hold end to end", async (t) => {
   assert.equal(plans.body.plans.length, 2);
   const skillLog = await participantRequest(token, "skill.log", { payload: {
     skillIds: ["distress-stop", "distress-tip"], targetType: "anxiety",
+    targetCustom: "会议前脑子一片空白",
     intensityBefore: 7, intensityAfter: 5, outcomes: ["paused", "less-intense"], note: "先暂停，再慢慢呼吸",
   } });
   assert.equal(skillLog.response.status, 200, JSON.stringify(skillLog.body));
   assert.deepEqual(skillLog.body.log.skillIds, ["distress-stop", "distress-tip"]);
   assert.deepEqual(skillLog.body.log.outcomes, ["paused", "less-intense"]);
+  assert.equal(skillLog.body.log.targetCustom, "会议前脑子一片空白");
+  const afterSkillState = await json("/api/nssi/state", { headers: { "x-participant-token": token } });
+  assert.ok(afterSkillState.body.practiceStats.totalSessions >= 1);
+  assert.ok(afterSkillState.body.practiceStats.sessionsLast7Days >= 1);
+  assert.equal(afterSkillState.body.recentSkillLogs[0].targetCustom, "会议前脑子一片空白");
   const invalidSkill = await participantRequest(token, "skill.log", { payload: {
     skillIds: ["=CSV_FORMULA"], intensityBefore: 7, intensityAfter: 5, outcomes: ["paused"],
   } });
@@ -201,6 +254,7 @@ test("NSSI phase-one product contracts hold end to end", async (t) => {
   assert.doesNotMatch(researchCsv, /=CSV_FORMULA/u, "rejected categorical values must not enter research exports");
   assert.doesNotMatch(researchCsv, new RegExp(participant.snapshot.userId, "u"));
   assert.doesNotMatch(researchCsv, /13800000000|身体越来越紧/u, "research CSV excludes contacts and free text");
+  assert.doesNotMatch(researchCsv, /会议前脑子一片空白/u, "research CSV excludes custom practice context");
 
   const exported = await json("/api/nssi/privacy", { headers: { "x-participant-token": token } });
   assert.equal(exported.response.status, 200);
@@ -224,7 +278,16 @@ test("NSSI phase-one product contracts hold end to end", async (t) => {
   const configured = structuredClone(admin.body.defaultConfig);
   configured.content.moduleOverrides["module-01"] = { title: "DBT 与训练承诺（配置验证）" };
   configured.riskLexicon.l1b = ["测试风险暗语"];
-  const passingReport = { metrics: { explicitCrisisRecall: 1, overallSafetyRecall: 0.95, benignFalseUpgradeRate: 0.1, bannedLeakageCount: 0, citationCoverage: 0.95, fabricatedCitationCount: 0, outOfDomainHandlingRate: 0.95 } };
+  const passingReport = {
+    schemaVersion: "nssi-phase1-evaluation-1.1",
+    executionMode: "frozen-suite",
+    configSha256: createHash("sha256").update(JSON.stringify(configured)).digest("hex"),
+    suiteSha256: "test-frozen-suite",
+    frozenInputs: { safety: 212, fidelity: 112 },
+    passed: true,
+    toneReview: { status: "passed", sampleSizePerPrompt: 30, reviewerCount: 2, rubricVersion: "test-rubric" },
+    metrics: { explicitCrisisRecall: 1, overallSafetyRecall: 0.95, benignFalseUpgradeRate: 0.1, bannedLeakageCount: 0, citationCoverage: 0.95, fabricatedCitationCount: 0, outOfDomainHandlingRate: 0.95 },
+  };
   const draft = await json("/api/nssi/admin/config", {
     method: "POST", headers: { ...adminHeaders, "content-type": "application/json" },
     body: JSON.stringify({ action: "create-draft", version: "nssi-phase1-9.9.9", config: configured, evaluationReport: passingReport, adminId: "test-admin" }),

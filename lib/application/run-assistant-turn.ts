@@ -23,6 +23,7 @@ import {
 } from "../rag";
 import { assessSafety } from "../safety/classifier";
 import type { ExternalRiskLexicon } from "../safety/classifier";
+import type { Phase1PromptSet } from "../nssi/prompt-library";
 import {
   type ConversationTurn,
   generateCompanionAnswer,
@@ -51,11 +52,13 @@ export type AssistantRuntimeContext = {
   allowedSkillCardIds?: string[];
   emaSummary?: string;
   recentSkillSummary?: string;
+  recentExerciseSummary?: string;
   hasSafetyPlan?: boolean;
   allowModel?: boolean;
   qualityRetry?: string;
   clinicalGuidance?: string;
   riskLexicon?: ExternalRiskLexicon;
+  prompts?: Phase1PromptSet;
 };
 
 function comparisonText(value: string) {
@@ -477,7 +480,7 @@ export async function runAssistantTurn(
     let bridgeStatus: "rejected" | "error" | undefined;
     if (runtimeContext.allowModel !== false && isModelConfigured()) {
       try {
-        const generatedBridge = await generateConversationalBridge(message, history);
+        const generatedBridge = await generateConversationalBridge(message, history, runtimeContext);
         if (generatedBridge) return finish(generatedBridge);
         bridgeStatus = "rejected";
         console.warn("[dbt-bridge] falling back: generated bridge failed schema or boundary checks");

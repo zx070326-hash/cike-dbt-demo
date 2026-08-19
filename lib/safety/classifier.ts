@@ -93,12 +93,11 @@ const violenceExposurePatterns = [
   /我.{0,4}被.{0,6}(打|推|掐|踢|威胁)/u,
 ];
 
-const diagnosisTerms = /(抑郁症?|焦虑症?|双相|躁郁|边缘型?人格|人格障碍|精神分裂|强迫症?|恐慌障碍|创伤后应激|PTSD|进食障碍|注意缺陷|多动症|ADHD|心理疾病|精神疾病)/iu;
 const diagnosisRequestPatterns = [
   /诊断|鉴定|确诊/u,
   /什么病|哪种病|有没有病/u,
   /(是不是|是否|像不像|算不算|会不会是|可能是|得了|患有).{0,18}(抑郁|焦虑|双相|躁郁|边缘|人格|精神|心理疾病|强迫|恐慌|创伤|PTSD|注意缺陷|多动|ADHD)/iu,
-  /(抑郁|焦虑|双相|躁郁|边缘|人格|精神|强迫|恐慌|创伤|PTSD|注意缺陷|多动|ADHD).{0,12}(吗|么|是不是|是否|可能性|概率)/iu,
+  /(抑郁|焦虑|双相|躁郁|边缘|人格|精神|强迫|恐慌|创伤|PTSD|注意缺陷|多动|ADHD).{0,4}(吗|么|是不是|是否|可能性|概率)/iu,
   /(这些|这种|上述|我的).{0,8}(症状|表现|情况).{0,10}(说明|算|是|属于).{0,8}(抑郁|焦虑|双相|疾病|病)/u,
   /(测一测|判断|确认|看看).{0,10}(抑郁|焦虑|双相|躁郁|边缘|人格|疾病|病)/u,
   /自测.{0,10}(抑郁|焦虑|双相|躁郁|边缘|人格|疾病|病)/u,
@@ -155,12 +154,12 @@ function matchesAny(value: string, patterns: RegExp[]) {
 }
 
 function isClinicalDiagnosisRequest(value: string) {
-  if (!diagnosisTerms.test(value) && !/诊断|确诊|什么病|哪种病/u.test(value)) return false;
+  if (!matchesAny(value, diagnosisRequestPatterns)) return false;
   // “我已确诊……”是背景信息，不等于要求系统重新诊断。
   const backgroundOnly = /(已经|已|已被|医生说|医院).{0,5}确诊/u.test(value) &&
     !/(是不是|是否|算不算|诊断|判断|确认|治疗方案|怎么治疗|如何治疗)/u.test(value.replace(/已被?确诊|已经确诊/gu, ""));
   if (backgroundOnly) return false;
-  return matchesAny(value, diagnosisRequestPatterns);
+  return true;
 }
 
 export function assessSafety(

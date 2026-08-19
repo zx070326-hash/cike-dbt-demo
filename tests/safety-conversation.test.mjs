@@ -55,6 +55,18 @@ test("diagnostic wording with a long symptom preface is stopped before retrieval
   assert.match(`${payload.title} ${payload.message} ${(payload.steps ?? []).join(" ")}`, /不能替你诊断|专业人员评估|持续/u);
 });
 
+test("ordinary emotion words followed by a conversational question are not misread as diagnosis requests", async () => {
+  for (const message of [
+    "我今天有点焦虑，能陪我先做一小步吗",
+    "我有点抑郁，能先听我说说吗",
+    "最近失眠让我焦虑，有没有当下能练的技能？",
+  ]) {
+    const payload = await chat(message);
+    assert.notEqual(payload.decision?.safetyCategory, "clinical-diagnosis", message);
+    assert.notEqual(payload.mode, "safety", message);
+  }
+});
+
 test("unsafe behavior first checks safety, then a safe follow-up routes to behavior chain", async () => {
   const firstMessage = "我一生气就摔东西，事后特别后悔";
   const first = await chat(firstMessage);

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { hitToCitation, retrieveEvidence } from "../../../../lib/rag";
-import { getActivePhase1Config, modulesWithConfig } from "../../../../lib/nssi/store";
+import { getActivePhase1Config, getParticipantSnapshot, modulesWithConfig } from "../../../../lib/nssi/store";
+import { apiError, participantToken } from "../_http";
 
 function normalizedTitle(value: string) {
   return value.normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
@@ -10,10 +11,15 @@ const roleWeight = { primary: 3, supporting: 2, "index-only": 1 } as const;
 const typeWeight = { handout: 5, "trainer-note": 4, worksheet: 2, "source-page": 1, "front-matter": 0 } as const;
 
 export async function GET(request: Request) {
-  const moduleId = new URL(request.url).searchParams.get("moduleId") ?? "";
-  const active = await getActivePhase1Config();
-  const curriculumModule = modulesWithConfig(active.config).find((item) => item.id === moduleId);
-  if (!curriculumModule) return NextResponse.json({ error: "MODULE_NOT_FOUND" }, { status: 404 });
+  try {
+    const moduleId = new URL(request.url).searchParams.get("moduleId") ?? "";
+    const token = participantToken(request);
+    const [active, snapshot] = await Promise.all([getActivePhase1Config(), getParticipantSnapshot(token)]);
+    const curriculumModule = modulesWithConfig(active.config).find((item) => item.id === moduleId);
+    if (!curriculumModule) return NextResponse.json({ error: "MODULE_NOT_FOUND" }, { status: 404 });
+    if (snapshot.protocol.progress[moduleId]?.status === "locked") {
+      return NextResponse.json({ error: "MODULE_LOCKED" }, { status: 403 });
+    }
   const seenPages = new Set<string>();
   const seenTitles = new Set<string>();
   const candidates = curriculumModule.sourceQueries
@@ -51,8 +57,11 @@ export async function GET(request: Request) {
     seenTitles.add(title);
     selected.push(hit);
   }
-  const citations = selected.map(hitToCitation);
-  return NextResponse.json({ module: curriculumModule, citations }, {
-    headers: { "cache-control": "no-store" },
-  });
+    const citations = selected.map(hitToCitation);
+    return NextResponse.json({ module: curriculumModule, citations }, {
+      headers: { "cache-control": "no-store" },
+    });
+  } catch (error) {
+    return apiError(error);
+  }
 }

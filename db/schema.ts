@@ -39,13 +39,20 @@ export const practiceRecords = sqliteTable("practice_records", {
 export const sessionSummaries = sqliteTable("session_summaries", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => users.id),
+  conversationId: text("conversation_id"),
   goalCode: text("goal_code").notNull(),
   selectedSkillId: text("selected_skill_id"),
   payloadCiphertext: text("payload_ciphertext").notNull(),
   keyVersion: text("key_version").notNull(),
+  rawRetention: text("raw_retention").notNull().default("summary-only"),
+  rawExpiresAt: text("raw_expires_at"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   deletedAt: text("deleted_at"),
-}, (table) => [index("session_summaries_user_created_idx").on(table.userId, table.createdAt)]);
+}, (table) => [
+  index("session_summaries_user_created_idx").on(table.userId, table.createdAt),
+  uniqueIndex("session_summaries_user_conversation_unique").on(table.userId, table.conversationId),
+]);
 
 export const safetyPlans = sqliteTable("safety_plans", {
   id: text("id").primaryKey(),
@@ -146,6 +153,7 @@ export const chatMessages = sqliteTable("chat_messages", {
   tokenUsageJson: text("token_usage_json"),
   latencyMs: integer("latency_ms"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  expiresAt: text("expires_at"),
   deletedAt: text("deleted_at"),
 }, (table) => [index("chat_messages_user_conversation_idx").on(table.userId, table.conversationId, table.createdAt)]);
 
@@ -197,6 +205,20 @@ export const notifications = sqliteTable("notifications", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   readAt: text("read_at"),
 }, (table) => [index("notifications_user_status_created_idx").on(table.userId, table.status, table.createdAt)]);
+
+export const pushSubscriptions = sqliteTable("push_subscriptions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  endpointHash: text("endpoint_hash").notNull().unique(),
+  subscriptionCiphertext: text("subscription_ciphertext").notNull(),
+  keyVersion: text("key_version").notNull(),
+  userAgent: text("user_agent"),
+  status: text("status").notNull().default("active"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  lastDeliveredAt: text("last_delivered_at"),
+  lastError: text("last_error"),
+}, (table) => [index("push_subscriptions_user_status_idx").on(table.userId, table.status)]);
 
 export const deletionRequests = sqliteTable("deletion_requests", {
   id: text("id").primaryKey(),

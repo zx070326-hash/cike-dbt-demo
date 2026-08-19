@@ -13,6 +13,8 @@ export type EmiDecision = {
   fallbackTemplateId: string | null;
   reasonCodes: string[];
   suggestedSkillId?: string;
+  personalizedMessage?: string;
+  personalizationStatus?: "agent-generated" | "template-fallback";
 };
 
 export function validateEma(input: EmaSubmission) {
@@ -65,6 +67,7 @@ export function createRiskEvent(
   sources: RiskSource[],
   level: RiskLevel,
   at = new Date().toISOString(),
+  humanSlaMinutes = 24 * 60,
 ): RiskEvent {
   return {
     id: crypto.randomUUID(),
@@ -74,6 +77,7 @@ export function createRiskEvent(
     status: "open",
     createdAt: new Date(at).toISOString(),
     notificationDeadlineAt: new Date(Date.parse(at) + 60_000).toISOString(),
+    humanSlaDeadlineAt: new Date(Date.parse(at) + Math.max(1, humanSlaMinutes) * 60_000).toISOString(),
   };
 }
 

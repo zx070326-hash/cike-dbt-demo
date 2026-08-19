@@ -28,6 +28,8 @@
     "MODEL_TIMEOUT_MS": "25000",
     "MODEL_VERIFY_GROUNDING": "true",
     "NSSI_SEMANTIC_RISK_MODE": "enabled",
-    "RISK_MODEL_TIMEOUT_MS": "1800"
+    "RISK_MODEL_TIMEOUT_MS": "1800",
+    "WEB_PUSH_VAPID_PUBLIC_KEY": "BF_7f_thZoHhKaaT9rYf6gqhqUZMocVgu2k_9NNMvirRFiH-yl6JXbnkIy-k8YhzkYdvNzxT35qXU6CBvCi1rvY",
+    "WEB_PUSH_VAPID_SUBJECT": "mailto:dbt-demo@example.com"
   }
 }

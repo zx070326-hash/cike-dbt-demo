@@ -57,7 +57,7 @@ function empty(status: SemanticRiskResult["status"], model = "not-configured", l
  * and can only add a safety trigger; the deterministic classifier remains the
  * first safety layer and cannot be vetoed here.
  */
-export async function classifySemanticRisk(message: string, timeoutCapMs?: number): Promise<SemanticRiskResult> {
+export async function classifySemanticRisk(message: string, timeoutCapMs?: number, instructionOverride?: string): Promise<SemanticRiskResult> {
   const settings = config();
   if (!settings) return empty("unavailable");
   const timeoutMs = timeoutCapMs ? Math.min(settings.timeoutMs, Math.max(500, timeoutCapMs)) : settings.timeoutMs;
@@ -72,7 +72,7 @@ export async function classifySemanticRisk(message: string, timeoutCapMs?: numbe
         max_tokens: 180,
         ...(deepSeek ? { thinking: { type: "disabled" } } : { temperature: 0 }),
         messages: [
-          { role: "system", content: classifierInstruction },
+          { role: "system", content: instructionOverride?.trim() || classifierInstruction },
           { role: "user", content: message.slice(0, 1000) },
         ],
         response_format: { type: "json_object" },

@@ -7,6 +7,7 @@ import {
   logSkill,
   markParticipantSafe,
   markNotificationRead,
+  recordEmiAction,
   saveSafetyPlan,
   submitModuleExercise,
   submitEma,
@@ -16,6 +17,7 @@ import type { SafetyPlanSections } from "../../../../lib/nssi/types";
 import { apiError, participantToken } from "../_http";
 import { assessSafety } from "../../../../lib/safety/classifier";
 import { classifySemanticRisk } from "../../../../lib/nssi/semantic-risk";
+import { generateEmiSelfReminder } from "../../../../lib/nssi/agent";
 
 export async function GET(request: Request) {
   try {
@@ -54,7 +56,7 @@ export async function POST(request: Request) {
       // EMA must remain fast: this independent classifier has a short cap. A
       // deterministic threshold/lexicon hit cannot be vetoed by its result.
       const semantic = note
-        ? await classifySemanticRisk(note, 700)
+        ? await classifySemanticRisk(note, 700, active.config.agent.prompts.riskClassifier)
         : { triggered: false, level: "none" as const, status: "not-run", latencyMs: 0 };
       return NextResponse.json(await submitEma(token, {
         localDate: String(input.localDate ?? ""),
@@ -70,7 +72,7 @@ export async function POST(request: Request) {
         semanticLevel: semantic.level === "none" ? undefined : semantic.level,
         semanticStatus: semantic.status,
         semanticLatencyMs: semantic.latencyMs,
-      }));
+      }, generateEmiSelfReminder));
     }
     if (action === "safety-plan.save") {
       return NextResponse.json(await saveSafetyPlan(token, body.payload as SafetyPlanSections));
@@ -78,18 +80,21 @@ export async function POST(request: Request) {
     if (action === "skill.log") {
       const input = body.payload as Record<string, unknown>;
       const note = typeof input.note === "string" ? input.note.trim().slice(0, 300) : undefined;
+      const targetCustom = typeof input.targetCustom === "string" ? input.targetCustom.trim().slice(0, 80) : undefined;
       const log = await logSkill(token, {
         skillIds: Array.isArray(input.skillIds) ? input.skillIds.filter((item): item is string => typeof item === "string") : [],
         intensityBefore: Number(input.intensityBefore),
         intensityAfter: Number(input.intensityAfter),
         targetType: typeof input.targetType === "string" ? input.targetType : undefined,
+        targetCustom,
         outcomes: Array.isArray(input.outcomes) ? input.outcomes.filter((item): item is string => typeof item === "string") : [],
         note,
       });
-      if (!note) return NextResponse.json({ log });
+      const safetyText = [targetCustom, note].filter(Boolean).join("。");
+      if (!safetyText) return NextResponse.json({ log });
       const active = await getActivePhase1Config();
-      const deterministic = assessSafety(note, [], active.config.riskLexicon);
-      const semantic = await classifySemanticRisk(note, 700);
+      const deterministic = assessSafety(safetyText, [], active.config.riskLexicon);
+      const semantic = await classifySemanticRisk(safetyText, 700, active.config.agent.prompts.riskClassifier);
       let riskEventId: string | undefined;
       if (deterministic.requiresImmediateAction) {
         riskEventId = (await createTextRisk(token, "deterministic-text", deterministic.reasonCodes.includes("EXTERNAL_LEXICON_L1B") ? "suspected" : "high")).id;
@@ -107,6 +112,13 @@ export async function POST(request: Request) {
     }
     if (action === "notification.read") {
       return NextResponse.json(await markNotificationRead(token, String(body.notificationId ?? "")));
+    }
+    if (action === "emi.event") {
+      return NextResponse.json(await recordEmiAction(
+        token,
+        String(body.event ?? "") as "displayed" | "step-viewed" | "contact-opened" | "safety-plan-opened" | "closed" | "marked-supported",
+        typeof body.metadata === "object" && body.metadata !== null ? body.metadata as Record<string, unknown> : {},
+      ));
     }
     return NextResponse.json({ error: "UNKNOWN_ACTION" }, { status: 400 });
   } catch (error) {

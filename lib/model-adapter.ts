@@ -2,6 +2,7 @@ import type { ChatPayload, SkillCard, SourceCitation } from "./dbt-content";
 import { resolveKnowledgeChunk } from "./knowledge-v2";
 import { conversationStarterReplies } from "./conversation-bridge";
 import type { RetrievalHit, RetrievalPlan } from "./rag";
+import type { Phase1PromptSet } from "./nssi/prompt-library";
 import { buildEvidenceBundle } from "./rag";
 import {
   claimsToReadableText,
@@ -31,9 +32,11 @@ export type ModelRuntimeContext = {
   currentModuleTitle?: string;
   emaSummary?: string;
   recentSkillSummary?: string;
+  recentExerciseSummary?: string;
   hasSafetyPlan?: boolean;
   qualityRetry?: string;
   clinicalGuidance?: string;
+  prompts?: Phase1PromptSet;
 };
 
 type RuntimeModelBindings = {
@@ -85,14 +88,14 @@ export async function generateNssiReminderDraft(input: {
   completedModules: number;
   currentModuleTitle?: string;
   recentEmaCount: number;
-}) {
+}, instructionOverride?: string) {
   const config = readConfig();
   if (!config) return null;
   // Reminder copy must fail over to the clinically reviewed template inside
   // the 500 ms product budget. Leave a small margin for promise cleanup and
   // persistence after the network abort fires.
   const compactConfig = { ...config, timeoutMs: Math.min(config.timeoutMs, 450) };
-  const instruction = `你是NSSI数字化干预系统唯一Agent服务中的提醒文案组件。只改写给定的临床预审模板，不新增心理知识、技能步骤、诊断、药物、自伤方式或疗效承诺。使用结构化状态做轻度个性化，不复述敏感记录，不制造依赖。标题不超过20个汉字，正文不超过70个汉字。输出严格JSON：{"title":string,"body":string}。`;
+  const instruction = instructionOverride ?? `你是NSSI数字化干预系统唯一Agent服务中的提醒文案组件。只改写给定的临床预审模板，不新增心理知识、技能步骤、诊断、药物、自伤方式或疗效承诺。使用结构化状态做轻度个性化，不复述敏感记录，不制造依赖。标题不超过20个汉字，正文不超过70个汉字。输出严格JSON：{"title":string,"body":string}。`;
   const prompt = `提醒类型：${input.kind}\n模板标题：${input.templateTitle}\n模板正文：${input.templateBody}\n当前周次：${input.currentWeek}\n已完成模块：${input.completedModules}/16\n当前模块：${input.currentModuleTitle ?? "未提供"}\n近7日有效EMA次数：${input.recentEmaCount}`;
   try {
     const raw = compactConfig.provider === "anthropic"
@@ -104,6 +107,31 @@ export async function generateNssiReminderDraft(input: {
     const forbidden = /诊断|确诊|药物|剂量|保证|治愈|自伤方式|自杀方式/u;
     if (!title || !body || title.length > 20 || body.length > 70 || forbidden.test(`${title}${body}`)) return null;
     return { title, body, model: compactConfig.model, provider: compactConfig.provider };
+  } catch {
+    return null;
+  }
+}
+
+export async function generateEmiSelfReminderDraft(input: {
+  skillId: string;
+  intensityBefore: number;
+  intensityAfter: number;
+  outcomes: string[];
+  fallback: string;
+}, instructionOverride?: string) {
+  const config = readConfig();
+  if (!config) return null;
+  const compactConfig = { ...config, timeoutMs: Math.min(config.timeoutMs, 450) };
+  const instruction = instructionOverride ?? `你是NSSI数字化干预系统中的即时干预文案组件。只把用户自己的结构化练习记录改写成一句自然的自我提醒，不新增心理知识，不判断疗效，不诊断，不提药物、自伤方式或模型。不得改变技能名称和前后分数。正文不超过80个汉字。输出严格JSON：{"message":string}。`;
+  const prompt = `技能ID：${input.skillId}\n练习前强度：${input.intensityBefore}\n练习后强度：${input.intensityAfter}\n用户勾选的实际变化：${input.outcomes.join("、") || "未提供"}\n临床模板兜底：${input.fallback}`;
+  try {
+    const raw = compactConfig.provider === "anthropic"
+      ? await callAnthropic(compactConfig, prompt, instruction, 160)
+      : await callOpenAiCompatible(compactConfig, prompt, instruction, 160);
+    const parsed = extractJson<{ message?: unknown }>(raw);
+    const message = cleanText(parsed.message, 80);
+    if (!message || /诊断|确诊|药物|剂量|保证|治愈|自伤方式|自杀方式/u.test(message)) return null;
+    return message;
   } catch {
     return null;
   }
@@ -147,6 +175,7 @@ function buildPrompt(
     runtimeContext.currentModuleTitle ? `当前模块：${runtimeContext.currentModuleTitle.slice(0, 80)}` : "",
     runtimeContext.emaSummary ? `近7日EMA结构化摘要：${runtimeContext.emaSummary.slice(0, 300)}` : "",
     runtimeContext.recentSkillSummary ? `最近技能记录摘要：${runtimeContext.recentSkillSummary.slice(0, 220)}` : "",
+    runtimeContext.recentExerciseSummary ? `最近课程练习摘要：${runtimeContext.recentExerciseSummary.slice(0, 360)}` : "",
     typeof runtimeContext.hasSafetyPlan === "boolean" ? `已建立安全计划：${runtimeContext.hasSafetyPlan ? "是" : "否"}` : "",
     runtimeContext.qualityRetry ? `上一候选未通过出站校验，必须修正：${runtimeContext.qualityRetry.slice(0, 180)}` : "",
     runtimeContext.clinicalGuidance ? `当前临床表达规范：${runtimeContext.clinicalGuidance.slice(0, 500)}` : "",
@@ -341,6 +370,7 @@ const bridgeForbiddenPatterns = [
 export async function generateConversationalBridge(
   query: string,
   history: ConversationTurn[] = [],
+  runtimeContext: ModelRuntimeContext = {},
 ): Promise<ChatPayload | null> {
   const config = readConfig();
   if (!config) return null;
@@ -352,8 +382,8 @@ export async function generateConversationalBridge(
     : "（无）";
   const prompt = `最近对话只用于理解指代，不得据此推断用户没有说出的事实：\n${recentConversation}\n\n用户当前表达：${query}`;
   const raw = config.provider === "anthropic"
-    ? await callAnthropic(config, prompt, bridgeSystemPrompt, 320)
-    : await callOpenAiCompatible(config, prompt, bridgeSystemPrompt, 320);
+    ? await callAnthropic(config, prompt, runtimeContext.prompts?.bridge ?? bridgeSystemPrompt, 320)
+    : await callOpenAiCompatible(config, prompt, runtimeContext.prompts?.bridge ?? bridgeSystemPrompt, 320);
   const parsed = extractJson<{
     title?: unknown;
     message?: unknown;
@@ -449,8 +479,8 @@ export async function generateGroundedAnswer(
   if (!config || !hits.length) return null;
   const prompt = buildPrompt(query, hits, history, plan, runtimeContext);
   const raw = config.provider === "anthropic"
-    ? await callAnthropic(config, prompt)
-    : await callOpenAiCompatible(config, prompt);
+    ? await callAnthropic(config, prompt, runtimeContext.prompts?.grounded ?? systemPrompt)
+    : await callOpenAiCompatible(config, prompt, runtimeContext.prompts?.grounded ?? systemPrompt);
   const parsed = extractJson<Partial<ChatPayload> & {
     acknowledgement?: unknown;
     claims?: unknown;
@@ -504,8 +534,8 @@ export async function generateCompanionAnswer(
   if (!config || !hits.length) return null;
   const prompt = buildPrompt(query, hits, history, plan, runtimeContext);
   const raw = config.provider === "anthropic"
-    ? await callAnthropic(config, prompt, companionSystemPrompt, 900)
-    : await callOpenAiCompatible(config, prompt, companionSystemPrompt, 900);
+    ? await callAnthropic(config, prompt, runtimeContext.prompts?.companion ?? companionSystemPrompt, 900)
+    : await callOpenAiCompatible(config, prompt, runtimeContext.prompts?.companion ?? companionSystemPrompt, 900);
   const parsed = extractJson<Partial<ChatPayload> & {
     acknowledgement?: unknown;
     skillLabel?: unknown;
