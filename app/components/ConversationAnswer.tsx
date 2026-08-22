@@ -21,9 +21,12 @@ type ConversationAnswerProps = {
 };
 
 function pageLabel(source: SourceCitation) {
-  return source.printedPage
+  const page = source.printedPage
     ? `书中 ${source.printedPage} 页`
     : `PDF ${source.pdfPage} 页`;
+  return source.paragraphOrdinal === undefined
+    ? page
+    : `${page} · 第 ${source.paragraphOrdinal + 1} 段`;
 }
 
 function uniqueBranches(payload: ChatPayload | undefined, mode: ExperienceMode): Branch[] {
@@ -63,8 +66,12 @@ export function ConversationAnswer({
   const branches = uniqueBranches(payload, mode);
   const label = kind === "crisis"
     ? "先把安全放在第一位"
-    : kind === "refusal"
-      ? "这里有一条重要边界"
+    : kind === "refusal" && payload?.mode === "safety"
+      ? "这件事需要专业人员判断"
+      : kind === "refusal" && payload?.refusalReason === "out-of-scope"
+        ? "这个问题超出当前体验范围"
+        : kind === "refusal"
+          ? "这次没有顺利接上"
       : mode === "companion"
         ? payload?.skillCard ? "听见你，也带来一个可能有用的方法" : "我在听"
         : "根据书中内容整理";
@@ -145,7 +152,47 @@ export function ConversationAnswer({
                 <ExternalLink size={14} aria-hidden="true" />
               </button>
             ))}
-            <p>卡片是通俗转述。点击来源可查看定位到的原页或 OCR 文本。</p>
+            <p>卡片是通俗转述。点击来源可按页码和段落索引核对原文；专家模式还会显示主张与原文的对应关系。</p>
+          </div>
+        </details>
+      )}
+
+      {mode === "deep-read" && !!sources.length && (
+        <details className="expert-evidence" open>
+          <summary>
+            <span><BookOpen size={15} aria-hidden="true" />专家核对：主张与原文段落</span>
+            <ChevronDown size={15} aria-hidden="true" />
+          </summary>
+          <div className="expert-evidence-body">
+            {!!payload?.claims?.length && (
+              <section aria-label="专业主张与来源绑定">
+                <h3>专业主张</h3>
+                <ol>
+                  {payload.claims.map((claim, index) => (
+                    <li key={`${claim.kind}-${index}`}>
+                      <p>{claim.text}</p>
+                      <small>
+                        依据：{claim.citationIds.map((id) => sources.find((item) => item.id === id)?.paragraphAnchor ?? id).join("、")}
+                      </small>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
+            <section aria-label="检索到的原文段落">
+              <h3>原文段落</h3>
+              {sources.map((item) => (
+                <article key={`expert-${item.id}`}>
+                  <header>
+                    <strong>{item.section}</strong>
+                    <span>{pageLabel(item)} · {item.paragraphAnchor ?? item.chunkId ?? item.id}</span>
+                  </header>
+                  <blockquote>{item.evidence}</blockquote>
+                  <button type="button" onClick={() => onSource(item)}>打开来源详情</button>
+                </article>
+              ))}
+              <p className="expert-caveat">原文来自 OCR 派生文本，专业核对时仍应回看扫描页。未完成专业审核的技能卡只用于导航。</p>
+            </section>
           </div>
         </details>
       )}

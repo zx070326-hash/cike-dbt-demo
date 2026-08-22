@@ -1,4 +1,8 @@
 import type { SafetyAssessment, SafetyCategory } from "../safety/classifier";
+import {
+  understandUserInput,
+  type InputUnderstanding,
+} from "./input-understanding";
 
 export type ConversationNeed = "listen" | "stabilize" | "clarify" | "learn" | "practice";
 export type ConversationIntensity = 0 | 1 | 2 | 3;
@@ -20,6 +24,7 @@ export type AssistantDecision = {
   skillCandidates: string[];
   requiresClarification: boolean;
   reasonCodes: string[];
+  inputUnderstanding: InputUnderstanding;
 };
 
 export type HistoryTurn = { role: "user" | "assistant"; content: string };
@@ -68,6 +73,17 @@ function inferResponseToIntervention(message: string, lastIntervention: string |
   if (/没用|没有用|没变化|完全没有|还是一样|一点没/u.test(message)) return "no-change";
   if (/好一点|缓了一点|有点用|轻松一点|好多了|有效/u.test(message)) return "helped";
   return "unknown";
+}
+
+function normalizedTurn(value: string) {
+  return value.normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+function repeatedAfterUnresolvedResponse(message: string, history: HistoryTurn[]) {
+  const previousUser = [...history].reverse().find((turn) => turn.role === "user")?.content ?? "";
+  const previousAssistant = [...history].reverse().find((turn) => turn.role === "assistant")?.content ?? "";
+  if (!previousUser || normalizedTurn(previousUser) !== normalizedTurn(message)) return false;
+  return /没看出|没找到|回答不了|范围之外|换个说法|还差一点信息/u.test(previousAssistant);
 }
 
 function inferIntensity(message: string, safety: SafetyAssessment): ConversationIntensity {
@@ -154,6 +170,7 @@ export function buildConversationDecision(
     .slice(-2)
     .map((turn) => turn.content)
     .join(" ");
+  const inputUnderstanding = understandUserInput(message, recentUserContext);
   const lastIntervention = inferLastIntervention(history);
   const intensity = inferIntensity(message, safety);
   const need = inferNeed(message, intensity, safety);
@@ -162,8 +179,13 @@ export function buildConversationDecision(
   const candidates = scoreSkillCandidates(message, recentUserContext, need);
   const viable = candidates.filter((item) => item.score >= 3);
 
-  let route = viable[0]?.id ?? "clarify";
-  const reasonCodes = [...(viable[0]?.reasons ?? [])];
+  let route = inputUnderstanding.scope === "clearly-unrelated"
+    ? "out-of-scope"
+    : viable[0]?.id ?? "clarify";
+  const reasonCodes = [
+    ...(viable[0]?.reasons ?? []),
+    ...inputUnderstanding.reasonCodes,
+  ];
   if (explicitSkill) {
     route = "direct";
     reasonCodes.unshift("USER_NAMED_SKILL");
@@ -173,6 +195,14 @@ export function buildConversationDecision(
   } else if (need === "listen") {
     route = "clarify";
     reasonCodes.unshift("USER_REQUESTED_LISTENING");
+  }
+  if (
+    repeatedAfterUnresolvedResponse(message, history) &&
+    inputUnderstanding.scope !== "clearly-unrelated" &&
+    safety.category === "none"
+  ) {
+    route = "clarify";
+    reasonCodes.unshift("REPEATED_UNRESOLVED_INPUT");
   }
 
   const activeSkill = safety.category === "unsafe-behavior" || safety.category === "other-harm-crisis"
@@ -211,6 +241,7 @@ export function buildConversationDecision(
       skillCandidates: viable.slice(0, 3).map((item) => item.id),
       requiresClarification,
       reasonCodes: [...new Set(reasonCodes)],
+      inputUnderstanding,
     },
   };
 }

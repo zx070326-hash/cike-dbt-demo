@@ -11,5 +11,6 @@ dist/
 data/ocr/*.jsonl
 tmp/
 *.log
+*.tsbuildinfo
 __pycache__/
 *.pyc

@@ -7,16 +7,29 @@
   "assets": {
     "directory": "dist/client"
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cike-nssi-phase1",
+      "database_id": "97ace12e-f44d-4024-be90-80b215aa4ed9"
+    }
+  ],
   "observability": {
     "enabled": true
   },
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
   "vars": {
-    "DEMO_EXPIRES_AT": "2026-08-16T16:01:26.000Z",
     "DEMO_MODEL_MODE": "generated",
     "MODEL_PROVIDER": "openai-compatible",
     "MODEL_BASE_URL": "https://api.deepseek.com",
     "MODEL_NAME": "deepseek-v4-flash",
     "MODEL_TIMEOUT_MS": "25000",
-    "MODEL_VERIFY_GROUNDING": "true"
+    "MODEL_VERIFY_GROUNDING": "true",
+    "NSSI_SEMANTIC_RISK_MODE": "enabled",
+    "RISK_MODEL_TIMEOUT_MS": "1800",
+    "WEB_PUSH_VAPID_PUBLIC_KEY": "BF_7f_thZoHhKaaT9rYf6gqhqUZMocVgu2k_9NNMvirRFiH-yl6JXbnkIy-k8YhzkYdvNzxT35qXU6CBvCi1rvY",
+    "WEB_PUSH_VAPID_SUBJECT": "mailto:dbt-demo@example.com"
   }
 }

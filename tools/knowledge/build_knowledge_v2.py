@@ -40,7 +40,10 @@ def normalize(value: str) -> str:
 
 
 def compact_line(value: str) -> str:
-    return re.sub(r"\s+", " ", value).strip(" \n\r\t·•—－-_:：，,。")
+    compacted = re.sub(r"\s+", " ", value).strip(" \n\r\t·•—－-_:：，,。")
+    # Common OCR substitution in headings only. Source-exact chunk text is
+    # untouched; this merely restores the readable em dash in display labels.
+    return re.sub(r"(?:一一|一—|—一)(?=[“\"‘])", "——", compacted)
 
 
 def valid_display_heading(value: str) -> bool:
@@ -56,18 +59,30 @@ def valid_display_heading(value: str) -> bool:
 
 def derive_display_section(page: dict) -> tuple[str, str]:
     """Return a readable derived title without changing the OCR source text."""
-    beginning = page["text"][:1200]
-    candidates: list[str] = []
-    for pattern in STRUCTURED_HEADING_PATTERNS:
-        candidates.extend(compact_line(match.group(0)) for match in pattern.finditer(beginning))
-    candidates = [candidate for candidate in candidates if valid_display_heading(candidate)]
-    if candidates:
-        # Prefer an explicit handout/worksheet heading. It is more useful to an
-        # end user than a repeated chapter header from the top of the page.
-        candidates.sort(key=lambda value: ("讲义" not in value and "练习单" not in value, len(value)))
-        return candidates[0], "detected-structure"
-
     raw = compact_line(page.get("section", ""))
+    # The page index already carries a section reconstructed across OCR line
+    # wraps. Prefer it when it is a concrete handout/worksheet heading. The
+    # previous regex-first strategy could turn a complete title such as
+    # “观察、描述、参与的记录日历” into the visibly truncated “观察、描述、”.
+    structured_raw = re.match(
+        r"^(?:通用|正念|情绪调节|人际效能|痛苦忍受)(?:讲义|练习单)\s*"
+        r"[0-9一二三四五六七八九十]+",
+        raw,
+    )
+    if valid_display_heading(raw) and structured_raw:
+        return raw, "ocr-heading"
+
+    beginning = page["text"][:1200]
+    candidates: list[tuple[int, str]] = []
+    for pattern in STRUCTURED_HEADING_PATTERNS:
+        candidates.extend((match.start(), compact_line(match.group(0))) for match in pattern.finditer(beginning))
+    candidates = [(position, candidate) for position, candidate in candidates if valid_display_heading(candidate)]
+    if candidates:
+        # The first concrete heading on a source page is normally its own
+        # title. Later mentions are usually references to related materials.
+        candidates.sort(key=lambda value: (value[0], -len(value[1])))
+        return candidates[0][1], "detected-structure"
+
     if valid_display_heading(raw):
         return raw, "ocr-heading"
 
@@ -77,7 +92,7 @@ def derive_display_section(page: dict) -> tuple[str, str]:
     return f"{source_label} · {page_label}", "generated-location-label"
 
 
-def source_quality(page: dict, display_heading_source: str) -> dict:
+def source_quality(page: dict, display_heading_source: str, display_section: str) -> dict:
     text = page["text"]
     issues: list[str] = []
     score = 1.0
@@ -99,18 +114,71 @@ def source_quality(page: dict, display_heading_source: str) -> dict:
         issues.append("likely-contents-page")
         score -= 0.45
     score = round(max(0.0, min(score, 1.0)), 3)
-    content_type = "trainer-note"
-    if "练习单" in text[:500]:
-        content_type = "worksheet"
-    elif "讲义" in text[:500]:
-        content_type = "handout"
-    elif "front-matter-or-contents" in issues or "likely-contents-page" in issues:
+    # Classify by source collection and the reconstructed page heading, not by
+    # any occurrence in the first 500 characters. Trainer notes routinely name
+    # several worksheets and were previously mislabeled as worksheets.
+    if "front-matter-or-contents" in issues or "likely-contents-page" in issues:
         content_type = "front-matter"
+    elif page["sourceId"] == "dbt-manual-upper":
+        content_type = "trainer-note"
+    elif re.match(r"^(?:通用|正念|情绪调节|人际效能|痛苦忍受)?练习单", display_section):
+        content_type = "worksheet"
+    elif re.match(r"^(?:通用|正念|情绪调节|人际效能|痛苦忍受)?讲义", display_section):
+        content_type = "handout"
+    else:
+        content_type = "source-page"
+
+    display_issues: list[str] = []
+    display_score = score
+    compact_text = re.sub(r"\s+", "", text)
+    reference_mentions = len(re.findall(r"(?:讲义|练习单)\s*[0-9一二三四五六七八九十]+[a-zA-Z]?", text[:1600]))
+    form_labels = sum(text.count(label) for label in ("开始日期", "截止日期", "姓名：", "情境及练习方法", "勾选"))
+    sentence_count = len(re.findall(r"[。！？；]", text))
+
+    if content_type == "front-matter":
+        display_issues.append("index-or-front-matter")
+        display_score = min(display_score, 0.12)
+    if len(compact_text) < 90:
+        display_issues.append("heading-or-short-page")
+        display_score -= 0.42
+    if form_labels >= 3:
+        display_issues.append("form-template")
+        display_score -= 0.24
+    if reference_mentions >= 5 and sentence_count < 9:
+        display_issues.append("reference-list-dominant")
+        display_score -= 0.46
+    if text.lstrip().startswith("续表") or re.match(r"^表[0-9一二三四五六七八九十]", display_section):
+        display_issues.append("table-or-catalogue")
+        display_score = min(display_score, 0.46)
+    if content_type == "worksheet":
+        # Worksheets remain searchable and are valuable when a user explicitly
+        # asks to practise, but explanatory handouts should lead a course page.
+        display_score -= 0.12
+    if page["sourceId"] == "dbt-manual-upper" and re.match(
+        r"^(?:通用|正念|情绪调节|人际效能|痛苦忍受)?练习单",
+        display_section,
+    ):
+        display_issues.append("trainer-note-cross-reference-heading")
+        display_score = min(display_score, 0.58)
+    if content_type == "source-page":
+        display_score -= 0.18
+    display_score = round(max(0.0, min(display_score, 1.0)), 3)
+    if not (score >= 0.48 and "front-matter-or-contents" not in issues and "likely-contents-page" not in issues):
+        display_role = "index-only"
+    elif display_score >= 0.68 and content_type in {"handout", "trainer-note"}:
+        display_role = "primary"
+    elif display_score >= 0.34:
+        display_role = "supporting"
+    else:
+        display_role = "index-only"
     return {
         "score": score,
         "issues": issues,
         "contentType": content_type,
         "groundingEligible": score >= 0.48 and "front-matter-or-contents" not in issues and "likely-contents-page" not in issues,
+        "displayScore": display_score,
+        "displayRole": display_role,
+        "displayIssues": display_issues,
     }
 
 
@@ -141,7 +209,7 @@ def split_page(page: dict, max_chars: int, overlap: int) -> list[dict]:
         return []
     chunks: list[dict] = []
     display_section, display_heading_source = derive_display_section(page)
-    quality = source_quality(page, display_heading_source)
+    quality = source_quality(page, display_heading_source, display_section)
     start = 0
     ordinal = 0
     while start < len(text):

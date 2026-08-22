@@ -1,3 +1,8 @@
+import {
+  understandUserInput,
+  type InputUnderstanding,
+} from "../conversation/input-understanding";
+
 export type RetrievalPlan = {
   kind: "direct" | "guided" | "clarify" | "out-of-scope";
   route:
@@ -34,22 +39,15 @@ const explicitSkillTerms = [
   "目标关系和自尊",
 ];
 
-const fuzzyPsychologicalTerms = [
-  "难受", "烦躁", "崩溃", "压抑", "压力", "紧张", "心慌", "不安", "害怕",
-  "焦虑", "担心", "恐惧", "悲伤", "愤怒", "生气", "羞耻", "内疚", "委屈",
-  "情绪", "脑子很乱", "冷静不下来", "控制不住", "不知道怎么办", "撑不住",
-  "反复想", "胡思乱想", "内耗", "纠结", "放不下", "接受不了", "抗拒",
-  "冲动", "后悔", "失控", "吵架", "沟通", "表达", "边界", "关系", "伴侣",
-  "心情不好", "心情不太好", "心情不是很好", "心情有点差", "心情很差",
-  "状态不好", "状态不太好", "状态有点差", "不开心", "低落", "郁闷", "孤独",
-  "心里堵", "有点累", "很累", "好累", "疲惫", "不知道该怎么说", "说不清",
-  "睡不好", "失眠", "身体绷", "心跳很快", "感受", "发火",
-];
-
 /** Deterministic provisional routing. It selects a retrieval direction, never a diagnosis. */
-export function planRetrieval(query: string, recentUserContext = ""): RetrievalPlan {
+export function planRetrieval(
+  query: string,
+  recentUserContext = "",
+  suppliedUnderstanding?: InputUnderstanding,
+): RetrievalPlan {
   const current = query.trim();
   const context = `${recentUserContext} ${current}`.trim();
+  const inputUnderstanding = suppliedUnderstanding ?? understandUserInput(current, recentUserContext);
   if (includesAny(current, explicitSkillTerms)) {
     return { kind: "direct", route: "direct", retrievalQuery: context, label: "用户指定的 DBT 技能" };
   }
@@ -176,8 +174,15 @@ export function planRetrieval(query: string, recentUserContext = ""): RetrievalP
       label: "把事实和脑中的猜测分开",
     };
   }
-  if (includesAny(current, fuzzyPsychologicalTerms)) {
-    return { kind: "clarify", route: "clarify", retrievalQuery: current, label: "需要确认当前目标" };
+  if (inputUnderstanding.scope !== "clearly-unrelated") {
+    return {
+      kind: "clarify",
+      route: "clarify",
+      retrievalQuery: current,
+      label: inputUnderstanding.scope === "self-experience"
+        ? "先确认此刻最需要的帮助"
+        : "需要确认当前目标",
+    };
   }
   return { kind: "out-of-scope", route: "out-of-scope", retrievalQuery: current, label: "当前 DBT 自助范围之外" };
 }

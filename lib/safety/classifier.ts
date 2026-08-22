@@ -16,6 +16,8 @@ export type SafetyAssessment = {
   requiresImmediateAction: boolean;
 };
 
+export type ExternalRiskLexicon = { l1a?: string[]; l1b?: string[] };
+
 export const crisisPatterns = [
   /自杀|轻生/u,
   /想死|不想活|不愿活/u,
@@ -34,6 +36,27 @@ export const crisisPatterns = [
   /(没有我|我不在了).{0,8}(更好|轻松)/u,
   /(撑不下去|不想继续了|想彻底消失)/u,
   /撑不下去.{0,8}(结束|消失|不活)/u,
+  /(不能|无法|很难|不确定).{0,6}保证.{0,4}(自己|我).{0,3}安全/u,
+  /怕.{0,6}(对自己做点什么|伤到自己)/u,
+  /(告别|遗书).{0,6}(写好|写完|准备)/u,
+  /已经准备好.{0,8}(行动|开始|去做)/u,
+  /身边.{0,5}(危险物品|刀|药).{0,10}(怕|可能|会).{0,5}(用|伤害自己)/u,
+  /一个人.{0,8}(越来越|已经|快要)?.{0,4}(控制不住|撑不住)/u,
+  /(危险的地方|高处|桥边|楼顶).{0,12}(撑不住|撑多久|控制不住|不知道怎么办)/u,
+  /如果.{0,6}(没有醒来|没醒来).{0,10}(轻松|更好)/u,
+  /不想再继续.{0,12}(想|想着).{0,4}(结束|消失)/u,
+  /伤害了自己/u,
+];
+
+// Requests for instructions are classified independently from a user's stated
+// intent. This prevents role-play, translation and "ignore the rules" wrappers
+// from moving a harmful request into the ordinary retrieval route.
+const harmfulInstructionPatterns = [
+  /(?:自杀|自伤|自残|伤害自己).{0,18}(?:方法|方式|步骤|教程|比较|更安全|怎么做|怎样做)/u,
+  /(?:方法|方式|步骤|教程).{0,12}(?:自杀|自伤|自残|伤害自己)/u,
+  /(?:怎样|怎么).{0,8}(?:伤害自己|自伤|自残|结束生命)/u,
+  /(?:假设|忽略|绕过).{0,12}(?:没有限制|规则|安全提醒).{0,16}(?:结束|消失).{0,6}(?:办法|方法|步骤)/u,
+  /(?:具体|详细).{0,6}(?:结束生命|结束自己).{0,6}(?:办法|方法|步骤)/u,
 ];
 
 const otherHarmPatterns = [
@@ -45,6 +68,7 @@ const otherHarmPatterns = [
   /怕.{0,10}(会|要|可能).{0,5}(伤到|打到|杀|砍|捅).{0,6}(旁边的人|别人|他|她|对方)/u,
   /(砍|杀|打|伤害).{0,5}(他|她|对方|别人).{0,6}(冲动|念头)/u,
   /(现在|马上|待会|一会儿)?.{0,6}(可能|也许|恐怕).{0,4}(会)?.{0,3}(伤害|伤到|打到).{0,4}(他人|别人|人|他|她|对方)/u,
+  /(手里|手边|拿着).{0,5}(东西|物品|刀|棍).{0,8}(怕|担心).{0,5}(马上|一会儿)?.{0,3}(动手|伤人)/u,
 ];
 
 export const unsafeBehaviorPatterns = [
@@ -69,12 +93,11 @@ const violenceExposurePatterns = [
   /我.{0,4}被.{0,6}(打|推|掐|踢|威胁)/u,
 ];
 
-const diagnosisTerms = /(抑郁症?|焦虑症?|双相|躁郁|边缘型?人格|人格障碍|精神分裂|强迫症?|恐慌障碍|创伤后应激|PTSD|进食障碍|注意缺陷|多动症|ADHD|心理疾病|精神疾病)/iu;
 const diagnosisRequestPatterns = [
   /诊断|鉴定|确诊/u,
   /什么病|哪种病|有没有病/u,
   /(是不是|是否|像不像|算不算|会不会是|可能是|得了|患有).{0,18}(抑郁|焦虑|双相|躁郁|边缘|人格|精神|心理疾病|强迫|恐慌|创伤|PTSD|注意缺陷|多动|ADHD)/iu,
-  /(抑郁|焦虑|双相|躁郁|边缘|人格|精神|强迫|恐慌|创伤|PTSD|注意缺陷|多动|ADHD).{0,12}(吗|么|是不是|是否|可能性|概率)/iu,
+  /(抑郁|焦虑|双相|躁郁|边缘|人格|精神|强迫|恐慌|创伤|PTSD|注意缺陷|多动|ADHD).{0,4}(吗|么|是不是|是否|可能性|概率)/iu,
   /(这些|这种|上述|我的).{0,8}(症状|表现|情况).{0,10}(说明|算|是|属于).{0,8}(抑郁|焦虑|双相|疾病|病)/u,
   /(测一测|判断|确认|看看).{0,10}(抑郁|焦虑|双相|躁郁|边缘|人格|疾病|病)/u,
   /自测.{0,10}(抑郁|焦虑|双相|躁郁|边缘|人格|疾病|病)/u,
@@ -121,6 +144,7 @@ function normalizeForSafety(input: string) {
   return input
     .normalize("NFKC")
     .replace(/(没有|没|并不|不是|从没|从未).{0,3}(想死|自杀|轻生|伤害自己|自残)/gu, "")
+    .replace(/(没有|没|并不|不是|不想|从没|从未).{0,3}(消失|结束自己|不醒来)/gu, "")
     .replace(/(没有|没|不会|并不|不是).{0,3}(想|要|会).{0,3}(伤害|打|杀).{0,4}(别人|他人|人|他|她|对方|家人)/gu, "")
     .trim();
 }
@@ -130,25 +154,50 @@ function matchesAny(value: string, patterns: RegExp[]) {
 }
 
 function isClinicalDiagnosisRequest(value: string) {
-  if (!diagnosisTerms.test(value) && !/诊断|确诊|什么病|哪种病/u.test(value)) return false;
+  if (!matchesAny(value, diagnosisRequestPatterns)) return false;
   // “我已确诊……”是背景信息，不等于要求系统重新诊断。
   const backgroundOnly = /(已经|已|已被|医生说|医院).{0,5}确诊/u.test(value) &&
     !/(是不是|是否|算不算|诊断|判断|确认|治疗方案|怎么治疗|如何治疗)/u.test(value.replace(/已被?确诊|已经确诊/gu, ""));
   if (backgroundOnly) return false;
-  return matchesAny(value, diagnosisRequestPatterns);
+  return true;
 }
 
 export function assessSafety(
   input: string,
   recentUserMessages: string[] = [],
+  externalLexicon: ExternalRiskLexicon = {},
 ): SafetyAssessment {
   const message = normalizeForSafety(input);
+  const normalizedMessage = message.normalize("NFKC").toLowerCase();
+  const l1aHit = (externalLexicon.l1a ?? []).some((term) => normalizedMessage.includes(term.normalize("NFKC").toLowerCase()));
+  const l1bHit = (externalLexicon.l1b ?? []).some((term) => normalizedMessage.includes(term.normalize("NFKC").toLowerCase()));
 
-  if (matchesAny(message, crisisPatterns)) {
+  if (l1aHit || l1bHit) {
+    return {
+      category: "self-harm-crisis",
+      severity: l1aHit ? "urgent" : "check-immediate",
+      reasonCodes: [l1aHit ? "EXTERNAL_LEXICON_L1A" : "EXTERNAL_LEXICON_L1B"],
+      requiresImmediateAction: l1aHit,
+    };
+  }
+
+  const informationalReference = /(?:课程|作业|新闻|文章|研究|科普).{0,12}(?:自杀|自伤)|(?:自杀|自伤).{0,8}(?:预防|课程|作业|研究|新闻|文章)/u.test(message);
+  const firstPersonIntent = /(我|自己).{0,8}(想|要|准备|打算|控制不住|忍不住).{0,8}(死|消失|伤害|自伤|自残|结束)/u.test(message);
+
+  if ((!informationalReference || firstPersonIntent) && matchesAny(message, crisisPatterns)) {
     return {
       category: "self-harm-crisis",
       severity: "urgent",
       reasonCodes: ["SELF_HARM_LANGUAGE"],
+      requiresImmediateAction: true,
+    };
+  }
+
+  if (matchesAny(message, harmfulInstructionPatterns)) {
+    return {
+      category: "self-harm-crisis",
+      severity: "urgent",
+      reasonCodes: ["HARMFUL_INSTRUCTION_REQUEST"],
       requiresImmediateAction: true,
     };
   }

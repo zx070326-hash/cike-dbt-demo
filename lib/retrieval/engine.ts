@@ -130,6 +130,9 @@ export function createRetrievalEngine(knowledge: KnowledgeV2): RetrievalEngine {
 
     const directCardIds = new Set(cardMatches.map(({ card }) => card.id));
     const relatedCardIds = new Set(cardMatches.flatMap(({ card }) => card.related));
+    const namedPhrases = [...new Set(cardMatches.flatMap(({ card }) => [card.label, ...card.aliases])
+      .map(normalizeRetrievalText)
+      .filter((phrase) => phrase.length >= 2 && normalizedQuery.includes(phrase)))];
     const evidenceBoosts = new Map<string, number>();
     for (const { card, score: cardScore } of cardMatches) {
       for (const evidence of card.evidence) {
@@ -170,6 +173,13 @@ export function createRetrievalEngine(knowledge: KnowledgeV2): RetrievalEngine {
         const lengthNormalization = 1.2 * (0.25 + 0.75 * (documentLength / averageDocumentLength));
         score += inverseDocumentFrequency * ((frequency * 2.2) / (frequency + lengthNormalization)) * 3;
       }
+      // When the user names a skill or subskill, at least one source that
+      // literally contains that phrase must outrank generic card evidence.
+      // Skill cards navigate; they do not replace the book text.
+      const exactNamedPhraseHits = namedPhrases.filter((phrase) => (
+        normalizedText.includes(phrase) || normalizedTitle.includes(phrase)
+      ));
+      score += exactNamedPhraseHits.reduce((sum, phrase) => sum + 45 + Math.min(phrase.length * 4, 32), 0);
       if (normalizedQuery.length >= 4 && normalizedText.includes(normalizedQuery)) score += 20;
 
       const cardIds = new Set(chunk.skillCardIds);
@@ -180,9 +190,13 @@ export function createRetrievalEngine(knowledge: KnowledgeV2): RetrievalEngine {
         (cardId) => cardIds.has(cardId) || cardEvidenceIds.get(cardId)?.has(chunk.id),
       );
       score += directMatches.length * 18 + relatedMatches.length * 2.5;
-      if (chunk.sourceQuality.contentType === "handout") score += 3.5;
-      if (chunk.sourceQuality.contentType === "worksheet") score += 2;
+      if (chunk.sourceQuality.contentType === "handout") score += 6;
+      if (chunk.sourceQuality.contentType === "trainer-note") score += 2;
+      if (chunk.sourceQuality.contentType === "worksheet") score -= 1;
+      if (chunk.sourceQuality.displayRole === "primary") score += 4;
+      if (chunk.sourceQuality.displayRole === "index-only") score -= 10;
       score *= 0.72 + chunk.sourceQuality.score * 0.28;
+      score *= 0.84 + chunk.sourceQuality.displayScore * 0.16;
       if (score < 2.2 || (!matchedTerms.length && !directMatches.length && !evidenceBoosts.has(chunk.id))) continue;
 
       scored.push({
@@ -208,7 +222,7 @@ export function createRetrievalEngine(knowledge: KnowledgeV2): RetrievalEngine {
         (cardId) => !selected.some((current) => current.matchedSkillCardIds.includes(cardId)),
       );
       if (!sameNeighborhood || addsNewCard || hit.score >= scored[0].score * 0.78) selected.push(hit);
-      if (selected.length >= Math.min(limit, 8)) break;
+      if (selected.length >= Math.min(limit, 24)) break;
     }
     return selected;
   }

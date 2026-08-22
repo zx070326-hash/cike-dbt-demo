@@ -8,6 +8,8 @@
 - `section`、`text`、页码和字符区间保留原始可追溯值。
 - `displaySection`、`sourceQuality`、`skillCardIds` 和 `parentBlockId` 是派生元数据；它们不覆盖原文。
 - 目录、前言、短页、低 OCR 置信度和不可靠标题会被标记。原文仍在知识包中，但不作为主要 grounding 证据。
+- `groundingEligible` 只回答“能不能被检索和核对”；`displayRole`（`primary` / `supporting` / `index-only`）另行回答“是否适合直接展示给用户”。空表、课程目录和交叉引用不会因为来自原书就自动占据课程页首位。
+- `displayScore` 与 `displayIssues` 记录展示质量判定。患者讲义优先，训练师说明用于补充，练习单在明确练习情境中使用；`index-only` 内容仍保留在专家检索与全书索引中。
 
 ## 2. 父上下文
 
@@ -50,7 +52,7 @@ diagnostics                  # 父块、低质量、专业审核统计
 执行：
 
 ```powershell
-node --experimental-strip-types tools/rag/evaluate_retrieval.mjs
+npx tsx tools/rag/evaluate_retrieval.mjs
 ```
 
 报告写入 `data/eval/retrieval-quality-report-v0.3.json`，包含 route accuracy、skill-card Recall@1/3/5、MRR、evidence-term Recall@5、父块解析率、来源可追溯率和低质量主要来源比例。

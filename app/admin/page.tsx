@@ -1,0 +1,26 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+import { Check, FileCheck2, LockKeyhole, RefreshCw, Settings2, ShieldCheck } from "lucide-react";
+
+type ConfigVersion = { id: string; version: string; status: string; config: Record<string, unknown>; evaluationReport?: Record<string, unknown>; createdAt: string; activatedAt?: string };
+
+export default function AdminPage() {
+  const [token, setToken] = useState("");
+  const [versions, setVersions] = useState<ConfigVersion[]>([]);
+  const [defaultConfig, setDefaultConfig] = useState<Record<string, unknown> | null>(null);
+  const [version, setVersion] = useState("nssi-phase1-0.1.0");
+  const [configText, setConfigText] = useState("");
+  const [reportText, setReportText] = useState("");
+  const [error, setError] = useState("");
+
+  async function staffFetch(path: string, init?: RequestInit) { const response = await fetch(path, { ...init, headers: { "content-type": "application/json", authorization: `Bearer ${token}` }, cache: "no-store" }); const body = await response.json() as Record<string, unknown>; if (!response.ok) throw new Error(String(body.error ?? "访问失败")); return body; }
+  async function load(event?: FormEvent) { event?.preventDefault(); setError(""); try { const body = await staffFetch("/api/nssi/admin/config"); const base = body.defaultConfig as Record<string, unknown>; setDefaultConfig(base); setConfigText((current) => current || JSON.stringify(base, null, 2)); setVersions(body.versions as ConfigVersion[]); } catch (cause) { setError(cause instanceof Error ? cause.message : "访问失败"); } }
+  async function createDraft() { setError(""); try { const created = await staffFetch("/api/nssi/admin/config", { method: "POST", body: JSON.stringify({ action: "create-draft", version, config: JSON.parse(configText), adminId: "admin-web" }) }); setReportText(JSON.stringify({ schemaVersion: "nssi-phase1-evaluation-1.1", executionMode: "frozen-suite", configSha256: created.configSha256, suiteSha256: "请粘贴评测器输出", frozenInputs: { safety: 0, fidelity: 0 }, passed: false, toneReview: { status: "pending-clinical-review", sampleSizePerPrompt: 0, reviewerCount: 0, rubricVersion: "nssi-tone-rubric-1.0" }, metrics: {} }, null, 2)); await load(); } catch (cause) { setError(cause instanceof Error ? cause.message : "创建失败"); } }
+  async function attachEvaluation(id: string) { setError(""); try { if (!reportText.trim()) throw new Error("请先粘贴由冻结评测器生成并完成双人语气审核的报告"); await staffFetch("/api/nssi/admin/config", { method: "POST", body: JSON.stringify({ action: "attach-evaluation", id, evaluationReport: JSON.parse(reportText), adminId: "admin-web" }) }); await load(); } catch (cause) { setError(cause instanceof Error ? cause.message : "报告绑定失败"); } }
+  async function activate(id: string) { setError(""); try { await staffFetch("/api/nssi/admin/config", { method: "POST", body: JSON.stringify({ action: "activate", id, adminId: "admin-web" }) }); await load(); } catch (cause) { setError(cause instanceof Error ? cause.message : "评测门禁未通过"); } }
+
+  if (!defaultConfig) return <main className="staff-login"><form onSubmit={load}><span className="staff-mark"><Settings2 /></span><small>此刻 · 管理配置</small><h1>版本与质量门禁</h1><p>配置修改不会直接上线。每个版本必须绑定完整评测报告并通过预注册阈值。</p><label><span>管理员访问令牌</span><input type="password" value={token} onChange={(event) => setToken(event.target.value)} autoComplete="off" /></label>{error && <p className="form-error">{error}</p>}<button type="submit" disabled={!token}>进入配置中心</button></form></main>;
+
+  return <main className="staff-app admin-app"><header><div><small>此刻 · NSSI 一期</small><h1>配置与发布门禁</h1></div><button type="button" onClick={() => load()}><RefreshCw />刷新</button></header>{error && <p className="staff-error">{error}</p>}<section className="admin-warning"><ShieldCheck /><span><strong>配置和报告必须一一对应</strong>课程、Prompt、阈值或词表任一变化都会产生新的配置哈希；旧报告无法绑定。临床双人语气审核未完成时，版本不能激活。</span></section><section className="config-editor"><div className="staff-section-head"><div><small>先建草稿，再运行冻结评测</small><h2>配置版本</h2></div></div><label><span>版本号</span><input value={version} onChange={(event) => setVersion(event.target.value)} /></label><label><span>配置 JSON（含全部 Prompt 与模块—章节映射）</span><textarea value={configText} onChange={(event) => setConfigText(event.target.value)} /></label><button type="button" onClick={createDraft}><FileCheck2 />创建不可变草稿并生成配置哈希</button><label><span>冻结评测报告 JSON</span><textarea value={reportText} onChange={(event) => setReportText(event.target.value)} placeholder="运行 npm run eval:phase1 后粘贴报告；完成双人盲评后再绑定" /></label></section><section className="config-versions"><div className="staff-section-head"><div><small>配置哈希 + ≥200 安全集 + ≥100 保真集 + 每 Prompt 双人各 30 条</small><h2>版本历史</h2></div></div>{versions.length ? versions.map((item) => <article key={item.id}><span className={`config-status ${item.status}`}>{item.status === "active" ? <Check /> : <LockKeyhole />}{item.status}</span><div><strong>{item.version}</strong><small>创建于 {new Date(item.createdAt).toLocaleString("zh-CN")} · {item.evaluationReport ? "已绑定报告" : "尚未绑定报告"}</small></div>{item.status === "draft" && <div className="config-version-actions"><button type="button" onClick={() => attachEvaluation(item.id)}>绑定上方报告</button><button type="button" onClick={() => activate(item.id)}>通过全部门禁后激活</button></div>}</article>) : <p className="staff-empty">还没有配置版本。</p>}</section></main>;
+}
